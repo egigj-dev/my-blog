@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Regularization: Preventing Your Network from Overfitting</title>
+    <title>Activation Functions: From Theory to Practice</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
@@ -321,328 +321,288 @@
     </style>
 </head>
 <body>
-    <a href="index.html" class="back-link">← Back to Blog</a>
+    <a href="../index.html" class="back-link">← Back to Blog</a>
     <button class="theme-toggle" id="themeToggle">Light Mode</button>
 
     <div class="container">
         <article class="content">
             <div class="article-header">
-                <div class="article-category">Regularization</div>
-                <h1>Regularization: Preventing Your Network from Overfitting</h1>
+                <div class="article-category">Activation Functions</div>
+                <h1>Activation Functions: From Theory to Practice</h1>
                 <div class="article-meta">
                     <span>Updated February 2026</span>
-                    <span>13 min read</span>
+                    <span>10 min read</span>
                 </div>
             </div>
 
             <h2>Introduction</h2>
             
             <p>
-                A neural network will always try to memorize training data if given the chance. Without constraints, it learns exact patterns in the training set and fails on new data. Regularization prevents this by forcing the network to learn generalizable patterns instead.
+                Without activation functions, neural networks are just expensive linear algebra. They become simple matrix multiplications that can't learn anything interesting. Adding the right activation function at each layer transforms them into something powerful—able to recognize patterns in images, understand language, and beat humans at complex games.
             </p>
 
             <p>
-                This article covers five regularization techniques: L1, L2, Dropout, Data Augmentation, and Early Stopping. Each works differently but shares a goal: make your model perform well on data it hasn't seen.
+                This article explains six activation functions: what they do, how they work, and when to use each one. We'll focus on practical understanding rather than mathematical proofs.
             </p>
 
-            <h2>The Overfitting Problem</h2>
+            <h2>Why Activation Functions Matter</h2>
 
             <p>
-                Overfitting occurs when a model learns the training data too well—capturing noise and specific details instead of underlying patterns. The result: high training accuracy but low test accuracy.
+                Consider a three-layer network without activation functions. Each layer performs a linear transformation: output = W₃(W₂(W₁ × input)). This simplifies to output = W × input, where W is the product of all weight matrices. No matter how many layers you stack, the network remains linear.
+            </p>
+
+            <p>
+                Activation functions break this limitation. By introducing non-linearity at each layer, they enable the network to approximate any continuous function. This is why deep learning is possible.
             </p>
 
             <div class="chart-container">
-                <canvas id="overfittingChart"></canvas>
+                <canvas id="comparisonChart"></canvas>
             </div>
 
+            <h2>Binary Step Function</h2>
+
             <p>
-                The chart shows a typical overfitting scenario. Training loss keeps decreasing while validation loss increases after a certain point. The network is memorizing, not generalizing.
+                The binary step function outputs 0 or 1 based on whether the input is negative or positive. This was the first activation function used in early perceptrons.
             </p>
 
-            <h2>L1 Regularization</h2>
+            <div class="code-block">f(x) = 0 if x < 0<br>f(x) = 1 if x ≥ 0</div>
+
+            <h3>The Problem</h3>
 
             <p>
-                L1 regularization adds a penalty for large weights to the loss function:
+                The gradient is zero everywhere except at x = 0, where it's undefined. During backpropagation, gradients can't flow through this function, making training impossible with modern optimization algorithms. Additionally, the output provides no information about the magnitude of the input—only its sign.
             </p>
 
-            <div class="code-block">loss = standard_loss + λ × Σ|weights|</div>
-
             <p>
-                The penalty forces weights toward zero. Some weights become exactly zero, automatically eliminating unimportant features. This creates sparse models—only important connections remain active.
+                Result: Obsolete. It was historically important but doesn't work with modern training methods.
             </p>
 
-            <h3>Feature Selection</h3>
+            <h2>Sigmoid Function</h2>
 
             <p>
-                Unlike L2, which shrinks weights gradually, L1 can eliminate them completely. This acts as automatic feature selection. For a medical diagnosis task with 100 possible symptoms, L1 might zero out 90, identifying only the 10 that matter.
+                Sigmoid was the dominant activation function from the 1990s through the 2000s. It maps any input to a value between 0 and 1.
+            </p>
+
+            <div class="code-block">σ(x) = 1 / (1 + e^(-x))</div>
+
+            <p>
+                The output can be interpreted as a probability. The function is smooth and differentiable, making optimization possible with gradient descent.
+            </p>
+
+            <h3>The Vanishing Gradient Problem</h3>
+
+            <p>
+                Sigmoid works well in shallow networks, but has a critical flaw in deep networks. When x is large (say x = 5), σ(x) ≈ 0.993, and the derivative is nearly zero. During backpropagation through multiple layers, these tiny gradients multiply together. By the time the gradient reaches early layers, it's effectively zero. The network can't learn effectively.
             </p>
 
             <div class="pros-cons">
                 <div class="pros">
                     <h4>Advantages</h4>
                     <ul>
-                        <li>Automatic feature selection</li>
-                        <li>Sparse models (faster)</li>
-                        <li>More interpretable</li>
+                        <li>Output (0,1) is interpretable as probability</li>
+                        <li>Smooth gradient enables optimization</li>
+                        <li>Clear boundary at x = 0</li>
                     </ul>
                 </div>
                 <div class="cons">
                     <h4>Disadvantages</h4>
                     <ul>
-                        <li>Can remove too many features</li>
-                        <li>Harder to optimize mathematically</li>
-                    </ul>
-                </div>
-            </div>
-
-            <h2>L2 Regularization</h2>
-
-            <p>
-                L2 regularization adds a penalty for the square of weights:
-            </p>
-
-            <div class="code-block">loss = standard_loss + λ × Σ(weights²)</div>
-
-            <p>
-                This shrinks weights uniformly without eliminating them. Instead of forcing weights to zero, it encourages smaller weights across the board. This distributes importance across many features rather than concentrating it on a few.
-            </p>
-
-            <h3>Weight Decay</h3>
-
-            <p>
-                L2 is also called weight decay because it gradually reduces all weight magnitudes. The effect is subtle but effective: the network uses all features but with smaller coefficients, forcing it to rely on more robust patterns.
-            </p>
-
-            <div class="pros-cons">
-                <div class="pros">
-                    <h4>Advantages</h4>
-                    <ul>
-                        <li>Smooth weight reduction</li>
-                        <li>Usually better accuracy than L1</li>
-                        <li>Easier to optimize</li>
-                        <li>Most popular choice</li>
-                    </ul>
-                </div>
-                <div class="cons">
-                    <h4>Disadvantages</h4>
-                    <ul>
-                        <li>Doesn't eliminate features</li>
-                        <li>Less interpretable than L1</li>
+                        <li>Vanishing gradient in extreme ranges</li>
+                        <li>Computationally expensive (exponential)</li>
+                        <li>Not zero-centered</li>
                     </ul>
                 </div>
             </div>
 
             <div class="highlight-box">
-                L2 is the default regularization choice for most problems. Use L1 when you need to understand which features matter most.
+                Still used for binary classification output layers. But for hidden layers in deep networks? Replaced by ReLU in the 2010s.
             </div>
 
-            <h2>Dropout</h2>
+            <h2>Hyperbolic Tangent (Tanh)</h2>
 
             <p>
-                Dropout randomly disables neurons during training. Each neuron has a probability (typically 50%) of being turned off for each training sample.
+                Tanh is sigmoid's improved cousin, outputting values between -1 and 1 instead of 0 and 1.
             </p>
 
-            <div class="code-block">output = output × random_mask (50% zeros)<br>(During testing, all neurons are active)</div>
+            <div class="code-block">tanh(x) = (e^x - e^(-x)) / (e^x + e^(-x))</div>
 
-            <h3>Why It Works</h3>
-
-            <p>
-                Dropout forces the network to learn with different combinations of neurons. No single neuron can dominate. Each neuron must learn to work with various teammates. This prevents co-adaptation—where neurons specialize in detecting training-specific patterns that don't generalize.
-            </p>
+            <h3>Zero-Centered Output</h3>
 
             <p>
-                Think of it as ensemble learning during training. With 50% dropout and 1000 neurons, each sample sees a different sub-network. By testing, the full network has learned from thousands of these sub-networks.
+                The key improvement: tanh's output is zero-centered. When inputs to a layer are zero-centered (mean close to zero), gradients flow more efficiently. This makes optimization faster than sigmoid. However, tanh still suffers from vanishing gradients in extreme ranges, just less severely.
             </p>
 
             <div class="pros-cons">
                 <div class="pros">
                     <h4>Advantages</h4>
                     <ul>
-                        <li>Very effective at preventing overfitting</li>
-                        <li>Simple to implement</li>
-                        <li>Ensemble-like behavior</li>
-                        <li>Works well with deep networks</li>
+                        <li>Zero-centered output improves convergence</li>
+                        <li>Stronger gradients than sigmoid</li>
+                        <li>Good for RNN hidden layers</li>
                     </ul>
                 </div>
                 <div class="cons">
                     <h4>Disadvantages</h4>
                     <ul>
-                        <li>Requires more training iterations</li>
-                        <li>Slower convergence</li>
-                        <li>Must disable during testing</li>
-                    </ul>
-                </div>
-            </div>
-
-            <h2>Data Augmentation</h2>
-
-            <p>
-                Data augmentation artificially creates new training examples by applying transformations to existing ones.
-            </p>
-
-            <h3>Examples</h3>
-
-            <p>
-                For images: rotate, flip, crop, change brightness, add noise, adjust contrast. For text: paraphrase, reorder sentences, synonym replacement. The key is that transformations shouldn't change the label.
-            </p>
-
-            <h3>Why It Works</h3>
-
-            <p>
-                With 1000 images, you have 1000 examples. With augmentation, you effectively have 5000 (rotated, flipped, zoomed versions). The network sees more variety, learns to recognize objects regardless of rotation or slight changes, and doesn't memorize specific images.
-            </p>
-
-            <div class="pros-cons">
-                <div class="pros">
-                    <h4>Advantages</h4>
-                    <ul>
-                        <li>Increases effective data size</li>
-                        <li>Forces learning of general patterns</li>
-                        <li>Handles real-world variation</li>
-                        <li>No additional data collection</li>
-                    </ul>
-                </div>
-                <div class="cons">
-                    <h4>Disadvantages</h4>
-                    <ul>
-                        <li>Requires domain knowledge</li>
+                        <li>Still suffers from vanishing gradients</li>
                         <li>Computationally expensive</li>
-                        <li>Can be ineffective with poor augmentations</li>
                     </ul>
                 </div>
             </div>
 
             <div class="highlight-box">
-                Data augmentation is almost always beneficial. Even if you have plenty of data, augmentation helps the model generalize.
+                Where you find it: Recurrent neural networks (RNNs, LSTMs). The zero-centered property works well for sequence models. For standard feedforward networks, ReLU outperforms it.
             </div>
 
-            <h2>Early Stopping</h2>
+            <h2>Rectified Linear Unit (ReLU)</h2>
 
             <p>
-                Early stopping monitors validation performance and stops training when it starts declining, even if training performance is still improving.
+                ReLU is deceptively simple: it outputs the input if positive, zero if negative.
             </p>
 
-            <h3>The Process</h3>
+            <div class="code-block">f(x) = max(0, x)</div>
 
             <p>
-                During training, periodically evaluate on a validation set. If validation loss increases (or validation accuracy decreases), stop. Save the weights from when validation was best.
+                Despite its simplicity, ReLU revolutionized deep learning. In 2012, a paper about deep convolutional neural networks using ReLU showed that networks could be trained 10x deeper, 100x faster than with sigmoid. This was the breakthrough moment for modern deep learning.
             </p>
 
-            <div class="code-block">best_validation_loss = infinity<br>patience_counter = 0<br><br>for each epoch:<br>  training_loss = train(network)<br>  validation_loss = validate(network)<br><br>  if validation_loss < best_validation_loss:<br>    best_validation_loss = validation_loss<br>    patience_counter = 0<br>    save_weights(network)<br>  else:<br>    patience_counter += 1<br><br>  if patience_counter > patience_threshold:<br>    stop_training()</div>
+            <h3>Why ReLU Works</h3>
 
             <p>
-                The "patience" parameter (typically 10-20 epochs) allows temporary increases in validation loss. You don't stop on the first bad epoch.
+                For positive inputs, the gradient is always 1. This means backpropagation works efficiently through deep networks. The vanishing gradient problem? Solved. For negative inputs, the neuron is inactive (output zero), which creates sparsity—only some neurons activate for a given input. This can improve computational efficiency and generalization.
+            </p>
+
+            <h3>The Dead Neuron Problem</h3>
+
+            <p>
+                If a neuron receives mostly negative inputs during training, its weights may never update (since gradient is zero for negative inputs). The neuron becomes "dead"—permanently inactive. This led to variants like Leaky ReLU (f(x) = 0.01x for x < 0) that allow small gradients even for negative inputs.
             </p>
 
             <div class="pros-cons">
                 <div class="pros">
                     <h4>Advantages</h4>
                     <ul>
-                        <li>Simple and effective</li>
-                        <li>No hyperparameters to tune</li>
-                        <li>Automatically finds optimal training point</li>
-                        <li>Saves training time</li>
+                        <li>Computationally cheap (single comparison)</li>
+                        <li>Non-vanishing gradient</li>
+                        <li>Sparse activation</li>
+                        <li>Enabled deep learning era</li>
                     </ul>
                 </div>
                 <div class="cons">
                     <h4>Disadvantages</h4>
                     <ul>
-                        <li>Requires a validation set</li>
-                        <li>Depends on validation set quality</li>
-                        <li>Reduces training data (some goes to validation)</li>
+                        <li>Dead neuron problem</li>
+                        <li>Not zero-centered</li>
+                        <li>Unbounded output</li>
                     </ul>
                 </div>
             </div>
 
-            <h2>Combining Techniques</h2>
+            <div class="highlight-box">
+                Today (2024), ReLU is still the industry standard for hidden layers. Use this unless you have a specific reason not to.
+            </div>
+
+            <h2>Linear Activation</h2>
 
             <p>
-                These techniques work together. Don't think of them as either/or choices.
+                Linear activation (also called identity function) simply outputs the input: f(x) = x. It's exclusively used in the output layer for regression tasks.
             </p>
 
-            <h3>For Simple Models</h3>
+            <h3>When to Use</h3>
 
             <p>
-                L2 regularization + Early stopping + Data augmentation. Simple, effective, minimal overhead.
+                For regression problems where output can be any real number (predicting house prices, stock prices, temperature), a linear output layer is essential. The network's hidden layers use non-linear activations (ReLU, tanh), but the output layer must be linear to allow unbounded predictions.
             </p>
 
-            <h3>For Deep Networks</h3>
-
             <p>
-                L2 regularization + Dropout (in middle layers, typically 50%) + Data augmentation + Early stopping + Batch normalization. This combination handles the complexity of deep architectures.
+                Using sigmoid or tanh in the output layer would incorrectly constrain predictions to a fixed range.
             </p>
 
-            <h3>For Limited Data</h3>
+            <h2>Softmax Function</h2>
 
             <p>
-                Heavy data augmentation + L2 regularization + Dropout + Early stopping. When data is scarce, augmentation becomes critical.
+                Softmax converts a vector of arbitrary values into a probability distribution where all outputs sum to 1.
             </p>
 
-            <h3>For Interpretability</h3>
+            <div class="code-block">softmax(x_i) = e^(x_i) / Σ(e^(x_j))</div>
 
             <p>
-                L1 regularization (automatic feature selection) + Early stopping. When understanding which features matter is important, L1 helps by zeroing out irrelevant ones.
+                Unlike sigmoid (which handles binary classification), softmax handles multiple classes. For a 10-class classification problem, the output layer has 10 neurons. Softmax converts their raw outputs into probabilities summing to 1.
+            </p>
+
+            <p>
+                The exponential in the numerator emphasizes differences between values. If one value is much larger, softmax assigns it most of the probability mass. This "winner-take-all" property makes softmax ideal for classification.
             </p>
 
             <div class="highlight-box">
-                Always use early stopping with a validation set. It's the simplest, most effective technique and has no downside.
+                Used exclusively in the output layer for multi-class classification. Not used in hidden layers.
             </div>
 
-            <h2>Comparison Table</h2>
+            <h2>Practical Recommendations</h2>
 
             <table class="comparison-table">
                 <thead>
                     <tr>
-                        <th>Technique</th>
-                        <th>Type</th>
-                        <th>Effectiveness</th>
-                        <th>Complexity</th>
+                        <th>Function</th>
+                        <th>Output Range</th>
+                        <th>Best Use</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>L1 Regularization</td>
-                        <td>Weight penalty</td>
-                        <td>Moderate</td>
-                        <td>Low</td>
+                        <td>Binary Step</td>
+                        <td>{0, 1}</td>
+                        <td>Historical only</td>
+                        <td>Obsolete</td>
                     </tr>
                     <tr>
-                        <td>L2 Regularization</td>
-                        <td>Weight penalty</td>
-                        <td>High</td>
-                        <td>Low</td>
+                        <td>Sigmoid</td>
+                        <td>(0, 1)</td>
+                        <td>Binary classification output</td>
+                        <td>Legacy</td>
                     </tr>
                     <tr>
-                        <td>Dropout</td>
-                        <td>Architectural</td>
-                        <td>Very High</td>
-                        <td>Low</td>
+                        <td>Tanh</td>
+                        <td>(-1, 1)</td>
+                        <td>RNN hidden layers</td>
+                        <td>Still used</td>
                     </tr>
                     <tr>
-                        <td>Data Augmentation</td>
-                        <td>Data level</td>
-                        <td>Very High</td>
-                        <td>Medium</td>
+                        <td>ReLU</td>
+                        <td>[0, ∞)</td>
+                        <td>Hidden layers (default)</td>
+                        <td>Industry standard</td>
                     </tr>
                     <tr>
-                        <td>Early Stopping</td>
-                        <td>Training process</td>
-                        <td>Very High</td>
-                        <td>Very Low</td>
+                        <td>Linear</td>
+                        <td>(-∞, ∞)</td>
+                        <td>Regression output</td>
+                        <td>Essential</td>
+                    </tr>
+                    <tr>
+                        <td>Softmax</td>
+                        <td>(0, 1)</td>
+                        <td>Multi-class output</td>
+                        <td>Standard</td>
                     </tr>
                 </tbody>
             </table>
 
+            <p>
+                For most problems: Use ReLU in hidden layers. Choose the output activation based on the task—sigmoid for binary classification, softmax for multi-class, and linear for regression.
+            </p>
+
             <div class="conclusion">
                 <h2>Conclusion</h2>
                 <p>
-                    Regularization is the difference between models that work in demos and models that work in production. Without it, networks memorize noise. With it, they learn generalizable patterns.
+                    Activation functions are fundamental to neural networks. They're what makes deep learning possible. The progression from sigmoid to ReLU represents real progress—not just in mathematics, but in practical capability.
                 </p>
                 <p>
-                    The five techniques covered here—L1, L2, Dropout, Data Augmentation, and Early Stopping—address overfitting from different angles. L1 and L2 constrain weights. Dropout creates ensemble effects. Data augmentation provides varied training examples. Early stopping finds the optimal training point.
+                    The vanishing gradient problem that sigmoid suffered from was blocking progress for years. ReLU solved it with elegant simplicity, enabling the deep learning revolution. Modern variants (Leaky ReLU, GELU, Swish) improve further, but standard ReLU remains the most deployed choice in production systems.
                 </p>
                 <p>
-                    A practical approach: start with L2 + early stopping (simplest), add dropout for deep networks, and always use data augmentation when possible. Fine-tune from there based on what you observe in your specific problem.
+                    In practice, your choice is simple: ReLU for hidden layers, and select the output activation based on your task. The theory is settled. Focus on architecture, data, and training.
                 </p>
             </div>
         </article>
@@ -671,18 +631,25 @@
             themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
         });
 
-        // Overfitting chart
-        new Chart(document.getElementById('overfittingChart'), {
+        // Chart
+        new Chart(document.getElementById('comparisonChart'), {
             type: 'line',
             data: {
-                labels: Array.from({length: 100}, (_, i) => i + 1),
+                labels: Array.from({length: 51}, (_, i) => (i - 25) * 0.2),
                 datasets: [
                     {
-                        label: 'Training Loss (No Regularization)',
-                        data: Array.from({length: 100}, (_, i) => {
-                            const x = i / 100;
-                            return 2 * Math.exp(-3 * x) + 0.01 * Math.sin(i / 5);
-                        }),
+                        label: 'Sigmoid',
+                        data: Array.from({length: 51}, (_, i) => 1 / (1 + Math.exp(-((i - 25) * 0.2)))),
+                        borderColor: '#00d9ff',
+                        backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Tanh',
+                        data: Array.from({length: 51}, (_, i) => Math.tanh((i - 25) * 0.2)),
                         borderColor: '#ff6b6b',
                         backgroundColor: 'rgba(255, 107, 107, 0.1)',
                         borderWidth: 2.5,
@@ -691,24 +658,8 @@
                         fill: false
                     },
                     {
-                        label: 'Validation Loss (No Regularization)',
-                        data: Array.from({length: 100}, (_, i) => {
-                            const x = i / 100;
-                            return 2 * Math.exp(-2 * x) + 0.15 * Math.sin(i / 3) + (i > 50 ? (i - 50) * 0.012 : 0);
-                        }),
-                        borderColor: '#ffa500',
-                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
-                        borderWidth: 2.5,
-                        tension: 0.3,
-                        pointRadius: 0,
-                        fill: false
-                    },
-                    {
-                        label: 'Validation Loss (With Regularization)',
-                        data: Array.from({length: 100}, (_, i) => {
-                            const x = i / 100;
-                            return 2 * Math.exp(-2.5 * x) + 0.08 * Math.sin(i / 5);
-                        }),
+                        label: 'ReLU',
+                        data: Array.from({length: 51}, (_, i) => Math.max(0, (i - 25) * 0.2)),
                         borderColor: '#27ae60',
                         backgroundColor: 'rgba(39, 174, 96, 0.1)',
                         borderWidth: 2.5,

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regularization: Preventing Your Network from Overfitting</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1e2e;
+            --bg-card: #1a2e42;
+            --text-primary: #e8f0f5;
+            --text-secondary: #a0adb8;
+            --accent: #00d9ff;
+            --border: #2a3f5a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body.light-mode {
+            --bg-dark: #ffffff;
+            --bg-card: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #3498db;
+            --border: #e0e6ed;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .article-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-category {
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .article-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .content {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: rgba(0, 217, 255, 0.1);
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .pros, .cons {
+            padding: 1.3rem;
+            border-radius: 6px;
+            border-left: 3px solid;
+        }
+
+        .pros {
+            border-left-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .cons {
+            border-left-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .pros h4, .cons h4 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pros h4 { color: #27ae60; }
+        .cons h4 { color: #ff6b6b; }
+
+        .pros ul, .cons ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .pros li, .cons li {
+            font-size: 0.95rem;
+            padding: 0.4rem 0;
+            color: var(--text-primary);
+        }
+
+        .pros li:before {
+            content: "✓ ";
+            color: #27ae60;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .cons li:before {
+            content: "✗ ";
+            color: #ff6b6b;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .highlight-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1.3rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .conclusion {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 6px;
+            margin: 2.5rem 0;
+        }
+
+        .conclusion h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .article-header h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+
+            .back-link, .theme-toggle {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .back-link {
+                left: 10px;
+            }
+
+            .theme-toggle {
+                right: 10px;
+            }
+        }
+
+        body.light-mode .comparison-table th {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        body.light-mode .highlight-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← Back to Blog</a>
+    <button class="theme-toggle" id="themeToggle">Light Mode</button>
+
+    <div class="container">
+        <article class="content">
+            <div class="article-header">
+                <div class="article-category">Regularization</div>
+                <h1>Regularization: Preventing Your Network from Overfitting</h1>
+                <div class="article-meta">
+                    <span>Updated February 2026</span>
+                    <span>13 min read</span>
+                </div>
+            </div>
+
+            <h2>Introduction</h2>
+            
+            <p>
+                A neural network will always try to memorize training data if given the chance. Without constraints, it learns exact patterns in the training set and fails on new data. Regularization prevents this by forcing the network to learn generalizable patterns instead.
+            </p>
+
+            <p>
+                This article covers five regularization techniques: L1, L2, Dropout, Data Augmentation, and Early Stopping. Each works differently but shares a goal: make your model perform well on data it hasn't seen.
+            </p>
+
+            <h2>The Overfitting Problem</h2>
+
+            <p>
+                Overfitting occurs when a model learns the training data too well—capturing noise and specific details instead of underlying patterns. The result: high training accuracy but low test accuracy.
+            </p>
+
+            <div class="chart-container">
+                <canvas id="overfittingChart"></canvas>
+            </div>
+
+            <p>
+                The chart shows a typical overfitting scenario. Training loss keeps decreasing while validation loss increases after a certain point. The network is memorizing, not generalizing.
+            </p>
+
+            <h2>L1 Regularization</h2>
+
+            <p>
+                L1 regularization adds a penalty for large weights to the loss function:
+            </p>
+
+            <div class="code-block">loss = standard_loss + λ × Σ|weights|</div>
+
+            <p>
+                The penalty forces weights toward zero. Some weights become exactly zero, automatically eliminating unimportant features. This creates sparse models—only important connections remain active.
+            </p>
+
+            <h3>Feature Selection</h3>
+
+            <p>
+                Unlike L2, which shrinks weights gradually, L1 can eliminate them completely. This acts as automatic feature selection. For a medical diagnosis task with 100 possible symptoms, L1 might zero out 90, identifying only the 10 that matter.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Automatic feature selection</li>
+                        <li>Sparse models (faster)</li>
+                        <li>More interpretable</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Can remove too many features</li>
+                        <li>Harder to optimize mathematically</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>L2 Regularization</h2>
+
+            <p>
+                L2 regularization adds a penalty for the square of weights:
+            </p>
+
+            <div class="code-block">loss = standard_loss + λ × Σ(weights²)</div>
+
+            <p>
+                This shrinks weights uniformly without eliminating them. Instead of forcing weights to zero, it encourages smaller weights across the board. This distributes importance across many features rather than concentrating it on a few.
+            </p>
+
+            <h3>Weight Decay</h3>
+
+            <p>
+                L2 is also called weight decay because it gradually reduces all weight magnitudes. The effect is subtle but effective: the network uses all features but with smaller coefficients, forcing it to rely on more robust patterns.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Smooth weight reduction</li>
+                        <li>Usually better accuracy than L1</li>
+                        <li>Easier to optimize</li>
+                        <li>Most popular choice</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Doesn't eliminate features</li>
+                        <li>Less interpretable than L1</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                L2 is the default regularization choice for most problems. Use L1 when you need to understand which features matter most.
+            </div>
+
+            <h2>Dropout</h2>
+
+            <p>
+                Dropout randomly disables neurons during training. Each neuron has a probability (typically 50%) of being turned off for each training sample.
+            </p>
+
+            <div class="code-block">output = output × random_mask (50% zeros)<br>(During testing, all neurons are active)</div>
+
+            <h3>Why It Works</h3>
+
+            <p>
+                Dropout forces the network to learn with different combinations of neurons. No single neuron can dominate. Each neuron must learn to work with various teammates. This prevents co-adaptation—where neurons specialize in detecting training-specific patterns that don't generalize.
+            </p>
+
+            <p>
+                Think of it as ensemble learning during training. With 50% dropout and 1000 neurons, each sample sees a different sub-network. By testing, the full network has learned from thousands of these sub-networks.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Very effective at preventing overfitting</li>
+                        <li>Simple to implement</li>
+                        <li>Ensemble-like behavior</li>
+                        <li>Works well with deep networks</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Requires more training iterations</li>
+                        <li>Slower convergence</li>
+                        <li>Must disable during testing</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Data Augmentation</h2>
+
+            <p>
+                Data augmentation artificially creates new training examples by applying transformations to existing ones.
+            </p>
+
+            <h3>Examples</h3>
+
+            <p>
+                For images: rotate, flip, crop, change brightness, add noise, adjust contrast. For text: paraphrase, reorder sentences, synonym replacement. The key is that transformations shouldn't change the label.
+            </p>
+
+            <h3>Why It Works</h3>
+
+            <p>
+                With 1000 images, you have 1000 examples. With augmentation, you effectively have 5000 (rotated, flipped, zoomed versions). The network sees more variety, learns to recognize objects regardless of rotation or slight changes, and doesn't memorize specific images.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Increases effective data size</li>
+                        <li>Forces learning of general patterns</li>
+                        <li>Handles real-world variation</li>
+                        <li>No additional data collection</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Requires domain knowledge</li>
+                        <li>Computationally expensive</li>
+                        <li>Can be ineffective with poor augmentations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                Data augmentation is almost always beneficial. Even if you have plenty of data, augmentation helps the model generalize.
+            </div>
+
+            <h2>Early Stopping</h2>
+
+            <p>
+                Early stopping monitors validation performance and stops training when it starts declining, even if training performance is still improving.
+            </p>
+
+            <h3>The Process</h3>
+
+            <p>
+                During training, periodically evaluate on a validation set. If validation loss increases (or validation accuracy decreases), stop. Save the weights from when validation was best.
+            </p>
+
+            <div class="code-block">best_validation_loss = infinity<br>patience_counter = 0<br><br>for each epoch:<br>  training_loss = train(network)<br>  validation_loss = validate(network)<br><br>  if validation_loss < best_validation_loss:<br>    best_validation_loss = validation_loss<br>    patience_counter = 0<br>    save_weights(network)<br>  else:<br>    patience_counter += 1<br><br>  if patience_counter > patience_threshold:<br>    stop_training()</div>
+
+            <p>
+                The "patience" parameter (typically 10-20 epochs) allows temporary increases in validation loss. You don't stop on the first bad epoch.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Simple and effective</li>
+                        <li>No hyperparameters to tune</li>
+                        <li>Automatically finds optimal training point</li>
+                        <li>Saves training time</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Requires a validation set</li>
+                        <li>Depends on validation set quality</li>
+                        <li>Reduces training data (some goes to validation)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Combining Techniques</h2>
+
+            <p>
+                These techniques work together. Don't think of them as either/or choices.
+            </p>
+
+            <h3>For Simple Models</h3>
+
+            <p>
+                L2 regularization + Early stopping + Data augmentation. Simple, effective, minimal overhead.
+            </p>
+
+            <h3>For Deep Networks</h3>
+
+            <p>
+                L2 regularization + Dropout (in middle layers, typically 50%) + Data augmentation + Early stopping + Batch normalization. This combination handles the complexity of deep architectures.
+            </p>
+
+            <h3>For Limited Data</h3>
+
+            <p>
+                Heavy data augmentation + L2 regularization + Dropout + Early stopping. When data is scarce, augmentation becomes critical.
+            </p>
+
+            <h3>For Interpretability</h3>
+
+            <p>
+                L1 regularization (automatic feature selection) + Early stopping. When understanding which features matter is important, L1 helps by zeroing out irrelevant ones.
+            </p>
+
+            <div class="highlight-box">
+                Always use early stopping with a validation set. It's the simplest, most effective technique and has no downside.
+            </div>
+
+            <h2>Comparison Table</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Technique</th>
+                        <th>Type</th>
+                        <th>Effectiveness</th>
+                        <th>Complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>L1 Regularization</td>
+                        <td>Weight penalty</td>
+                        <td>Moderate</td>
+                        <td>Low</td>
+                    </tr>
+                    <tr>
+                        <td>L2 Regularization</td>
+                        <td>Weight penalty</td>
+                        <td>High</td>
+                        <td>Low</td>
+                    </tr>
+                    <tr>
+                        <td>Dropout</td>
+                        <td>Architectural</td>
+                        <td>Very High</td>
+                        <td>Low</td>
+                    </tr>
+                    <tr>
+                        <td>Data Augmentation</td>
+                        <td>Data level</td>
+                        <td>Very High</td>
+                        <td>Medium</td>
+                    </tr>
+                    <tr>
+                        <td>Early Stopping</td>
+                        <td>Training process</td>
+                        <td>Very High</td>
+                        <td>Very Low</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="conclusion">
+                <h2>Conclusion</h2>
+                <p>
+                    Regularization is the difference between models that work in demos and models that work in production. Without it, networks memorize noise. With it, they learn generalizable patterns.
+                </p>
+                <p>
+                    The five techniques covered here—L1, L2, Dropout, Data Augmentation, and Early Stopping—address overfitting from different angles. L1 and L2 constrain weights. Dropout creates ensemble effects. Data augmentation provides varied training examples. Early stopping finds the optimal training point.
+                </p>
+                <p>
+                    A practical approach: start with L2 + early stopping (simplest), add dropout for deep networks, and always use data augmentation when possible. Fine-tune from there based on what you observe in your specific problem.
+                </p>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const isDark = localStorage.getItem('light-mode') !== 'true';
+
+        function updateTheme() {
+            if (!isDark) {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = 'Dark Mode';
+            } else {
+                document.body.classList.remove('light-mode');
+                themeToggle.textContent = 'Light Mode';
+            }
+        }
+
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            const isNowLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('light-mode', isNowLight);
+            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
+        });
+
+        // Overfitting chart
+        new Chart(document.getElementById('overfittingChart'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 100}, (_, i) => i + 1),
+                datasets: [
+                    {
+                        label: 'Training Loss (No Regularization)',
+                        data: Array.from({length: 100}, (_, i) => {
+                            const x = i / 100;
+                            return 2 * Math.exp(-3 * x) + 0.01 * Math.sin(i / 5);
+                        }),
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Validation Loss (No Regularization)',
+                        data: Array.from({length: 100}, (_, i) => {
+                            const x = i / 100;
+                            return 2 * Math.exp(-2 * x) + 0.15 * Math.sin(i / 3) + (i > 50 ? (i - 50) * 0.012 : 0);
+                        }),
+                        borderColor: '#ffa500',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Validation Loss (With Regularization)',
+                        data: Array.from({length: 100}, (_, i) => {
+                            const x = i / 100;
+                            return 2 * Math.exp(-2.5 * x) + 0.08 * Math.sin(i / 5);
+                        }),
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 12, weight: '500' },
+                            color: document.body.classList.contains('light-mode') ? '#2c3e50' : '#e8f0f5'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: { color: 'rgba(0, 217, 255, 0.1)' },
+                        ticks: { color: document.body.classList.contains('light-mode') ? '#5a6c7d' : '#a0adb8' }
+                    },
+                    x: {
+                        grid: { color: 'rgba(0, 217, 255, 0.1)' },
+                        ticks: { color: document.body.classList.contains('light-mode') ? '#5a6c7d' : '#a0adb8' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

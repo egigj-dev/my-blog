@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimization Techniques: Training Networks Faster</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1e2e;
+            --bg-card: #1a2e42;
+            --text-primary: #e8f0f5;
+            --text-secondary: #a0adb8;
+            --accent: #00d9ff;
+            --border: #2a3f5a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body.light-mode {
+            --bg-dark: #ffffff;
+            --bg-card: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #3498db;
+            --border: #e0e6ed;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .article-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-category {
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .article-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .content {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: rgba(0, 217, 255, 0.1);
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .pros, .cons {
+            padding: 1.3rem;
+            border-radius: 6px;
+            border-left: 3px solid;
+        }
+
+        .pros {
+            border-left-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .cons {
+            border-left-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .pros h4, .cons h4 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pros h4 { color: #27ae60; }
+        .cons h4 { color: #ff6b6b; }
+
+        .pros ul, .cons ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .pros li, .cons li {
+            font-size: 0.95rem;
+            padding: 0.4rem 0;
+            color: var(--text-primary);
+        }
+
+        .pros li:before {
+            content: "✓ ";
+            color: #27ae60;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .cons li:before {
+            content: "✗ ";
+            color: #ff6b6b;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .highlight-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1.3rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .conclusion {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 6px;
+            margin: 2.5rem 0;
+        }
+
+        .conclusion h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .article-header h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+
+            .back-link, .theme-toggle {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .back-link {
+                left: 10px;
+            }
+
+            .theme-toggle {
+                right: 10px;
+            }
+        }
+
+        body.light-mode .comparison-table th {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        body.light-mode .highlight-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← Back to Blog</a>
+    <button class="theme-toggle" id="themeToggle">Light Mode</button>
+
+    <div class="container">
+        <article class="content">
+            <div class="article-header">
+                <div class="article-category">Optimization</div>
+                <h1>Optimization Techniques: Training Networks Faster</h1>
+                <div class="article-meta">
+                    <span>Updated February 2026</span>
+                    <span>12 min read</span>
+                </div>
+            </div>
+
+            <h2>Introduction</h2>
+            
+            <p>
+                Neural networks learn through gradient descent: compute gradients, update weights, repeat. But simple gradient descent is slow. For large networks training on massive datasets, slow means impractical.
+            </p>
+
+            <p>
+                Optimization techniques accelerate training by making gradient descent smarter. Some preprocess data, others adjust how gradients are applied, and some use adaptive learning rates. Together, they can reduce training time from weeks to hours while improving final performance.
+            </p>
+
+            <h2>Feature Scaling</h2>
+
+            <p>
+                When input features have vastly different scales (height in meters vs. age in years), gradient descent struggles. The loss function becomes elongated, forcing the optimizer to take smaller steps.
+            </p>
+
+            <h3>Standardization</h3>
+
+            <p>
+                Transform each feature to have mean 0 and standard deviation 1:
+            </p>
+
+            <div class="code-block">x_normalized = (x - mean) / std</div>
+
+            <p>
+                This puts all features on the same scale, allowing the optimizer to find the direction of steepest descent more directly.
+            </p>
+
+            <h3>Normalization</h3>
+
+            <p>
+                Scale features to a range, typically [0, 1]:
+            </p>
+
+            <div class="code-block">x_normalized = (x - min) / (max - min)</div>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Faster convergence</li>
+                        <li>Better gradient flow</li>
+                        <li>Simple to implement</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Requires knowing data statistics</li>
+                        <li>Must be applied consistently</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Batch Normalization</h2>
+
+            <p>
+                Feature scaling normalizes inputs. Batch normalization normalizes the outputs of every layer during training.
+            </p>
+
+            <div class="code-block">y_normalized = (y - batch_mean) / sqrt(batch_var + epsilon)</div>
+
+            <p>
+                By normalizing layer inputs, we keep them in favorable ranges for activation functions, reducing the internal covariate shift problem. This allows higher learning rates and faster training.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Faster training</li>
+                        <li>Reduces sensitivity to weight initialization</li>
+                        <li>Acts as regularization</li>
+                        <li>Allows higher learning rates</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Adds computational cost</li>
+                        <li>Behavior differs during training vs. testing</li>
+                        <li>Requires tracking running statistics</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Mini-Batch Gradient Descent</h2>
+
+            <p>
+                Standard gradient descent (SGD) computes gradients on one sample, which is noisy. Full-batch gradient descent computes gradients on all samples, which is stable but slow.
+            </p>
+
+            <p>
+                Mini-batch gradient descent splits the dataset into small batches (typically 32-256 samples) and updates weights based on each batch. This balances noise and stability.
+            </p>
+
+            <div class="highlight-box">
+                Batch size is a critical hyperparameter. Larger batches are more stable but require more memory. Smaller batches are noisier but allow more frequent updates.
+            </div>
+
+            <h2>Momentum</h2>
+
+            <p>
+                Standard gradient descent updates weights with the current gradient. Momentum adds history: use a weighted average of past gradients.
+            </p>
+
+            <div class="code-block">velocity = beta * velocity + gradient<br>weights = weights - learning_rate * velocity</div>
+
+            <p>
+                Think of it as rolling a ball downhill. The ball gains momentum and accelerates in consistent directions while moving slowly in oscillating directions. This helps escape local minima and converges faster.
+            </p>
+
+            <div class="highlight-box">
+                β (typically 0.9) controls how much history to remember. Higher β means more momentum.
+            </div>
+
+            <h2>RMSProp</h2>
+
+            <p>
+                RMSProp adapts the learning rate per parameter based on the magnitude of recent gradients. Parameters with large gradients get smaller updates (lower effective learning rate).
+            </p>
+
+            <div class="code-block">rms = beta * rms + (1 - beta) * gradient²<br>weights = weights - learning_rate * gradient / sqrt(rms + epsilon)</div>
+
+            <p>
+                This helps with parameters that consistently have large or small gradients, allowing the optimizer to use appropriate step sizes per parameter.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Adaptive learning rates</li>
+                        <li>Works well in practice</li>
+                        <li>Handles different gradient magnitudes</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>More hyperparameters to tune</li>
+                        <li>More memory for storing running averages</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Adam Optimizer</h2>
+
+            <p>
+                Adam combines momentum and RMSProp. It maintains both a running average of gradients (momentum) and a running average of gradient magnitudes (adaptive learning rates).
+            </p>
+
+            <div class="code-block">m = beta1 * m + (1 - beta1) * gradient<br>v = beta2 * v + (1 - beta2) * gradient²<br>weights = weights - learning_rate * m / sqrt(v + epsilon)</div>
+
+            <p>
+                Adam is the most popular optimizer in modern deep learning. It works well across different architectures and datasets with minimal tuning.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Fast convergence</li>
+                        <li>Robust to different problems</li>
+                        <li>Industry standard</li>
+                        <li>Minimal hyperparameter tuning</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Can sometimes overfit</li>
+                        <li>Requires more memory</li>
+                        <li>Sometimes performs worse than SGD + momentum on some tasks</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                Default hyperparameters work well: learning_rate=0.001, beta1=0.9, beta2=0.999.
+            </div>
+
+            <h2>Learning Rate Decay</h2>
+
+            <p>
+                A fixed learning rate can be too aggressive early in training and too conservative late in training. Learning rate decay reduces the learning rate over time.
+            </p>
+
+            <div class="code-block">learning_rate = initial_lr * decay_rate^epoch</div>
+
+            <p>
+                With decay, the optimizer takes larger steps initially to explore the loss landscape, then smaller steps to fine-tune weights. This often results in better final solutions.
+            </p>
+
+            <p>
+                Common strategies include exponential decay (reduce by a fixed percentage each epoch), step decay (reduce by a factor every N epochs), and cosine decay (follow a cosine curve).
+            </p>
+
+            <h2>Practical Pipeline</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Stage</th>
+                        <th>Technique</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Data Preparation</td>
+                        <td>Feature Scaling</td>
+                        <td>2-3x faster training</td>
+                    </tr>
+                    <tr>
+                        <td>Training Setup</td>
+                        <td>Mini-Batch + Batch Norm</td>
+                        <td>Stable, fast convergence</td>
+                    </tr>
+                    <tr>
+                        <td>Optimization</td>
+                        <td>Adam Optimizer</td>
+                        <td>Usually converges faster</td>
+                    </tr>
+                    <tr>
+                        <td>Fine-tuning</td>
+                        <td>Learning Rate Decay</td>
+                        <td>Better final performance</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Recommended Training Setup</h3>
+
+            <p>
+                Start with: standardized features + mini-batch (32-256) + Adam optimizer (lr=0.001) + batch normalization.
+            </p>
+
+            <p>
+                If training oscillates, add momentum or try learning rate decay. If training is too slow, increase batch size. If underfitting, increase learning rate. If overfitting, apply regularization (covered in another article).
+            </p>
+
+            <div class="conclusion">
+                <h2>Conclusion</h2>
+                <p>
+                    Modern optimization isn't just about gradient descent—it's about preprocessing data, using adaptive learning rates, normalizing layer activations, and decaying learning rates over time.
+                </p>
+                <p>
+                    The difference between a network that takes weeks to train and one that trains in hours comes down to these optimization techniques. Adam combined with batch normalization is the industry standard for good reason: it works across diverse problems with minimal tuning.
+                </p>
+                <p>
+                    But these aren't one-size-fits-all. Different problems may require different approaches. The key is understanding what each technique does and when to apply it.
+                </p>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const isDark = localStorage.getItem('light-mode') !== 'true';
+
+        function updateTheme() {
+            if (!isDark) {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = 'Dark Mode';
+            } else {
+                document.body.classList.remove('light-mode');
+                themeToggle.textContent = 'Light Mode';
+            }
+        }
+
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            const isNowLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('light-mode', isNowLight);
+            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
+        });
+    </script>
+</body>
+</html>
