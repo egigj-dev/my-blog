@@ -19,16 +19,16 @@ A professional blog about deep learning fundamentals, covering activation functi
 ## Project Structure
 
 ```
-ai-learning-blog/
+my-blog/
 ├─ index.html                          (homepage)
 ├─ README.md                           (this file)
 ├─ .gitignore
 ├─ LICENSE
 │
 ├─ articles/
-│  ├─ activation-functions.html
-│  ├─ optimization-techniques.html
-│  └─ regularization-techniques.html
+│  ├─ activation_functions.html
+│  ├─ optimization_techniques.html
+│  └─ regularization_techniques.html
 │
 └─ assets/
    └─ images/
@@ -38,7 +38,7 @@ ai-learning-blog/
 
 ### Option 1: Python HTTP Server
 ```bash
-cd ai-learning-blog
+cd my-blog
 python -m http.server 8000
 ```
 Then open your browser to: `http://localhost:8000`
@@ -46,7 +46,7 @@ Then open your browser to: `http://localhost:8000`
 ### Option 2: Node.js http-server
 ```bash
 npm install -g http-server
-cd ai-learning-blog
+cd my-blog
 http-server
 ```
 Then open your browser to: `http://localhost:8080`
@@ -56,7 +56,7 @@ Simply open `index.html` in your web browser (some features may be limited).
 
 ## Deployment to GitHub Pages
 
-1. Create a new repository on GitHub named `ai-learning-blog`
+1. Create a new repository on GitHub named `my-blog`
 2. Clone the repository to your computer
 3. Add all files to the repository
 4. Push to GitHub:
@@ -69,7 +69,7 @@ Simply open `index.html` in your web browser (some features may be limited).
 6. Select **main** branch as source
 7. Save
 
-Your site will be live at: `https://YOUR_USERNAME.github.io/ai-learning-blog/`
+Your site will be live at: `https://YOUR_USERNAME.github.io/my-blog/`
 
 ## Adding More Articles
 
