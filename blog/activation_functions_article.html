@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activation Functions: From Theory to Practice</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1e2e;
+            --bg-card: #1a2e42;
+            --text-primary: #e8f0f5;
+            --text-secondary: #a0adb8;
+            --accent: #00d9ff;
+            --border: #2a3f5a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body.light-mode {
+            --bg-dark: #ffffff;
+            --bg-card: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #3498db;
+            --border: #e0e6ed;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .article-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-category {
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .article-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .content {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: rgba(0, 217, 255, 0.1);
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .pros, .cons {
+            padding: 1.3rem;
+            border-radius: 6px;
+            border-left: 3px solid;
+        }
+
+        .pros {
+            border-left-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .cons {
+            border-left-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .pros h4, .cons h4 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pros h4 { color: #27ae60; }
+        .cons h4 { color: #ff6b6b; }
+
+        .pros ul, .cons ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .pros li, .cons li {
+            font-size: 0.95rem;
+            padding: 0.4rem 0;
+            color: var(--text-primary);
+        }
+
+        .pros li:before {
+            content: "✓ ";
+            color: #27ae60;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .cons li:before {
+            content: "✗ ";
+            color: #ff6b6b;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .highlight-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1.3rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .conclusion {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 6px;
+            margin: 2.5rem 0;
+        }
+
+        .conclusion h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .article-header h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+
+            .back-link, .theme-toggle {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .back-link {
+                left: 10px;
+            }
+
+            .theme-toggle {
+                right: 10px;
+            }
+        }
+
+        body.light-mode .comparison-table th {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        body.light-mode .highlight-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Back to Blog</a>
+    <button class="theme-toggle" id="themeToggle">Light Mode</button>
+
+    <div class="container">
+        <article class="content">
+            <div class="article-header">
+                <div class="article-category">Activation Functions</div>
+                <h1>Activation Functions: From Theory to Practice</h1>
+                <div class="article-meta">
+                    <span>Updated February 2026</span>
+                    <span>10 min read</span>
+                </div>
+            </div>
+
+            <h2>Introduction</h2>
+            
+            <p>
+                Without activation functions, neural networks are just expensive linear algebra. They become simple matrix multiplications that can't learn anything interesting. Adding the right activation function at each layer transforms them into something powerful—able to recognize patterns in images, understand language, and beat humans at complex games.
+            </p>
+
+            <p>
+                This article explains six activation functions: what they do, how they work, and when to use each one. We'll focus on practical understanding rather than mathematical proofs.
+            </p>
+
+            <h2>Why Activation Functions Matter</h2>
+
+            <p>
+                Consider a three-layer network without activation functions. Each layer performs a linear transformation: output = W₃(W₂(W₁ × input)). This simplifies to output = W × input, where W is the product of all weight matrices. No matter how many layers you stack, the network remains linear.
+            </p>
+
+            <p>
+                Activation functions break this limitation. By introducing non-linearity at each layer, they enable the network to approximate any continuous function. This is why deep learning is possible.
+            </p>
+
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+
+            <h2>Binary Step Function</h2>
+
+            <p>
+                The binary step function outputs 0 or 1 based on whether the input is negative or positive. This was the first activation function used in early perceptrons.
+            </p>
+
+            <div class="code-block">f(x) = 0 if x < 0<br>f(x) = 1 if x ≥ 0</div>
+
+            <h3>The Problem</h3>
+
+            <p>
+                The gradient is zero everywhere except at x = 0, where it's undefined. During backpropagation, gradients can't flow through this function, making training impossible with modern optimization algorithms. Additionally, the output provides no information about the magnitude of the input—only its sign.
+            </p>
+
+            <p>
+                Result: Obsolete. It was historically important but doesn't work with modern training methods.
+            </p>
+
+            <h2>Sigmoid Function</h2>
+
+            <p>
+                Sigmoid was the dominant activation function from the 1990s through the 2000s. It maps any input to a value between 0 and 1.
+            </p>
+
+            <div class="code-block">σ(x) = 1 / (1 + e^(-x))</div>
+
+            <p>
+                The output can be interpreted as a probability. The function is smooth and differentiable, making optimization possible with gradient descent.
+            </p>
+
+            <h3>The Vanishing Gradient Problem</h3>
+
+            <p>
+                Sigmoid works well in shallow networks, but has a critical flaw in deep networks. When x is large (say x = 5), σ(x) ≈ 0.993, and the derivative is nearly zero. During backpropagation through multiple layers, these tiny gradients multiply together. By the time the gradient reaches early layers, it's effectively zero. The network can't learn effectively.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Output (0,1) is interpretable as probability</li>
+                        <li>Smooth gradient enables optimization</li>
+                        <li>Clear boundary at x = 0</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Vanishing gradient in extreme ranges</li>
+                        <li>Computationally expensive (exponential)</li>
+                        <li>Not zero-centered</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                Still used for binary classification output layers. But for hidden layers in deep networks? Replaced by ReLU in the 2010s.
+            </div>
+
+            <h2>Hyperbolic Tangent (Tanh)</h2>
+
+            <p>
+                Tanh is sigmoid's improved cousin, outputting values between -1 and 1 instead of 0 and 1.
+            </p>
+
+            <div class="code-block">tanh(x) = (e^x - e^(-x)) / (e^x + e^(-x))</div>
+
+            <h3>Zero-Centered Output</h3>
+
+            <p>
+                The key improvement: tanh's output is zero-centered. When inputs to a layer are zero-centered (mean close to zero), gradients flow more efficiently. This makes optimization faster than sigmoid. However, tanh still suffers from vanishing gradients in extreme ranges, just less severely.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Zero-centered output improves convergence</li>
+                        <li>Stronger gradients than sigmoid</li>
+                        <li>Good for RNN hidden layers</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Still suffers from vanishing gradients</li>
+                        <li>Computationally expensive</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                Where you find it: Recurrent neural networks (RNNs, LSTMs). The zero-centered property works well for sequence models. For standard feedforward networks, ReLU outperforms it.
+            </div>
+
+            <h2>Rectified Linear Unit (ReLU)</h2>
+
+            <p>
+                ReLU is deceptively simple: it outputs the input if positive, zero if negative.
+            </p>
+
+            <div class="code-block">f(x) = max(0, x)</div>
+
+            <p>
+                Despite its simplicity, ReLU revolutionized deep learning. In 2012, a paper about deep convolutional neural networks using ReLU showed that networks could be trained 10x deeper, 100x faster than with sigmoid. This was the breakthrough moment for modern deep learning.
+            </p>
+
+            <h3>Why ReLU Works</h3>
+
+            <p>
+                For positive inputs, the gradient is always 1. This means backpropagation works efficiently through deep networks. The vanishing gradient problem? Solved. For negative inputs, the neuron is inactive (output zero), which creates sparsity—only some neurons activate for a given input. This can improve computational efficiency and generalization.
+            </p>
+
+            <h3>The Dead Neuron Problem</h3>
+
+            <p>
+                If a neuron receives mostly negative inputs during training, its weights may never update (since gradient is zero for negative inputs). The neuron becomes "dead"—permanently inactive. This led to variants like Leaky ReLU (f(x) = 0.01x for x < 0) that allow small gradients even for negative inputs.
+            </p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>Advantages</h4>
+                    <ul>
+                        <li>Computationally cheap (single comparison)</li>
+                        <li>Non-vanishing gradient</li>
+                        <li>Sparse activation</li>
+                        <li>Enabled deep learning era</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>Disadvantages</h4>
+                    <ul>
+                        <li>Dead neuron problem</li>
+                        <li>Not zero-centered</li>
+                        <li>Unbounded output</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                Today (2024), ReLU is still the industry standard for hidden layers. Use this unless you have a specific reason not to.
+            </div>
+
+            <h2>Linear Activation</h2>
+
+            <p>
+                Linear activation (also called identity function) simply outputs the input: f(x) = x. It's exclusively used in the output layer for regression tasks.
+            </p>
+
+            <h3>When to Use</h3>
+
+            <p>
+                For regression problems where output can be any real number (predicting house prices, stock prices, temperature), a linear output layer is essential. The network's hidden layers use non-linear activations (ReLU, tanh), but the output layer must be linear to allow unbounded predictions.
+            </p>
+
+            <p>
+                Using sigmoid or tanh in the output layer would incorrectly constrain predictions to a fixed range.
+            </p>
+
+            <h2>Softmax Function</h2>
+
+            <p>
+                Softmax converts a vector of arbitrary values into a probability distribution where all outputs sum to 1.
+            </p>
+
+            <div class="code-block">softmax(x_i) = e^(x_i) / Σ(e^(x_j))</div>
+
+            <p>
+                Unlike sigmoid (which handles binary classification), softmax handles multiple classes. For a 10-class classification problem, the output layer has 10 neurons. Softmax converts their raw outputs into probabilities summing to 1.
+            </p>
+
+            <p>
+                The exponential in the numerator emphasizes differences between values. If one value is much larger, softmax assigns it most of the probability mass. This "winner-take-all" property makes softmax ideal for classification.
+            </p>
+
+            <div class="highlight-box">
+                Used exclusively in the output layer for multi-class classification. Not used in hidden layers.
+            </div>
+
+            <h2>Practical Recommendations</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Output Range</th>
+                        <th>Best Use</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Binary Step</td>
+                        <td>{0, 1}</td>
+                        <td>Historical only</td>
+                        <td>Obsolete</td>
+                    </tr>
+                    <tr>
+                        <td>Sigmoid</td>
+                        <td>(0, 1)</td>
+                        <td>Binary classification output</td>
+                        <td>Legacy</td>
+                    </tr>
+                    <tr>
+                        <td>Tanh</td>
+                        <td>(-1, 1)</td>
+                        <td>RNN hidden layers</td>
+                        <td>Still used</td>
+                    </tr>
+                    <tr>
+                        <td>ReLU</td>
+                        <td>[0, ∞)</td>
+                        <td>Hidden layers (default)</td>
+                        <td>Industry standard</td>
+                    </tr>
+                    <tr>
+                        <td>Linear</td>
+                        <td>(-∞, ∞)</td>
+                        <td>Regression output</td>
+                        <td>Essential</td>
+                    </tr>
+                    <tr>
+                        <td>Softmax</td>
+                        <td>(0, 1)</td>
+                        <td>Multi-class output</td>
+                        <td>Standard</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                For most problems: Use ReLU in hidden layers. Choose the output activation based on the task—sigmoid for binary classification, softmax for multi-class, and linear for regression.
+            </p>
+
+            <div class="conclusion">
+                <h2>Conclusion</h2>
+                <p>
+                    Activation functions are fundamental to neural networks. They're what makes deep learning possible. The progression from sigmoid to ReLU represents real progress—not just in mathematics, but in practical capability.
+                </p>
+                <p>
+                    The vanishing gradient problem that sigmoid suffered from was blocking progress for years. ReLU solved it with elegant simplicity, enabling the deep learning revolution. Modern variants (Leaky ReLU, GELU, Swish) improve further, but standard ReLU remains the most deployed choice in production systems.
+                </p>
+                <p>
+                    In practice, your choice is simple: ReLU for hidden layers, and select the output activation based on your task. The theory is settled. Focus on architecture, data, and training.
+                </p>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const isDark = localStorage.getItem('light-mode') !== 'true';
+
+        function updateTheme() {
+            if (!isDark) {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = 'Dark Mode';
+            } else {
+                document.body.classList.remove('light-mode');
+                themeToggle.textContent = 'Light Mode';
+            }
+        }
+
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            const isNowLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('light-mode', isNowLight);
+            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
+        });
+
+        // Chart
+        new Chart(document.getElementById('comparisonChart'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 51}, (_, i) => (i - 25) * 0.2),
+                datasets: [
+                    {
+                        label: 'Sigmoid',
+                        data: Array.from({length: 51}, (_, i) => 1 / (1 + Math.exp(-((i - 25) * 0.2)))),
+                        borderColor: '#00d9ff',
+                        backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Tanh',
+                        data: Array.from({length: 51}, (_, i) => Math.tanh((i - 25) * 0.2)),
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'ReLU',
+                        data: Array.from({length: 51}, (_, i) => Math.max(0, (i - 25) * 0.2)),
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 12, weight: '500' },
+                            color: document.body.classList.contains('light-mode') ? '#2c3e50' : '#e8f0f5'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: { color: 'rgba(0, 217, 255, 0.1)' },
+                        ticks: { color: document.body.classList.contains('light-mode') ? '#5a6c7d' : '#a0adb8' }
+                    },
+                    x: {
+                        grid: { color: 'rgba(0, 217, 255, 0.1)' },
+                        ticks: { color: document.body.classList.contains('light-mode') ? '#5a6c7d' : '#a0adb8' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
