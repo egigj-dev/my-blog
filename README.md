@@ -4,9 +4,9 @@ A professional blog about deep learning fundamentals, covering activation functi
 
 ## Articles
 
-- [Activation Functions: From Theory to Practice](articles/activation-functions.html) - Understanding the mechanics, advantages, and trade-offs of key activation functions
-- [Optimization Techniques: Training Networks Faster](articles/optimization-techniques.html) - Practical optimization methods to accelerate neural network training
-- [Regularization: Preventing Your Network from Overfitting](articles/regularization-techniques.html) - Techniques to improve generalization and prevent overfitting
+- [Activation Functions: From Theory to Practice](articles/activation_functions.html) - Understanding the mechanics, advantages, and trade-offs of key activation functions
+- [Optimization Techniques: Training Networks Faster](articles/optimization_techniques.html) - Practical optimization methods to accelerate neural network training
+- [Regularization: Preventing Your Network from Overfitting](articles/regularization_techniques.html) - Techniques to improve generalization and prevent overfitting
 
 ## Features
 
@@ -81,13 +81,13 @@ Your site will be live at: `https://YOUR_USERNAME.github.io/my-blog/`
 
 ## File Naming Convention
 
-Use **kebab-case** (lowercase with hyphens):
-- `activation-functions.html` ✓
-- `optimization-techniques.html` ✓
-- `my-new-article.html` ✓
+Use **snake_case** (lowercase with underscores):
+- `activation_functions.html` ✓
+- `optimization_techniques.html` ✓
+- `my_new_article.html` ✓
 
 Not:
-- `activation_functions.html` ✗
+- `activation-functions.html` ✗
 - `ActivationFunctions.html` ✗
 - `Activation Functions.html` ✗
 

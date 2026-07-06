@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="20" fill="#00b894"/>
+  <text x="50" y="58" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="bold" fill="#fff" text-anchor="middle" dominant-baseline="middle">ML</text>
+  <circle cx="28" cy="66" r="4" fill="#fff" opacity="0.3"/>
+  <circle cx="46" cy="50" r="4" fill="#fff" opacity="0.3"/>
+  <circle cx="62" cy="58" r="4" fill="#fff" opacity="0.3"/>
+  <line x1="28" y1="66" x2="46" y2="50" stroke="#fff" stroke-width="1.5" opacity="0.25"/>
+  <line x1="46" y1="50" x2="62" y2="58" stroke="#fff" stroke-width="1.5" opacity="0.25"/>
+  <line x1="28" y1="66" x2="62" y2="58" stroke="#fff" stroke-width="1.5" opacity="0.25"/>
+</svg>

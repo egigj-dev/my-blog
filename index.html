@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI/ML Blog - Neural Networks & Deep Learning</title>
+    <meta name="description" content="Deep learning fundamentals blog exploring neural networks, activation functions, optimization techniques, and regularization — with interactive visualizations and real-world examples.">
+    <meta property="og:title" content="AI/ML Learning Blog - Neural Networks & Deep Learning">
+    <meta property="og:description" content="Deep learning fundamentals blog exploring neural networks, activation functions, optimization techniques, and regularization — with interactive visualizations and real-world examples.">
+    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         * {
             margin: 0;
@@ -213,6 +220,62 @@
         }
 
         /* Footer */
+        /* Author Card */
+        .author-section {
+            max-width: 500px;
+            margin: 0 auto 3rem;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .author-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+        }
+        .author-section h3 {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 0.3rem;
+        }
+        .author-section .role {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+        }
+        .author-section .location {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 1.2rem;
+        }
+        .author-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+        .author-links a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: opacity 0.2s ease;
+        }
+        .author-links a:hover {
+            opacity: 0.7;
+        }
+
         footer {
             background: var(--bg-white);
             text-align: center;
@@ -334,6 +397,19 @@
             </a>
         </div>
     </main>
+
+    <!-- Author Section -->
+    <section class="author-section">
+        <div class="author-avatar">EG</div>
+        <h3>Egi Gjineci</h3>
+        <p class="role">AI/ML Engineer at Credins Bank</p>
+        <p class="location">📍 Tirana, Albania</p>
+        <div class="author-links">
+            <a href="https://linkedin.com/in/egigjineci" target="_blank">💼 LinkedIn</a>
+            <a href="https://github.com/egigj-dev" target="_blank">💻 GitHub</a>
+            <a href="mailto:egigj.dev@gmail.com">✉️ Email</a>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer>
