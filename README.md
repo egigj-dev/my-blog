@@ -1,139 +1,94 @@
-# AI Learning Blog
+# AI/ML Learning Blog
 
-A professional blog about deep learning fundamentals, covering activation functions, optimization techniques, and regularization strategies.
+A deep learning fundamentals blog covering neural networks, activation functions, optimization techniques, regularization, computer vision, and transfer learning. Built with HTML, CSS, and JavaScript — no frameworks, no build tools.
 
 ## Articles
 
-- [Activation Functions: From Theory to Practice](articles/activation_functions.html) - Understanding the mechanics, advantages, and trade-offs of key activation functions
-- [Optimization Techniques: Training Networks Faster](articles/optimization_techniques.html) - Practical optimization methods to accelerate neural network training
-- [Regularization: Preventing Your Network from Overfitting](articles/regularization_techniques.html) - Techniques to improve generalization and prevent overfitting
+- [Activation Functions](articles/activation-functions.html) — ReLU, Sigmoid, Tanh, Softmax explained with interactive comparisons
+- [Optimization Techniques](articles/optimization-techniques.html) — Feature scaling, batch norm, momentum, RMSProp, Adam, LR decay
+- [Regularization Techniques](articles/regularization-techniques.html) — L1, L2, Dropout, Data Augmentation, Early Stopping
+- [Transfer Learning for CIFAR-10](articles/cifar10-transfer-learning.html) — EfficientNetB0 frozen backbone, 87–89% accuracy in under 3 minutes
+- [AlexNet Paper Walkthrough](articles/alexnet-paper.html) — Deep dive into the architecture that sparked modern deep learning
+- [Data Augmentation](articles/data-augmentation.html) — Techniques to expand your dataset and improve generalization
 
 ## Features
 
-- **Dark and Light Mode** - Toggle between dark and light themes
-- **Responsive Design** - Works perfectly on desktop, tablet, and mobile
-- **Interactive Charts** - Using Chart.js for visual comparisons
-- **Professional GitHub-style Design** - Clean, modern aesthetic
-- **No External Dependencies** - Except Chart.js CDN
+- **Dark / Light mode** — persists across sessions via localStorage
+- **Interactive mind map** — click any topic node to jump to its article
+- **Responsive grid layout** — works on desktop, tablet, and mobile
+- **Typography** — Syne (headings), Lora (body), JetBrains Mono (code)
+- **Zero external dependencies** — no CDNs, no build tools, no frameworks
+- **GitHub Pages ready** — push to `main`, enable Pages, and it's live
 
 ## Project Structure
 
 ```
 my-blog/
-├─ index.html                          (homepage)
-├─ README.md                           (this file)
-├─ .gitignore
-├─ LICENSE
+├── index.html                  (homepage with mind map + article grid)
+├── README.md
+├── favicon.svg
+├── .gitignore
+├── LICENSE
 │
-├─ articles/
-│  ├─ activation_functions.html
-│  ├─ optimization_techniques.html
-│  └─ regularization_techniques.html
+├── articles/
+│   ├── activation-functions.html
+│   ├── optimization-techniques.html
+│   ├── regularization-techniques.html
+│   ├── cifar10-transfer-learning.html
+│   ├── alexnet-paper.html
+│   └── data-augmentation.html
 │
-└─ assets/
-   └─ images/
+└── assets/
+    ├── alexnet-architecture.png
+    ├── alexnet-architecture-2.png
+    ├── data-aug-example.png
+    └── data-aug-example-2.png
 ```
 
-## How to Run Locally
+## Run Locally
 
-### Option 1: Python HTTP Server
 ```bash
 cd my-blog
-python -m http.server 8000
+python3 -m http.server 8000
+# → http://localhost:8000
 ```
-Then open your browser to: `http://localhost:8000`
 
-### Option 2: Node.js http-server
+Or with Node:
+
 ```bash
-npm install -g http-server
-cd my-blog
-http-server
+npx serve .
 ```
-Then open your browser to: `http://localhost:8080`
 
-### Option 3: Direct in Browser
-Simply open `index.html` in your web browser (some features may be limited).
+## Add a New Article
 
-## Deployment to GitHub Pages
-
-1. Create a new repository on GitHub named `my-blog`
-2. Clone the repository to your computer
-3. Add all files to the repository
-4. Push to GitHub:
-   ```bash
-   git add .
-   git commit -m "Initial commit: Blog portfolio with 3 deep learning articles"
-   git push origin main
-   ```
-5. Go to **Settings → Pages**
-6. Select **main** branch as source
-7. Save
-
-Your site will be live at: `https://YOUR_USERNAME.github.io/my-blog/`
-
-## Adding More Articles
-
-1. Create a new HTML file in the `articles/` folder
-2. Use the same template structure as existing articles
-3. Ensure the back link points to: `<a href="../index.html">`
-4. Add a new card to `index.html` in the articles grid
-5. Commit and push to GitHub
+1. Create a new `.html` file in `articles/` (use an existing one as a template)
+2. The back link at the top should point to `../index.html`
+3. Add a card to the `.art-grid` in `index.html`
+4. Add a node to the SVG mind map (optional)
+5. Commit and push
 
 ## File Naming Convention
 
-Use **snake_case** (lowercase with underscores):
-- `activation_functions.html` ✓
-- `optimization_techniques.html` ✓
-- `my_new_article.html` ✓
+Use **kebab-case** (lowercase with hyphens):
 
-Not:
-- `activation-functions.html` ✗
-- `ActivationFunctions.html` ✗
-- `Activation Functions.html` ✗
+- `activation-functions.html` ✓
+- `cifar10-transfer-learning.html` ✓
+- `my-new-article.html` ✓
 
-## Customization
+## Deployment
 
-### Change Colors
-Edit the CSS `:root` variables at the top of any HTML file:
-```css
-:root {
-    --bg-dark: #0f1e2e;      /* Background color */
-    --accent: #00d9ff;       /* Accent/highlight color */
-    --text-primary: #e8f0f5; /* Main text color */
-}
-```
+Push to `main` on GitHub. In Settings → Pages, select the `main` branch root. Your site is live at `https://egigj-dev.github.io/my-blog/`.
 
-### Update Author Info
-In `index.html`, find the author card section and update:
-- Title
-- Bio/description
-- Links
+## Tech Stack
 
-### Add Logo or Favicon
-1. Place images in `assets/images/`
-2. Reference them in HTML: `<img src="../assets/images/logo.png">`
-
-## Technology Stack
-
-- **HTML5** - Content structure
-- **CSS3** - Styling and responsive design
-- **JavaScript** - Theme toggle and interactivity
-- **Chart.js** - Interactive charts (via CDN)
+- HTML5 + CSS3 — no frameworks
+- Vanilla JavaScript — theme toggle, interactive mind map
+- SVG — knowledge graph visualization
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
 
 ## Author
 
-Created: February 2026
-
-Feel free to use this as a template for your own blog or portfolio!
-
----
-
-**Need help?**
-- Check the [How to Run Locally](#how-to-run-locally) section
-- Review the [Project Structure](#project-structure) section
-- Customize the author card in `index.html`
-- Add your own articles following the existing template
+**Egi Gjineci** — AI/ML Engineer at Credins Bank, Tirana, Albania
