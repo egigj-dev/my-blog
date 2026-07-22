@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageNet Classification with Deep Convolutional Neural Networks - Paper Summary</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1e2e;
+            --bg-card: #1a2e42;
+            --text-primary: #e8f0f5;
+            --text-secondary: #a0adb8;
+            --accent: #00d9ff;
+            --border: #2a3f5a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body.light-mode {
+            --bg-dark: #ffffff;
+            --bg-card: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #3498db;
+            --border: #e0e6ed;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .article-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-category {
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .article-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .content {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .image-placeholder {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            margin: 2rem 0;
+            font-weight: 500;
+        }
+
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .highlight-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1.3rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .conclusion {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 6px;
+            margin: 2.5rem 0;
+        }
+
+        .conclusion h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+
+        .paper-info {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        .paper-info p {
+            margin-bottom: 0.5rem;
+        }
+
+        .paper-info strong {
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .article-header h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .back-link, .theme-toggle {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .back-link {
+                left: 10px;
+            }
+
+            .theme-toggle {
+                right: 10px;
+            }
+        }
+
+        body.light-mode .paper-info {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .highlight-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← Back to Blog</a>
+    <button class="theme-toggle" id="themeToggle">Light Mode</button>
+
+    <div class="container">
+        <article class="content">
+            <div class="article-header">
+                <div class="article-category">Paper Summary</div>
+                <h1>ImageNet Classification with Deep Convolutional Neural Networks</h1>
+                <div class="article-meta">
+                    <span>Updated February 2026</span>
+                    <span>15 min read</span>
+                </div>
+            </div>
+
+            <div class="paper-info">
+                <p><strong>Paper:</strong> ImageNet Classification with Deep Convolutional Neural Networks</p>
+                <p><strong>Authors:</strong> Alex Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton</p>
+                <p><strong>Published:</strong> 2012 (NIPS)</p>
+                <p><strong>Commonly Known As:</strong> AlexNet</p>
+                <p><strong>Significance:</strong> Won the 2012 ImageNet Large Scale Visual Recognition Challenge (ILSVRC)</p>
+            </div>
+
+            <div class="image-placeholder">
+                <img src="../assets/alexnet-architecture-2.png" alt="AlexNet Architecture" width="850" height="500">
+            </div>
+
+            <h2>Introduction</h2>
+
+            <p>
+                The ImageNet challenge (ILSVRC) presented one of the most demanding visual recognition tasks: classifying images into 1,000 different categories from a dataset of 1.2 million high-resolution training images. This task required systems to not only recognize obvious objects but also distinguish between subtle variations (like different dog breeds).
+            </p>
+
+            <p>
+                Before 2012, the best approaches used hand-crafted features combined with machine learning algorithms like SVMs. While these methods showed promise, they plateaued at around 74-76% accuracy. The natural question was: could deep learning break through this ceiling?
+            </p>
+
+            <p>
+                Krizhevsky, Sutskever, and Hinton demonstrated that deep convolutional neural networks (CNNs), combined with modern computational resources (GPUs), could dramatically outperform existing methods. This paper introduced AlexNet, which achieved 63.3% top-1 accuracy and 85.2% top-5 accuracy, a massive improvement that fundamentally changed how the industry approached computer vision.
+            </p>
+
+            <h2>Procedures</h2>
+
+            <h3>The AlexNet Architecture</h3>
+
+            <p>
+                AlexNet consisted of 8 layers (5 convolutional, 3 fully connected) with the following key specifications:
+            </p>
+
+            <div class="code-block">
+Input: 224×224×3 (ImageNet images)<br>
+<br>
+Conv1: 96 filters, 11×11, stride 4<br>
+MaxPool1: 3×3, stride 2<br>
+<br>
+Conv2: 256 filters, 5×5, stride 1<br>
+MaxPool2: 3×3, stride 2<br>
+<br>
+Conv3: 384 filters, 3×3, stride 1<br>
+Conv4: 384 filters, 3×3, stride 1<br>
+Conv5: 256 filters, 3×3, stride 1<br>
+MaxPool3: 3×3, stride 2<br>
+<br>
+FC1: 4096 units<br>
+FC2: 4096 units<br>
+FC3: 1000 units (output)
+            </div>
+
+            <h3>Key Innovations</h3>
+
+            <p>
+                <strong>ReLU Activation:</strong> The network used ReLU instead of sigmoid or tanh. This choice was crucial - ReLU provided faster convergence and allowed the network to train effectively on GPUs.
+            </p>
+
+            <p>
+                <strong>GPU Training:</strong> This was trained on two NVIDIA GTX 580 GPUs for 6 days. Without GPUs, this would have been impractical. The paper explicitly states: "Our network's parameters were initialized randomly... [and] the learning rate was initially 0.01 and was divided by 10 when the validation error rate plateaued."
+            </p>
+
+            <p>
+                <strong>Data Augmentation:</strong> The authors significantly expanded their training set by artificially creating variations: horizontal flips, random crops at different locations, and random intensity changes. This was essential for preventing overfitting on the relatively small dataset.
+            </p>
+
+            <p>
+                <strong>Dropout Regularization:</strong> Dropout was applied in the fully connected layers (with dropout rate of 0.5) to further prevent overfitting. This technique randomly deactivates neurons during training, forcing the network to learn with different subsets of features.
+            </p>
+
+            <h3>Training Details</h3>
+
+            <p>
+                The network was trained using stochastic gradient descent with momentum (momentum=0.9). Batch size was 128. Training took roughly 90 epochs. The validation accuracy plateaued after about 100 hours of training.
+            </p>
+
+            <h2>Results</h2>
+
+            <h3>Accuracy Metrics</h3>
+
+            <p>
+                The results were groundbreaking. AlexNet achieved 63.3% top-1 error rate (meaning 36.7% correct on the first prediction) and 85.2% top-5 error rate on the test set. To put this in perspective, the next-best method at the time achieved only 74.7% top-5 error, a gap of nearly 10 percentage points.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Key Finding:</strong> AlexNet cut the error rate nearly in half compared to the previous best method. This ~10% improvement was the largest jump in ImageNet accuracy achieved in a single year up to that point, and it fundamentally shifted the field toward deep learning.
+            </div>
+
+            <h3>Ablation Studies</h3>
+
+            <p>
+                The authors performed ablation studies to understand which components mattered most. When they removed the convolutional layers and replaced them with fully connected layers, accuracy dropped significantly. This demonstrated that the local connectivity patterns learned by convolutions were essential.
+            </p>
+
+            <p>
+                Similarly, removing data augmentation or dropout led to measurable decreases in validation accuracy. These ablations proved that the regularization techniques weren't just tricks, they were necessary components of the approach.
+            </p>
+
+            <h3>Qualitative Analysis</h3>
+
+            <p>
+                Beyond accuracy numbers, the authors examined what the network learned. The first convolutional layer learned edge detectors and simple textures, classic features you'd expect. Deeper layers learned increasingly complex patterns: corners, circles, and finally, object-like features. This hierarchy of features was elegant proof that the network was learning meaningful representations.
+            </p>
+
+            <h2>Conclusion</h2>
+
+            <p>
+                The researchers concluded that deep convolutional neural networks, combined with GPUs and modern training techniques, could achieve state-of-the-art results on large-scale image classification problems. They emphasized that depth was crucial as simply having more parameters wasn't enough; the hierarchical structure of convolutions was essential.
+            </p>
+
+            <p>
+                They also noted that the improvements came not from a single innovation, but from the combination: ReLU activations for training efficiency, data augmentation for regularization, dropout for preventing co-adaptation, and GPU computing for scalability. This holistic approach became the template for deep learning in computer vision.
+            </p>
+
+            <div class="conclusion">
+                <h2>Personal Reflection</h2>
+                
+                <p>
+                    Reading this paper 12+ years after publication is fascinating because you can see how it shaped everything that came after. Every modern computer vision model owes something to AlexNet's architecture and training approach.
+                </p>
+
+                <p>
+                    What strikes me most is how the paper combines bold experimentation (using GPUs, trying ReLU widely, extensive data augmentation) with careful empirical validation (ablation studies showing what matters). The authors didn't just achieve good accuracy but they provided insights into why their approach worked.
+                </p>
+
+                <p>
+                    The GPU training point is particularly relevant. This paper demonstrated that computational resources weren't just a convenience - they were a game-changer. It wasn't that CNNs suddenly got better in 2012; researchers had proposed deep architectures before. What changed was the practical ability to train them effectively.
+                </p>
+
+                <p>
+                    One limitation I note: the paper is dataset-specific. The conclusions might not fully generalize to other domains (medical imaging, satellite imagery, etc.). However, subsequent work by the same authors (and many others) proved that the principles were broadly applicable.
+                </p>
+
+                <p>
+                    Finally, the writing is clear and the experimental methodology is sound. The authors present their methods, report results honestly (including failure cases in ablation studies), and discuss implications thoughtfully. This is a masterclass in academic clarity - a paper worth reading not just for its results, but for how to conduct and present research.
+                </p>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const isDark = localStorage.getItem('light-mode') !== 'true';
+
+        function updateTheme() {
+            if (!isDark) {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = 'Dark Mode';
+            } else {
+                document.body.classList.remove('light-mode');
+                themeToggle.textContent = 'Light Mode';
+            }
+        }
+
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            const isNowLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('light-mode', isNowLight);
+            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
+        });
+    </script>
+</body>
+</html>

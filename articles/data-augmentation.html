@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Data Augmentation: A Beginner's Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1e2e;
+            --bg-card: #1a2e42;
+            --text-primary: #e8f0f5;
+            --text-secondary: #a0adb8;
+            --accent: #00d9ff;
+            --border: #2a3f5a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body.light-mode {
+            --bg-dark: #ffffff;
+            --bg-card: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #3498db;
+            --border: #e0e6ed;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .article-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-category {
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .article-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .content {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1.3rem;
+        }
+
+        li {
+            margin-bottom: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .image-placeholder {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            margin: 2rem 0;
+            font-weight: 500;
+        }
+
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
+
+        .example-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1.3rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .example-box strong {
+            color: var(--accent);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: var(--accent);
+            color: var(--bg-dark);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .conclusion {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 6px;
+            margin: 2.5rem 0;
+        }
+
+        .conclusion h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+
+        .comparison-table th {
+            background: rgba(0, 217, 255, 0.1);
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .article-header h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .back-link, .theme-toggle {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .back-link {
+                left: 10px;
+            }
+
+            .theme-toggle {
+                right: 10px;
+            }
+        }
+
+        body.light-mode .comparison-table th {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        body.light-mode .example-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← Back to Blog</a>
+    <button class="theme-toggle" id="themeToggle">Light Mode</button>
+
+    <div class="container">
+        <article class="content">
+            <div class="article-header">
+                <div class="article-category">Data Augmentation</div>
+                <h1>Automated Data Augmentation: A Beginner's Guide</h1>
+                <div class="article-meta">
+                    <span>Updated February 2026</span>
+                    <span>18 min read</span>
+                </div>
+            </div>
+
+            <div class="image-placeholder">
+                <img src="../assets/data-aug-example.png" alt="Data Augmentation Example" width="850" height="500">>
+            </div>
+
+            <h2>Introduction</h2>
+
+            <p>
+                In machine learning, data is everything. More data usually means better models. But what if you don't have enough data? What if you have 500 images but you need 50,000? This is where data augmentation comes in.
+            </p>
+
+            <p>
+                Data augmentation is the process of artificially creating new training data from existing data. Instead of just collecting more images, you modify the ones you have, rotate them, zoom in/out, flip them, change brightness, and use these variations to train your model.
+            </p>
+
+            <p>
+                Automated data augmentation goes further. Instead of manually deciding "rotate by 15 degrees" or "adjust brightness by 20%," the process automatically decides what transformations to apply and how much. This saves time and often discovers transformations humans wouldn't have thought of.
+            </p>
+
+            <p>
+                By the end of this guide, you'll understand what augmentation is, why it matters, how to do it manually, and how to use automated approaches.
+            </p>
+
+            <h2>Why Data Augmentation Matters</h2>
+
+            <p>
+                Imagine you're training a dog classifier with only 100 images. The model learns: "dogs have brown color, standing pose, sunny lighting." Then you test it on a dog photo that's gray, sitting down, in shadow. It fails.
+            </p>
+
+            <p>
+                Data augmentation solves this by showing the model dogs in many variations: different colors, poses, lighting, angles. The model learns the essence of "dog-ness" rather than specific visual patterns in your training data.
+            </p>
+
+            <div class="example-box">
+                <strong>Real Example:</strong> If you train on 100 images of cats but only show side views, your model learns "cats are side profiles." When you test on a front-view cat, it won't recognize it. Data augmentation by rotating images teaches it "cats are cats from any angle."
+            </div>
+
+            <h2>Manual Data Augmentation: Step by Step</h2>
+
+            <p>
+                Before diving into automation, let's understand the basic transformations. These are the building blocks that automated systems use.
+            </p>
+
+            <h3><span class="step-number">1</span>Rotation</h3>
+
+            <p>
+                <strong>What it does:</strong> Rotates the image by a random angle.
+            </p>
+
+            <p>
+                <strong>When to use:</strong> When objects can appear at different angles in real data.
+            </p>
+
+            <div class="code-block"><pre># Example: Rotate image by 30 degrees
+from PIL import Image
+
+img = Image.open('dog.jpg')
+rotated_img = img.rotate(30)
+rotated_img.save('dog_rotated_30.jpg')</pre></div>
+
+            <p>
+                In practice, you'd rotate by random angles (0-360 degrees) and keep versions that look realistic. A dog photo rotated 45 degrees is fine; rotated 180 degrees looks weird and might confuse the model.
+            </p>
+
+            <h3><span class="step-number">2</span>Flipping</h3>
+
+            <p>
+                <strong>What it does:</strong> Flips the image horizontally or vertically.
+            </p>
+
+            <p>
+                <strong>When to use:</strong> When the object can appear flipped in real data. For a dog, left-facing or right-facing are both valid.
+            </p>
+
+            <div class="code-block"><pre># Horizontal flip
+flipped_img = img.transpose(Image.FLIP_LEFT_RIGHT)
+flipped_img.save('dog_flipped.jpg')</pre></div>
+
+            <p>
+                Vertical flips are usually less useful unless your objects naturally appear upside down. A dog upside down is unusual, so vertical flips might add unrealistic data.
+            </p>
+
+            <h3><span class="step-number">3</span>Brightness and Contrast</h3>
+
+            <p>
+                <strong>What it does:</strong> Changes how bright or dark the image is.
+            </p>
+
+            <p>
+                <strong>When to use:</strong> When your deployment environment has varying lighting conditions.
+            </p>
+
+            <div class="code-block"><pre>from PIL import ImageEnhance
+
+enhancer = ImageEnhance.Brightness(img)
+bright_img = enhancer.enhance(1.5)  # 50% brighter
+dark_img = enhancer.enhance(0.7)    # 30% darker</pre></div>
+
+            <p>
+                Brightening by 1.5x means multiply all pixel values by 1.5. Dimming by 0.7x multiplies by 0.7. Typical ranges are 0.5x to 2.0x (half to double brightness).
+            </p>
+
+            <h3><span class="step-number">4</span>Cropping and Zooming</h3>
+
+            <p>
+                <strong>What it does:</strong> Takes a random section of the image (crop) or zooms into part of it.
+            </p>
+
+            <p>
+                <strong>When to use:</strong> When your model needs to recognize objects at different sizes or positions.
+            </p>
+
+            <div class="code-block"><pre># Crop: Take the center 80% of the image
+width, height = img.size
+box = (width * 0.1, height * 0.1, width * 0.9, height * 0.9)
+cropped_img = img.crop(box)</pre></div>
+
+            <p>
+                A dog might fill 20% of an image (far away) or 90% of an image (close up). Cropping teaches your model to recognize dogs at various scales.
+            </p>
+
+            <h3><span class="step-number">5</span>Adding Noise</h3>
+
+            <p>
+                <strong>What it does:</strong> Adds random pixel value variations to simulate poor camera quality.
+            </p>
+
+            <p>
+                <strong>When to use:</strong> When you expect lower-quality images in production (phone cameras, security cameras, etc.).
+            </p>
+
+            <div class="code-block"><pre>import numpy as np
+
+img_array = np.array(img)
+noise = np.random.normal(0, 10, img_array.shape)
+noisy_img = np.clip(img_array + noise, 0, 255)</pre></div>
+
+            <p>
+                Gaussian noise (mean=0, std=10) adds realistic camera noise. Too much noise makes images unrecognizable; too little has no effect.
+            </p>
+
+            <h2>How to Apply Manual Augmentation</h2>
+
+            <div class="example-box">
+                <strong>Step-by-Step Process:</strong>
+                <ol style="margin-top: 0.8rem;">
+                    <li>Load your 100 original images</li>
+                    <li>For each image:
+                        <ul style="margin-top: 0.4rem;">
+                            <li>Create rotated version (3-5 rotations per image)</li>
+                            <li>Create flipped version (horizontal flip)</li>
+                            <li>Create brightness variations (2-3 versions)</li>
+                            <li>Create cropped versions (2-3 crops)</li>
+                        </ul>
+                    </li>
+                    <li>Now you have ~1000-1500 images instead of 100</li>
+                    <li>Train your model on this expanded dataset</li>
+                </ol>
+            </div>
+
+            <p>
+                This is tedious! For 100 images with 5 rotations, 3 brightness changes, and 2 crops each, you're creating 1000 images manually. This is why automation is valuable.
+            </p>
+
+            <h2>Automated Data Augmentation</h2>
+
+            <p>
+                Automated augmentation means the system decides what transformations to apply, rather than you deciding manually. There are two main approaches:
+            </p>
+
+            <h3>Approach 1: In-Memory Augmentation (During Training)</h3>
+
+            <p>
+                Instead of creating augmented images beforehand, augment them on-the-fly during training. Each epoch sees slightly different versions of the original images.
+            </p>
+
+            <div class="code-block"><pre># Using popular library: Albumentations
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
+transform = A.Compose([
+    A.HorizontalFlip(p=0.5),
+    A.Rotate(limit=30, p=0.7),
+    A.RandomBrightnessContrast(p=0.2),
+    A.GaussNoise(p=0.1),
+    ToTensorV2(),
+], bbox_params=A.BboxParams(format='albumentations'))
+
+# During training:
+for epoch in range(num_epochs):
+    for image, label in dataloader:
+        augmented = transform(image=image)
+        # Train on augmented image</pre></div>
+
+            <p>
+                Benefits: No disk space needed, infinitely many variations possible, computationally efficient.
+            </p>
+
+            <p>
+                Downside: Slightly slower training (augmentation adds computation per batch).
+            </p>
+
+            <h3>Approach 2: Smart Augmentation Policy (AutoAugment)</h3>
+
+            <p>
+                Instead of random augmentations, use a learned policy. AutoAugment uses reinforcement learning to discover which augmentations work best for your dataset.
+            </p>
+
+            <div class="code-block"><pre># Simplified example of smart augmentation
+import torchvision.transforms as transforms
+
+# AutoAugment policy (pre-trained on ImageNet)
+from torchvision.transforms import AutoAugment, AutoAugmentPolicy
+
+augment = AutoAugment(policy=AutoAugmentPolicy.IMAGENET)
+
+# Apply to images
+augmented_images = [augment(img) for img in images]</pre></div>
+
+            <p>
+                How AutoAugment works:
+            </p>
+
+            <ol>
+                <li>Try different augmentation policies</li>
+                <li>Measure validation accuracy with each policy</li>
+                <li>Keep the policies that improve accuracy the most</li>
+                <li>Use the best policy for training</li>
+            </ol>
+
+            <div class="example-box">
+                <strong>Why This Matters:</strong> For ImageNet (1000 classes of general objects), AutoAugment found that rotation is helpful. For medical X-rays, rotation might be harmful (a rotated X-ray looks unnatural). Smart augmentation adapts to your specific data.
+            </div>
+
+            <h3>Approach 3: RandAugment (Simpler and Practical)</h3>
+
+            <p>
+                AutoAugment is powerful but complex. RandAugment is simpler: randomly pick augmentations and apply them with random intensity.
+            </p>
+
+            <div class="code-block"><pre>from timm.data import RandAugment
+
+augment = RandAugment(
+    num_ops=2,        # Apply 2 random ops per image
+    magnitude=9,      # Intensity of operations (0-10)
+)
+
+# Apply to each image
+augmented_images = [augment(img) for img in images]</pre></div>
+
+            <p>
+                This is often as effective as AutoAugment but much faster to implement.
+            </p>
+
+            <h2>Step-by-Step: Implementing Data Augmentation</h2>
+
+            <h3><span class="step-number">1</span>Choose Your Library</h3>
+
+            <p>
+                <strong>For images:</strong> Albumentations (most popular), torchvision, imgaug, Augmentor
+            </p>
+
+            <p>
+                <strong>For general data:</strong> scikit-learn, pandas, custom Python code
+            </p>
+
+            <div class="code-block"><pre># Install the library
+pip install albumentations</pre></div>
+
+            <h3><span class="step-number">2</span>Define Your Augmentation Pipeline</h3>
+
+            <div class="code-block"><pre>import albumentations as A
+
+train_transform = A.Compose([
+    A.HorizontalFlip(p=0.5),           # 50% chance
+    A.VerticalFlip(p=0.1),             # 10% chance
+    A.Rotate(limit=45, p=0.7),         # 70% chance, max 45°
+    A.RandomBrightnessContrast(p=0.2), # 20% chance
+    A.GaussNoise(p=0.1),               # 10% chance
+    A.Resize(224, 224),                # Resize to 224x224
+])</pre></div>
+
+            <p>
+                Each `p=0.X` is the probability of applying that transformation. `p=0.5` means 50% of images get flipped.
+            </p>
+
+            <h3><span class="step-number">3</span>Apply During Training</h3>
+
+            <div class="code-block"><pre>import torch
+from torch.utils.data import DataLoader, Dataset
+
+class CustomDataset(Dataset):
+    def __init__(self, images, labels, transform=None):
+        self.images = images
+        self.labels = labels
+        self.transform = transform
+    
+    def __getitem__(self, idx):
+        image = self.images[idx]
+        label = self.labels[idx]
+        
+        if self.transform:
+            augmented = self.transform(image=image)
+            image = augmented['image']
+        
+        return image, label
+
+# Create dataset with augmentation
+train_dataset = CustomDataset(
+    images=train_images,
+    labels=train_labels,
+    transform=train_transform
+)
+
+train_loader = DataLoader(
+    train_dataset,
+    batch_size=32,
+    shuffle=True
+)
+
+# Training loop
+model.train()
+for images, labels in train_loader:
+    # Each image in this batch is independently augmented
+    predictions = model(images)
+    loss = criterion(predictions, labels)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()</pre></div>
+
+            <h3><span class="step-number">4</span>Use Different Augmentations for Train vs. Test</h3>
+
+            <p>
+                <strong>Critical point:</strong> Only augment training data, never test data.
+            </p>
+
+            <div class="code-block"><pre># For training: aggressive augmentation
+train_transform = A.Compose([
+    A.HorizontalFlip(p=0.5),
+    A.Rotate(limit=45, p=0.7),
+    A.RandomBrightnessContrast(p=0.3),
+])
+
+# For testing: only resize, no augmentation
+test_transform = A.Compose([
+    A.Resize(224, 224),
+])</pre></div>
+
+            <p>
+                Why? Augmentation teaches the model to generalize. At test time, you want to evaluate on real, unmodified images to know how it will perform in production.
+            </p>
+
+            <h2>Common Augmentations and When to Use Them</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Augmentation</th>
+                        <th>Good For</th>
+                        <th>Avoid When</th>
+                        <th>Typical Range</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Rotation</td>
+                        <td>Objects at different angles</td>
+                        <td>Text (rotated text looks wrong)</td>
+                        <td>±15 to ±45°</td>
+                    </tr>
+                    <tr>
+                        <td>Flip (H/V)</td>
+                        <td>Objects from different sides</td>
+                        <td>Text, directional objects</td>
+                        <td>50% horizontal, 10% vertical</td>
+                    </tr>
+                    <tr>
+                        <td>Brightness</td>
+                        <td>Different lighting conditions</td>
+                        <td>Very extreme (hard to recognize)</td>
+                        <td>0.7x to 1.3x</td>
+                    </tr>
+                    <tr>
+                        <td>Crop/Zoom</td>
+                        <td>Objects at different distances</td>
+                        <td>Small objects (risk losing them)</td>
+                        <td>80-100% of image</td>
+                    </tr>
+                    <tr>
+                        <td>Noise</td>
+                        <td>Low-quality images</td>
+                        <td>High-quality data (degrades it)</td>
+                        <td>σ=5 to 15</td>
+                    </tr>
+                    <tr>
+                        <td>Color shift</td>
+                        <td>Different camera white balance</td>
+                        <td>When color matters (e.g., tumor color)</td>
+                        <td>±20% per channel</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Real-World Example: Dog Classifier</h2>
+
+            <div class="example-box">
+                <strong>Scenario:</strong> You have 200 dog photos. You want to train a classifier.
+            </div>
+
+            <div class="code-block"><pre>import albumentations as A
+from albumentations.pytorch import ToTensorV2
+import torch
+from torch.utils.data import DataLoader, Dataset
+from torchvision import models
+import torch.nn as nn
+
+# Step 1: Define augmentation
+train_aug = A.Compose([
+    A.HorizontalFlip(p=0.5),              # Dogs face left/right
+    A.Rotate(limit=20, p=0.5),            # Head tilts
+    A.RandomBrightnessContrast(p=0.3),    # Different lighting
+    A.Resize(224, 224),
+    ToTensorV2(),
+])
+
+test_aug = A.Compose([
+    A.Resize(224, 224),
+    ToTensorV2(),
+])
+
+# Step 2: Create dataset
+class DogDataset(Dataset):
+    def __init__(self, images, labels, transform):
+        self.images = images
+        self.labels = labels
+        self.transform = transform
+    
+    def __getitem__(self, idx):
+        img = self.images[idx]
+        if self.transform:
+            img = self.transform(image=img)['image']
+        return img, self.labels[idx]
+
+# Step 3: Create dataloaders
+train_dataset = DogDataset(train_images, train_labels, train_aug)
+test_dataset = DogDataset(test_images, test_labels, test_aug)
+
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=32)
+
+# Step 4: Train
+model = models.resnet50(pretrained=True)
+model.fc = nn.Linear(2048, 10)  # 10 dog breeds
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters())
+
+for epoch in range(10):
+    for images, labels in train_loader:
+        predictions = model(images)
+        loss = criterion(predictions, labels)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+# Your 200 images become effectively 1000+ variations through augmentation!</pre></div>
+
+            <h2>Key Takeaways for Beginners</h2>
+
+            <p>
+                <strong>Data augmentation creates new training examples by modifying existing ones.</strong> This makes models more robust and helps when you have limited data.
+            </p>
+
+            <p>
+                <strong>Common augmentations are simple:</strong> flip, rotate, brightness changes, crops, and noise.
+            </p>
+
+            <p>
+                <strong>Automate, don't manually create images.</strong> Use libraries like Albumentations to apply augmentations during training.
+            </p>
+
+            <p>
+                <strong>Only augment training data, never test data.</strong> You want to evaluate on real, unmodified images.
+            </p>
+
+            <p>
+                <strong>Start simple.</strong> Horizontal flips + rotation covers 80% of use cases. Add more augmentations if accuracy plateaus.
+            </p>
+
+            <p>
+                <strong>Tune probabilities.</strong> `p=0.5` means 50% of images get that augmentation. Start with 0.5 for standard operations.
+            </p>
+
+            <div class="conclusion">
+                <h2>Conclusion</h2>
+
+                <p>
+                    Data augmentation is one of the most practical techniques in machine learning. When you're starting out, remember: collect as much diverse real data as possible, then use augmentation to expand it further. Augmentation is a multiplier, not a replacement for good data collection.
+                </p>
+
+                <p>
+                    The examples in this guide work for image data, but augmentation applies to other domains too: text (synonym replacement, word reordering), audio (pitch shifts, speed changes), and numerical data (adding noise, transformations).
+                </p>
+
+                <p>
+                    Your next step: try Albumentations with your own dataset. Start with 3-4 augmentations, monitor your validation accuracy, and adjust from there. You'll quickly build intuition for what works.
+                </p>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const isDark = localStorage.getItem('light-mode') !== 'true';
+
+        function updateTheme() {
+            if (!isDark) {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = 'Dark Mode';
+            } else {
+                document.body.classList.remove('light-mode');
+                themeToggle.textContent = 'Light Mode';
+            }
+        }
+
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            const isNowLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('light-mode', isNowLight);
+            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
+        });
+    </script>
+</body>
+</html>

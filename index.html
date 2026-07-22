@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI/ML Blog - Neural Networks & Deep Learning</title>
+<title>AI/ML Blog - Neural Networks & Deep Learning</title>
     <meta name="description" content="Deep learning fundamentals blog exploring neural networks, activation functions, optimization techniques, and regularization — with interactive visualizations and real-world examples.">
     <meta property="og:title" content="AI/ML Learning Blog - Neural Networks & Deep Learning">
     <meta property="og:description" content="Deep learning fundamentals blog exploring neural networks, activation functions, optimization techniques, and regularization — with interactive visualizations and real-world examples.">
@@ -11,251 +11,298 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary: #2d3436;
-            --secondary: #636e72;
-            --accent: #00b894;
-            --accent-warm: #ff7675;
-            --bg-light: #fafbfc;
-            --bg-white: #ffffff;
-            --text-primary: #2d3436;
-            --text-secondary: #636e72;
-            --border: #dfe6e9;
+            --bg:        #07111e;
+            --bg-card:   #0c1928;
+            --line:      rgba(255,255,255,0.07);
+            --accent:    #00d4b8;
+            --gold:      #f0a500;
+            --violet:    #a78bfa;
+            --danger:    #ff5e57;
+            --text:      #d6e8f2;
+            --text-2:    #6b8fa8;
+            --text-3:    #3a5570;
+            --border:    rgba(0,212,184,0.18);
         }
 
-        body.dark-mode {
-            --bg-light: #1a1a2e;
-            --bg-white: #16213e;
-            --text-primary: #e4e4e7;
-            --text-secondary: #a1a1a9;
-            --border: #404052;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
+        html { scroll-behavior: smooth; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
-            color: var(--text-primary);
-            line-height: 1.8;
+            font-family: 'Syne', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
-        /* Dark Mode Toggle Button */
-        #darkModeToggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            padding: 12px 16px;
-            border-radius: 50%;
-            border: 2px solid var(--border);
-            background: var(--bg-white);
-            color: var(--text-primary);
-            font-size: 1.3rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
         }
 
-        #darkModeToggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        .blob {
+            position: fixed; border-radius: 50%;
+            filter: blur(130px); pointer-events: none; z-index: 0;
+        }
+        .blob-1 { width:520px;height:520px;background:rgba(0,212,184,.06);top:-180px;left:-130px; }
+        .blob-2 { width:420px;height:420px;background:rgba(240,165,0,.04);bottom:60px;right:-100px; }
+
+        /* NAV */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(7,17,30,0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--line);
+            padding: 0 2.5rem;
+            display: flex; align-items: center;
+            justify-content: space-between;
+            height: 64px;
         }
 
-        /* Header */
+        .nav-logo { display:flex;align-items:center;gap:11px;text-decoration:none; }
+        .logo-mark {
+            width:36px;height:36px;flex-shrink:0;
+            border:1.5px solid var(--accent);
+            border-radius:8px;
+            display:flex;align-items:center;justify-content:center;
+            background: rgba(0,212,184,0.06);
+        }
+        .logo-mark svg { width:19px;height:19px; }
+        .logo-text {
+            font-weight:800;font-size:0.92rem;
+            letter-spacing:0.04em;color:var(--text);
+        }
+        .logo-text span { color:var(--accent); }
+
+        .nav-links { display:flex;align-items:center;gap:2px;list-style:none; }
+        .nav-links a {
+            color:var(--text-2);text-decoration:none;
+            font-size:0.82rem;font-weight:600;
+            letter-spacing:0.06em;text-transform:uppercase;
+            padding:0.45rem 0.85rem;border-radius:6px;
+            transition:color .2s,background .2s;
+        }
+        .nav-links a:hover { color:var(--text);background:rgba(255,255,255,.05); }
+        .nav-links a.active { color:var(--accent); }
+
+        .theme-btn {
+            background:none;border:1px solid var(--line);
+            color:var(--text-2);width:34px;height:34px;
+            border-radius:7px;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            transition:border-color .2s,color .2s;
+        }
+        .theme-btn:hover { border-color:var(--accent);color:var(--accent); }
+
+        /* HEADER */
         header {
-            background: var(--bg-white);
-            padding: 4rem 2rem;
-            text-align: center;
-            border-bottom: 1px solid var(--border);
-            animation: fadeInDown 0.8s ease-out;
+            position:relative;z-index:1;
+            padding:7rem 2.5rem 5.5rem;
+            text-align:center;
+            border-bottom:1px solid var(--line);
+        }
+
+        .header-pill {
+            display:inline-flex;align-items:center;gap:8px;
+            font-family:'JetBrains Mono',monospace;
+            font-size:0.7rem;font-weight:500;
+            letter-spacing:0.13em;text-transform:uppercase;
+            color:var(--accent);
+            background:rgba(0,212,184,.08);
+            border:1px solid rgba(0,212,184,.2);
+            padding:.32rem .9rem;border-radius:20px;
+            margin-bottom:2rem;
+        }
+        .header-pill::before {
+            content:'';width:5px;height:5px;border-radius:50%;
+            background:var(--accent);
+            animation:blink 2.2s ease-in-out infinite;
         }
 
         header h1 {
-            font-size: 3.2rem;
-            margin-bottom: 1rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            color: var(--primary);
+            font-family:'Lora',serif;
+            font-weight:500;
+            font-size:clamp(2.2rem,4.8vw,4rem);
+            line-height:1.18;letter-spacing:-.025em;
+            color:#ecf4f9;
+            max-width:700px;margin:0 auto 1.4rem;
         }
+        header h1 em { font-style:italic;color:var(--accent); }
 
         header p {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            max-width: 700px;
-            margin: 0 auto;
+            font-size:1rem;font-weight:400;
+            color:var(--text-2);line-height:1.75;
+            max-width:520px;margin:0 auto;
         }
 
-        /* Navigation */
-        nav {
-            background: var(--bg-white);
-            padding: 1.5rem 2rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            flex-wrap: wrap;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        /* SECTIONS */
+        .section-eye {
+            font-family:'JetBrains Mono',monospace;
+            font-size:0.69rem;font-weight:500;
+            letter-spacing:0.14em;text-transform:uppercase;
+            color:var(--text-3);margin-bottom:.5rem;
+        }
+        .section-h {
+            font-family:'Lora',serif;
+            font-size:clamp(1.4rem,2.8vw,2rem);
+            font-weight:500;letter-spacing:-.015em;
+            color:#ecf4f9;margin-bottom:.4rem;
+        }
+        .section-sub { font-size:.87rem;color:var(--text-2); }
+
+        /* MIND MAP */
+        .mm-section {
+            position:relative;z-index:1;
+            padding:5rem 2.5rem;
+            border-bottom:1px solid var(--line);
+        }
+        .mm-wrap {
+            width:100%;max-width:880px;margin:2.5rem auto 0;
+            background:var(--bg-card);
+            border:1px solid var(--line);
+            border-radius:16px;overflow:hidden;
+        }
+        .mm-wrap svg { width:100%;height:auto;display:block; }
+        .mm-node { cursor:pointer; }
+        .mm-node rect, .mm-node ellipse { transition:opacity .18s; }
+        .mm-node:hover rect, .mm-node:hover ellipse { opacity:.82; }
+
+        /* ARTICLES */
+        .art-section {
+            position:relative;z-index:1;
+            padding:5rem 2.5rem 6rem;
+            max-width:1160px;margin:0 auto;width:100%;
+        }
+        .art-header {
+            display:flex;align-items:flex-end;
+            justify-content:space-between;
+            margin-bottom:2.8rem;
+            flex-wrap:wrap;gap:1rem;
+        }
+        .art-count {
+            font-family:'JetBrains Mono',monospace;
+            font-size:.69rem;color:var(--text-3);letter-spacing:.06em;
+        }
+        .art-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(295px,1fr));
+            gap:1.4rem;
         }
 
-        nav a {
-            color: var(--text-primary);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
+        /* CARD */
+        .card {
+            background:var(--bg-card);
+            border:1px solid var(--line);
+            border-radius:13px;
+            padding:1.9rem;
+            text-decoration:none;color:inherit;
+            display:flex;flex-direction:column;
+            position:relative;overflow:hidden;
+            transition:border-color .25s,transform .25s,box-shadow .25s;
+        }
+        .card::after {
+            content:'';position:absolute;inset:0;
+            background:linear-gradient(135deg,rgba(0,212,184,.04) 0%,transparent 55%);
+            opacity:0;transition:opacity .3s;pointer-events:none;
+        }
+        .card:hover {
+            border-color:rgba(0,212,184,.22);
+            transform:translateY(-5px);
+            box-shadow:0 18px 55px rgba(0,0,0,.45), 0 0 0 1px rgba(0,212,184,.08);
+        }
+        .card:hover::after { opacity:1; }
+
+        .card-num {
+            font-family:'JetBrains Mono',monospace;
+            font-size:.66rem;font-weight:500;
+            color:var(--text-3);letter-spacing:.08em;
+            margin-bottom:1.1rem;
+        }
+        .card-tag {
+            display:inline-block;
+            font-family:'JetBrains Mono',monospace;
+            font-size:.63rem;font-weight:500;
+            letter-spacing:.1em;text-transform:uppercase;
+            padding:.22rem .65rem;border-radius:4px;
+            margin-bottom:.9rem;
+        }
+        .t-nn  { background:rgba(0,212,184,.1); color:var(--accent); }
+        .t-tr  { background:rgba(240,165,0,.1);  color:var(--gold); }
+        .t-gen { background:rgba(167,139,250,.1);color:var(--violet); }
+        .t-cv  { background:rgba(255,94,87,.1);  color:var(--danger); }
+
+        .card h3 {
+            font-size:1.2rem;font-weight:700;
+            line-height:1.3;letter-spacing:-.01em;
+            color:#dceef7;margin-bottom:.75rem;
+        }
+        .card p {
+            font-size:.86rem;line-height:1.68;
+            color:var(--text-2);flex:1;
+        }
+        .card-foot {
+            display:flex;align-items:center;
+            justify-content:space-between;
+            margin-top:1.5rem;padding-top:1.1rem;
+            border-top:1px solid var(--line);
+        }
+        .card-time {
+            font-family:'JetBrains Mono',monospace;
+            font-size:.69rem;color:var(--text-3);
+        }
+        .card-arr {
+            width:26px;height:26px;
+            border:1px solid var(--text-3);border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            color:var(--text-3);
+            transition:border-color .2s,color .2s,transform .2s;
+        }
+        .card:hover .card-arr {
+            border-color:var(--accent);color:var(--accent);
+            transform:rotate(45deg);
         }
 
-        nav a:hover {
-            background: rgba(0, 184, 148, 0.1);
-            color: var(--accent);
-        }
-
-        nav a.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-        }
-
-        /* Main Content */
-        main {
-            flex: 1;
-            max-width: 1000px;
-            margin: 3rem auto;
-            padding: 0 2rem;
-            width: 100%;
-            animation: fadeInUp 0.8s ease-out 0.2s both;
-        }
-
-        /* Section Title */
-        main h2 {
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            color: var(--primary);
-            border-bottom: 3px solid var(--accent);
-            padding-bottom: 1rem;
-            display: inline-block;
-            width: 100%;
-        }
-
-        /* Blog Grid */
-        .blog-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        /* Blog Card */
-        .blog-card {
-            background: var(--bg-white);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .blog-card:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-            border-color: var(--accent);
-        }
-
-        .blog-card h3 {
-            font-size: 1.6rem;
-            color: var(--primary);
-            margin-bottom: 1rem;
-            line-height: 1.3;
-        }
-
-        .blog-card .description {
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-            line-height: 1.6;
-        }
-
-        .blog-card .meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .blog-card .read-more {
-            color: var(--accent);
-            font-weight: 700;
-            display: inline-block;
-            margin-top: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .blog-card:hover .read-more {
-            transform: translateX(5px);
-        }
-
-        /* Footer */
-        /* Author Card */
+/* AUTHOR SECTION */
         .author-section {
             max-width: 500px;
             margin: 0 auto 3rem;
-            background: var(--bg-white);
-            border: 1px solid var(--border);
+            background: var(--bg-card);
+            border: 1px solid var(--line);
             border-radius: 12px;
             padding: 2rem;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         .author-avatar {
-            width: 80px;
-            height: 80px;
+            width: 80px; height: 80px;
             border-radius: 50%;
             background: var(--accent);
             color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 700;
             margin: 0 auto 1rem;
         }
         .author-section h3 {
             font-size: 1.4rem;
-            color: var(--primary);
+            color: var(--text);
             margin-bottom: 0.3rem;
         }
         .author-section .role {
-            color: var(--text-secondary);
+            color: var(--text-2);
             font-size: 0.95rem;
             margin-bottom: 0.3rem;
         }
         .author-section .location {
-            color: var(--text-secondary);
+            color: var(--text-2);
             font-size: 0.85rem;
             margin-bottom: 1.2rem;
         }
@@ -272,131 +319,329 @@
             font-weight: 600;
             transition: opacity 0.2s ease;
         }
-        .author-links a:hover {
-            opacity: 0.7;
-        }
+        .author-links a:hover { opacity: 0.7; }
 
+        /* FOOTER */
         footer {
-            background: var(--bg-white);
-            text-align: center;
-            padding: 2rem;
-            margin-top: auto;
-            border-top: 1px solid var(--border);
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+            position:relative;z-index:1;margin-top:auto;
+            border-top:1px solid var(--line);
+            padding:1.6rem 2.5rem;
+            display:flex;align-items:center;
+            justify-content:space-between;
+            gap:1rem;flex-wrap:wrap;
         }
-
         footer p {
-            margin: 0.5rem 0;
+            font-size:.78rem;color:var(--text-3);
+            font-family:'JetBrains Mono',monospace;
         }
+        footer a { color:var(--accent);text-decoration:none; }
+        footer a:hover { text-decoration:underline; }
 
-        /* Animations */
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* LIGHT MODE */
+        body.light {
+            --bg:#f2f6fb;--bg-card:#ffffff;
+            --line:rgba(0,0,0,.08);
+            --text:#1a2a38;--text-2:#4a6072;--text-3:#8fa5b5;
+            --border:rgba(0,152,140,.3);
         }
+        body.light header h1,
+        body.light .section-h { color:#1a2a38; }
+        body.light .card h3 { color:#1a2a38; }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* ANIMATIONS */
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+        @keyframes up {
+            from { opacity:0;transform:translateY(22px); }
+            to   { opacity:1;transform:translateY(0); }
         }
+        .u  { animation:up .7s ease both; }
+        .u1 { animation-delay:.08s; }
+        .u2 { animation-delay:.18s; }
+        .u3 { animation-delay:.28s; }
+        .u4 { animation-delay:.38s; }
+        .u5 { animation-delay:.48s; }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            header h1 {
-                font-size: 2rem;
-            }
-
-            header p {
-                font-size: 1rem;
-            }
-
-            nav {
-                gap: 1rem;
-                padding: 1rem;
-            }
-
-            main h2 {
-                font-size: 1.8rem;
-            }
-
-            .blog-grid {
-                grid-template-columns: 1fr;
-            }
+        /* RESPONSIVE */
+        @media(max-width:680px){
+            nav{padding:0 1.2rem;}
+            header{padding:4rem 1.2rem 3rem;}
+            .mm-section,.art-section{padding-left:1.2rem;padding-right:1.2rem;}
+            .art-grid{grid-template-columns:1fr;}
+            footer{flex-direction:column;align-items:flex-start;}
         }
     </style>
 </head>
 <body>
-    <!-- Dark Mode Toggle -->
-    <button id="darkModeToggle" title="Toggle dark mode">☀️</button>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
 
-    <!-- Header -->
-    <header>
-        <h1>🧠 AI/ML Learning Blog</h1>
-        <p>Exploring neural networks, deep learning, and optimization techniques with interactive visualizations and real-world examples</p>
-    </header>
-
-    <!-- Navigation -->
+    <!-- NAV -->
     <nav>
-        <a href="index.html" class="active">🏠 Home</a>
-        <a href="#blog-section">📚 Blog Posts</a>
-        <a href="https://github.com/egigj-dev/my-blog" target="_blank">💻 GitHub</a>
+        <a href="index.html" class="nav-logo">
+            <div class="logo-mark">
+                <!--
+                    LOGO PLACEHOLDER
+                    Replace the SVG below with your own mark.
+                    Recommended size: 19×19 px viewBox.
+                -->
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="10" cy="10" r="2.8" fill="#00d4b8"/>
+                    <circle cx="3.2" cy="4.2"  r="1.4" fill="#00d4b8" opacity=".5"/>
+                    <circle cx="16.8" cy="4.2" r="1.4" fill="#00d4b8" opacity=".5"/>
+                    <circle cx="3.2" cy="15.8" r="1.4" fill="#00d4b8" opacity=".5"/>
+                    <circle cx="16.8" cy="15.8" r="1.4" fill="#00d4b8" opacity=".5"/>
+                    <line x1="10" y1="10" x2="3.2"  y2="4.2"  stroke="#00d4b8" stroke-width="1" opacity=".35"/>
+                    <line x1="10" y1="10" x2="16.8" y2="4.2"  stroke="#00d4b8" stroke-width="1" opacity=".35"/>
+                    <line x1="10" y1="10" x2="3.2"  y2="15.8" stroke="#00d4b8" stroke-width="1" opacity=".35"/>
+                    <line x1="10" y1="10" x2="16.8" y2="15.8" stroke="#00d4b8" stroke-width="1" opacity=".35"/>
+                </svg>
+            </div>
+            <span class="logo-text">AI<span>/</span>ML Blog</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="#articles">Articles</a></li>
+            <li><a href="https://github.com/egigj-dev/my-blog" target="_blank">GitHub</a></li>
+        </ul>
+
+        <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path id="themeIco"
+                    d="M7.5 1v1M7.5 13v1M1 7.5H0M15 7.5h-1M3.05 3.05l-.7-.7M12.65 12.65l-.7-.7M3.05 11.95l-.7.7M12.65 2.35l-.7.7M7.5 4.5a3 3 0 100 6 3 3 0 000-6z"
+                    stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+        </button>
     </nav>
 
-    <!-- Main Content -->
-    <main>
-        <h2 id="blog-section">📚 Latest Blog Posts</h2>
+    <!-- HEADER -->
+    <header>
+        <div class="header-pill u">Deep Learning · Optimization · Computer Vision</div>
+        <h1 class="u u1">Where <em>neural networks</em><br>meet clear explanations</h1>
+        <p class="u u2">In-depth articles on deep learning foundations, training strategies,
+        and applied computer vision — built for practitioners.</p>
+    </header>
 
-        <div class="blog-grid">
-            <!-- Blog Card 1: Activation Functions -->
-            <a href="articles/activation_functions.html" class="blog-card">
-                <h3>🧩 Activation Functions</h3>
-                <p class="description">
-                    Understand the secret ingredient that makes neural networks smart. Learn about ReLU, Sigmoid, Tanh, Softmax, and more with interactive visualizations.
-                </p>
-                <div class="meta">
-                    <span>📖 10 min read</span>
-                    <span class="read-more">Read → </span>
-                </div>
-            </a>
+    <!-- MIND MAP -->
+    <section class="mm-section" id="mindmap">
+        <div class="section-eye">Knowledge Graph</div>
+        <div class="section-h">Topics at a glance</div>
+        <p class="section-sub u u3">Click any topic node to open the article</p>
 
-            <!-- Blog Card 2: Optimization Techniques -->
-            <a href="articles/optimization_techniques.html" class="blog-card">
-                <h3>⚡ Optimization Techniques</h3>
-                <p class="description">
-                    Learn how to train neural networks faster and better. Master feature scaling, batch normalization, Adam optimizer, and more.
-                </p>
-                <div class="meta">
-                    <span>📖 12 min read</span>
-                    <span class="read-more">Read → </span>
-                </div>
-            </a>
+        <div class="mm-wrap u u3">
+            <svg viewBox="0 0 880 460" xmlns="http://www.w3.org/2000/svg"
+                 font-family="'Syne',sans-serif">
+                <defs>
+                    <filter id="gf" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="4" result="b"/>
+                        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                </defs>
 
-            <!-- Blog Card 3: Regularization Techniques -->
-            <a href="articles/regularization_techniques.html" class="blog-card">
-                <h3>🛡️ Regularization Techniques</h3>
-                <p class="description">
-                    Stop your network from memorizing noise. Learn L1, L2, Dropout, Data Augmentation, and Early Stopping to build models that generalize.
-                </p>
-                <div class="meta">
-                    <span>📖 11 min read</span>
-                    <span class="read-more">Read → </span>
-                </div>
-            </a>
+                <!-- edges: center → topics -->
+                <path d="M440,230 Q360,185 228,148" stroke="#00d4b8" stroke-width="1.5" fill="none" opacity=".3" stroke-dasharray="5 3"/>
+                <path d="M440,230 Q510,175 650,138" stroke="#f0a500"  stroke-width="1.5" fill="none" opacity=".3" stroke-dasharray="5 3"/>
+                <path d="M440,230 Q348,290 218,322" stroke="#a78bfa"  stroke-width="1.5" fill="none" opacity=".3" stroke-dasharray="5 3"/>
+                <path d="M440,230 Q522,292 660,332" stroke="#ff5e57"  stroke-width="1.5" fill="none" opacity=".3" stroke-dasharray="5 3"/>
+
+                <!-- edges: topics → leaves -->
+                <line x1="228" y1="148" x2="106" y2="100" stroke="#00d4b8" stroke-width=".9" opacity=".18"/>
+                <line x1="228" y1="148" x2="110" y2="182" stroke="#00d4b8" stroke-width=".9" opacity=".18"/>
+                <line x1="228" y1="148" x2="212" y2="66"  stroke="#00d4b8" stroke-width=".9" opacity=".18"/>
+
+                <line x1="650" y1="138" x2="768" y2="88"  stroke="#f0a500" stroke-width=".9" opacity=".18"/>
+                <line x1="650" y1="138" x2="772" y2="155" stroke="#f0a500" stroke-width=".9" opacity=".18"/>
+                <line x1="650" y1="138" x2="668" y2="54"  stroke="#f0a500" stroke-width=".9" opacity=".18"/>
+
+                <line x1="218" y1="322" x2="94"  y2="276" stroke="#a78bfa" stroke-width=".9" opacity=".18"/>
+                <line x1="218" y1="322" x2="90"  y2="358" stroke="#a78bfa" stroke-width=".9" opacity=".18"/>
+                <line x1="218" y1="322" x2="202" y2="402" stroke="#a78bfa" stroke-width=".9" opacity=".18"/>
+
+                <line x1="660" y1="332" x2="778" y2="280" stroke="#ff5e57" stroke-width=".9" opacity=".18"/>
+                <line x1="660" y1="332" x2="782" y2="365" stroke="#ff5e57" stroke-width=".9" opacity=".18"/>
+                <line x1="660" y1="332" x2="668" y2="416" stroke="#ff5e57" stroke-width=".9" opacity=".18"/>
+
+                <!-- CENTER -->
+                <g class="mm-node">
+                    <ellipse cx="440" cy="230" rx="70" ry="37"
+                             fill="#0d2035" stroke="#00d4b8" stroke-width="1.8"
+                             filter="url(#gf)"/>
+                    <text x="440" y="226" text-anchor="middle"
+                          fill="#00d4b8" font-size="12.5" font-weight="700" letter-spacing=".04em">AI / ML</text>
+                    <text x="440" y="242" text-anchor="middle"
+                          fill="#6b8fa8" font-size="9.5">Learning Blog</text>
+                </g>
+
+                <!-- TOPIC: Activation Functions -->
+                <g class="mm-node" onclick="location.href='articles/activation-functions.html'" style="cursor:pointer">
+                    <rect x="146" y="118" width="164" height="58" rx="10"
+                          fill="#081a26" stroke="#00d4b8" stroke-width="1.4"/>
+                    <text x="228" y="143" text-anchor="middle"
+                          fill="#00d4b8" font-size="11.5" font-weight="700">Activation</text>
+                    <text x="228" y="158" text-anchor="middle"
+                          fill="#00d4b8" font-size="11.5" font-weight="700">Functions</text>
+                    <text x="228" y="172" text-anchor="middle"
+                          fill="#2a4a5a" font-size="8.5" font-family="'JetBrains Mono',monospace">→ open</text>
+                </g>
+
+                <!-- TOPIC: Optimization -->
+                <g class="mm-node" onclick="location.href='articles/optimization-techniques.html'" style="cursor:pointer">
+                    <rect x="566" y="106" width="168" height="58" rx="10"
+                          fill="#130f00" stroke="#f0a500" stroke-width="1.4"/>
+                    <text x="650" y="131" text-anchor="middle"
+                          fill="#f0a500" font-size="11.5" font-weight="700">Optimization</text>
+                    <text x="650" y="146" text-anchor="middle"
+                          fill="#f0a500" font-size="11.5" font-weight="700">Techniques</text>
+                    <text x="650" y="160" text-anchor="middle"
+                          fill="#4a3800" font-size="8.5" font-family="'JetBrains Mono',monospace">→ open</text>
+                </g>
+
+                <!-- TOPIC: Regularization -->
+                <g class="mm-node" onclick="location.href='articles/regularization-techniques.html'" style="cursor:pointer">
+                    <rect x="136" y="293" width="164" height="58" rx="10"
+                          fill="#0e091c" stroke="#a78bfa" stroke-width="1.4"/>
+                    <text x="218" y="318" text-anchor="middle"
+                          fill="#a78bfa" font-size="11.5" font-weight="700">Regularization</text>
+                    <text x="218" y="333" text-anchor="middle"
+                          fill="#a78bfa" font-size="11.5" font-weight="700">Techniques</text>
+                    <text x="218" y="347" text-anchor="middle"
+                          fill="#3a2660" font-size="8.5" font-family="'JetBrains Mono',monospace">→ open</text>
+                </g>
+
+                <!-- TOPIC: Transfer Learning -->
+                <g class="mm-node" onclick="location.href='articles/cifar10-transfer-learning.html'" style="cursor:pointer">
+                    <rect x="578" y="304" width="164" height="58" rx="10"
+                          fill="#180908" stroke="#ff5e57" stroke-width="1.4"/>
+                    <text x="660" y="329" text-anchor="middle"
+                          fill="#ff5e57" font-size="11.5" font-weight="700">Transfer</text>
+                    <text x="660" y="344" text-anchor="middle"
+                          fill="#ff5e57" font-size="11.5" font-weight="700">Learning</text>
+                    <text x="660" y="358" text-anchor="middle"
+                          fill="#501a18" font-size="8.5" font-family="'JetBrains Mono',monospace">→ open</text>
+                </g>
+
+                <!-- LEAVES: Activation -->
+                <rect x="32"  y="77"  width="76" height="22" rx="5" fill="#081a26" stroke="#00d4b8" stroke-width=".8" opacity=".7"/>
+                <text x="70"  y="91"  text-anchor="middle" fill="#00d4b8" font-size="9" opacity=".85">ReLU / GELU</text>
+
+                <rect x="36"  y="164" width="80" height="22" rx="5" fill="#081a26" stroke="#00d4b8" stroke-width=".8" opacity=".7"/>
+                <text x="76"  y="178" text-anchor="middle" fill="#00d4b8" font-size="9" opacity=".85">Sigmoid / Tanh</text>
+
+                <rect x="156" y="44"  width="72" height="22" rx="5" fill="#081a26" stroke="#00d4b8" stroke-width=".8" opacity=".7"/>
+                <text x="192" y="58"  text-anchor="middle" fill="#00d4b8" font-size="9" opacity=".85">Softmax</text>
+
+                <!-- LEAVES: Optimization -->
+                <rect x="748" y="70"  width="60" height="22" rx="5" fill="#130f00" stroke="#f0a500" stroke-width=".8" opacity=".7"/>
+                <text x="778" y="84"  text-anchor="middle" fill="#f0a500" font-size="9" opacity=".85">Adam</text>
+
+                <rect x="744" y="140" width="82" height="22" rx="5" fill="#130f00" stroke="#f0a500" stroke-width=".8" opacity=".7"/>
+                <text x="785" y="154" text-anchor="middle" fill="#f0a500" font-size="9" opacity=".85">Batch Norm</text>
+
+                <rect x="634" y="32"  width="74" height="22" rx="5" fill="#130f00" stroke="#f0a500" stroke-width=".8" opacity=".7"/>
+                <text x="671" y="46"  text-anchor="middle" fill="#f0a500" font-size="9" opacity=".85">LR Decay</text>
+
+                <!-- LEAVES: Regularization -->
+                <rect x="24"  y="258" width="68" height="22" rx="5" fill="#0e091c" stroke="#a78bfa" stroke-width=".8" opacity=".7"/>
+                <text x="58"  y="272" text-anchor="middle" fill="#a78bfa" font-size="9" opacity=".85">Dropout</text>
+
+                <rect x="16"  y="342" width="72" height="22" rx="5" fill="#0e091c" stroke="#a78bfa" stroke-width=".8" opacity=".7"/>
+                <text x="52"  y="356" text-anchor="middle" fill="#a78bfa" font-size="9" opacity=".85">L1 / L2</text>
+
+                <rect x="142" y="390" width="100" height="22" rx="5" fill="#0e091c" stroke="#a78bfa" stroke-width=".8" opacity=".7"/>
+                <text x="192" y="404" text-anchor="middle" fill="#a78bfa" font-size="9" opacity=".85">Early Stopping</text>
+
+                <!-- LEAVES: Transfer Learning -->
+                <rect x="748" y="262" width="96" height="22" rx="5" fill="#180908" stroke="#ff5e57" stroke-width=".8" opacity=".7"/>
+                <text x="796" y="276" text-anchor="middle" fill="#ff5e57" font-size="9" opacity=".85">EfficientNetB0</text>
+
+                <rect x="752" y="350" width="72" height="22" rx="5" fill="#180908" stroke="#ff5e57" stroke-width=".8" opacity=".7"/>
+                <text x="788" y="364" text-anchor="middle" fill="#ff5e57" font-size="9" opacity=".85">CIFAR-10</text>
+
+                <rect x="604" y="406" width="116" height="22" rx="5" fill="#180908" stroke="#ff5e57" stroke-width=".8" opacity=".7"/>
+                <text x="662" y="420" text-anchor="middle" fill="#ff5e57" font-size="9" opacity=".85">Feature Extraction</text>
+
+            </svg>
         </div>
-    </main>
+    </section>
+
+<!-- ARTICLES -->
+    <section class="art-section" id="articles">
+        <div class="art-header">
+            <div>
+                <div class="section-eye">Published</div>
+                <div class="section-h">Articles</div>
+            </div>
+            <div class="art-count">04 articles</div>
+        </div>
+
+        <div class="art-grid">
+
+            <a href="articles/activation-functions.html" class="card u u1">
+                <div class="card-num">01 —</div>
+                <span class="card-tag t-nn">Neural Networks</span>
+                <h3>Activation Functions</h3>
+                <p>The non-linear ingredient that makes deep learning possible. ReLU, Sigmoid, Tanh, Softmax — what they do, when to use them, and why the choice matters.</p>
+                <div class="card-foot">
+                    <span class="card-time">10 min read</span>
+                    <div class="card-arr">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
+                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="articles/optimization-techniques.html" class="card u u2">
+                <div class="card-num">02 —</div>
+                <span class="card-tag t-tr">Training</span>
+                <h3>Optimization Techniques</h3>
+                <p>Feature scaling, batch normalization, mini-batch GD, momentum, RMSProp, Adam, and learning rate decay — from first principles to production practice.</p>
+                <div class="card-foot">
+                    <span class="card-time">12 min read</span>
+                    <div class="card-arr">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
+                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="articles/regularization-techniques.html" class="card u u3">
+                <div class="card-num">03 —</div>
+                <span class="card-tag t-gen">Generalization</span>
+                <h3>Regularization Techniques</h3>
+                <p>Stop your network from memorizing noise. L1, L2, Dropout, Data Augmentation, and Early Stopping — how each works and when to combine them.</p>
+                <div class="card-foot">
+                    <span class="card-time">13 min read</span>
+                    <div class="card-arr">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
+                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </a>
+
+            <a href="articles/cifar10-transfer-learning.html" class="card u u4">
+                <div class="card-num">04 —</div>
+                <span class="card-tag t-cv">Computer Vision</span>
+                <h3>Transfer Learning for CIFAR-10</h3>
+                <p>A frozen EfficientNetB0 backbone reaching 87–89% accuracy in under 3 minutes. Feature caching, the resolution mismatch problem, and classifier head design.</p>
+                <div class="card-foot">
+                    <span class="card-time">15 min read</span>
+                    <div class="card-arr">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
+                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+    </section>
 
     <!-- Author Section -->
     <section class="author-section">
@@ -411,32 +656,27 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer>
-        <p>© 2026 AI/ML Learning Blog | Built with ❤️ using HTML, CSS & JavaScript</p>
-        <p>Hosted on <strong>GitHub Pages</strong></p>
+        <p>© 2026 AI/ML Learning Blog</p>
+        <p>Hosted on <a href="https://github.com/egigj-dev/my-blog" target="_blank">GitHub Pages</a></p>
     </footer>
 
-    <!-- Dark Mode Script -->
     <script>
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        const btn  = document.getElementById('themeBtn');
+        const ico  = document.getElementById('themeIco');
+        const MOON = "M7.5 1.5A6 6 0 1012.5 13 4.5 4.5 0 017.5 1.5z";
+        const SUN  = "M7.5 1v1M7.5 13v1M1 7.5H0M15 7.5h-1M3.05 3.05l-.7-.7M12.65 12.65l-.7-.7M3.05 11.95l-.7.7M12.65 2.35l-.7.7M7.5 4.5a3 3 0 100 6 3 3 0 000-6z";
 
-        // Apply saved dark mode preference
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
-            if (darkModeToggle) darkModeToggle.textContent = '🌙';
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light');
+            ico.setAttribute('d', MOON);
         }
 
-        // Toggle dark mode on button click
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                const isNowDark = document.body.classList.contains('dark-mode');
-                localStorage.setItem('darkMode', isNowDark);
-                darkModeToggle.textContent = isNowDark ? '🌙' : '☀️';
-            });
-        }
+        btn.addEventListener('click', () => {
+            const light = document.body.classList.toggle('light');
+            ico.setAttribute('d', light ? MOON : SUN);
+            localStorage.setItem('theme', light ? 'light' : 'dark');
+        });
     </script>
 </body>
 </html>
