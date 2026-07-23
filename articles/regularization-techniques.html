@@ -12,6 +12,8 @@
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -325,6 +327,28 @@
             background: rgba(52, 152, 219, 0.1);
             border-left-color: #3498db;
         }
+
+        /* --- rg component --- */
+        .rg { margin: 2.5rem 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .rg-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-bottom: 1px solid var(--border); }
+        .rg-chip { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; font-family: inherit; font-size: .78rem; padding: .3rem .75rem; border-radius: 5px; opacity: .55; transition: opacity .2s, color .2s, border-color .2s; }
+        .rg-chip.on { opacity: 1; color: var(--accent); border-color: var(--accent); }
+        .rg-panels { display: grid; grid-template-columns: 1fr 1fr; }
+        .rg-pane { position: relative; height: 340px; }
+        .rg-pane + .rg-pane { border-left: 1px solid var(--border); }
+        .rg-pane svg { display: block; width: 100%; height: 100%; }
+        .rg-tag { position: absolute; top: 10px; left: 14px; font-size: .68rem; letter-spacing: .09em; text-transform: uppercase; color: var(--text-secondary); opacity: .75; pointer-events: none; }
+        .rg-readout { padding: .55rem 1.1rem; border-top: 1px solid var(--border); font-size: .78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+        .rg-readout b { color: var(--text-primary); }
+        .rg-sep { opacity: .35; margin: 0 .5rem; }
+        .rg-dim { opacity: .7; }
+        .rg-note { padding: .85rem 1.1rem; border-top: 1px solid var(--border); font-size: .8rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        .rg-note strong { color: var(--text-primary); }
+        .rg-range { display: flex; align-items: center; gap: .55rem; font-size: .78rem; color: var(--text-secondary); }
+        .rg-range input { accent-color: var(--accent); width: 130px; }
+        .rg-range > span:last-child { color: var(--text-primary); min-width: 2.4em; font-variant-numeric: tabular-nums; }
+        @media (max-width: 760px) { .rg-panels { grid-template-columns: 1fr; } .rg-pane + .rg-pane { border-left: none; border-top: 1px solid var(--border); } .rg-pane { height: 290px; } }
+
     </style>
 </head>
 <body>
@@ -479,6 +503,25 @@
                         <li>Must disable during testing</li>
                     </ul>
                 </div>
+            </div>
+
+            <div class="rg" id="rg">
+                <div class="rg-bar">
+                    <div class="rg-modes" id="rg-modes" style="display:flex;gap:.4rem;flex-wrap:wrap"></div>
+                    <label class="rg-range"><span id="rg-lamlabel">Lambda</span>
+                        <input type="range" id="rg-lam" min="0" max="2" step="0.01" aria-label="Regularization strength">
+                        <span id="rg-lamv"></span>
+                    </label>
+                </div>
+                <div class="rg-panels">
+                    <div class="rg-pane"><div class="rg-tag">Constraint geometry</div><svg id="rg-geo" aria-label="Loss contours against L1 and L2 constraint regions"></svg></div>
+                    <div class="rg-pane"><div class="rg-tag">Subnetwork</div><svg id="rg-net" aria-label="Network weights under the active regularizer"></svg></div>
+                </div>
+                <div class="rg-readout" id="rg-geonote"></div>
+                <div class="rg-readout" id="rg-netnote"></div>
+                <p class="rg-note"><strong>The setup is illustrative</strong> &mdash; a synthetic two-parameter quadratic loss, because constraint geometry is only visible in two dimensions.
+                <strong>The solutions are computed.</strong> The L2 point is the closed-form ridge estimate; the L1 point comes from proximal gradient descent with soft-thresholding, the same operator that produces sparsity in real training.
+                Raise lambda and watch the L1 solution slide along the diamond until it snaps onto an axis &mdash; that coordinate becomes <em>exactly</em> zero. The L2 solution shrinks toward the origin but never reaches an axis at any finite lambda. That one difference is why L1 selects features while L2 only damps them.</p>
             </div>
 
             <h2>Data Augmentation</h2>
@@ -754,5 +797,7 @@
             }
         });
     </script>
+    <script src="../assets/viz-core.js"></script>
+    <script src="../assets/regularization-geometry.js"></script>
 </body>
 </html>
