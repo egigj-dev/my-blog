@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI/ML Blog - Neural Networks & Deep Learning</title>
+    <title>AI/ML Blog — Neural Networks & Deep Learning</title>
     <meta name="description" content="Deep learning fundamentals blog exploring neural networks, activation functions, optimization techniques, and regularization — with interactive visualizations and real-world examples.">
-    <meta property="og:title" content="AI/ML Learning Blog - Neural Networks & Deep Learning">
-    <meta property="og:description" content="Deep learning fundamentals blog exploring neural networks, activation functions, optimization techniques, and regularization — with interactive visualizations and real-world examples.">
+    <meta property="og:title" content="AI/ML Learning Blog — Neural Networks & Deep Learning">
+    <meta property="og:description" content="Deep learning fundamentals blog exploring neural networks, activation functions, optimization techniques, and regularization.">
     <meta property="og:url" content="https://egigj-dev.github.io/my-blog/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
@@ -18,17 +18,16 @@
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg:        #07111e;
-            --bg-card:   #0c1928;
-            --line:      rgba(255,255,255,0.07);
-            --accent:    #00d4b8;
-            --gold:      #f0a500;
-            --violet:    #a78bfa;
-            --danger:    #ff5e57;
-            --text:      #d6e8f2;
-            --text-2:    #6b8fa8;
-            --text-3:    #3a5570;
-            --border:    rgba(0,212,184,0.18);
+            --bg:      #07111e;
+            --bg-card: #0c1928;
+            --line:    rgba(255,255,255,0.07);
+            --accent:  #00d4b8;
+            --gold:    #f0a500;
+            --violet:  #a78bfa;
+            --danger:  #ff5e57;
+            --text:    #d6e8f2;
+            --text-2:  #6b8fa8;
+            --text-3:  #3a5570;
         }
 
         html { scroll-behavior: smooth; }
@@ -49,325 +48,237 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
         }
 
-        .blob {
-            position: fixed; border-radius: 50%;
-            filter: blur(130px); pointer-events: none; z-index: 0;
-        }
-        .blob-1 { width:520px;height:520px;background:rgba(0,212,184,.06);top:-180px;left:-130px; }
-        .blob-2 { width:420px;height:420px;background:rgba(240,165,0,.04);bottom:60px;right:-100px; }
+        .blob { position: fixed; border-radius: 50%; filter: blur(130px); pointer-events: none; z-index: 0; }
+        .blob-1 { width:520px; height:520px; background:rgba(0,212,184,.06); top:-180px; left:-130px; }
+        .blob-2 { width:420px; height:420px; background:rgba(240,165,0,.04); bottom:60px; right:-100px; }
 
         /* NAV */
         nav {
             position: sticky; top: 0; z-index: 100;
             background: rgba(7,17,30,0.88);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--line);
             padding: 0 2.5rem;
-            display: flex; align-items: center;
-            justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between;
             height: 64px;
         }
-
-        .nav-logo { display:flex;align-items:center;gap:11px;text-decoration:none; }
+        .nav-logo { display:flex; align-items:center; gap:11px; text-decoration:none; }
         .logo-mark {
-            width:36px;height:36px;flex-shrink:0;
-            border:1.5px solid var(--accent);
-            border-radius:8px;
-            display:flex;align-items:center;justify-content:center;
+            width:36px; height:36px; flex-shrink:0;
+            border:1.5px solid var(--accent); border-radius:8px;
+            display:flex; align-items:center; justify-content:center;
             background: rgba(0,212,184,0.06);
         }
-        .logo-mark svg { width:19px;height:19px; }
-        .logo-text {
-            font-weight:800;font-size:0.92rem;
-            letter-spacing:0.04em;color:var(--text);
-        }
+        .logo-mark svg { width:19px; height:19px; }
+        .logo-text { font-weight:800; font-size:0.92rem; letter-spacing:0.04em; color:var(--text); }
         .logo-text span { color:var(--accent); }
-
-        .nav-links { display:flex;align-items:center;gap:2px;list-style:none; }
+        .nav-links { display:flex; align-items:center; gap:2px; list-style:none; }
         .nav-links a {
-            color:var(--text-2);text-decoration:none;
-            font-size:0.82rem;font-weight:600;
-            letter-spacing:0.06em;text-transform:uppercase;
-            padding:0.45rem 0.85rem;border-radius:6px;
-            transition:color .2s,background .2s;
+            color:var(--text-2); text-decoration:none;
+            font-size:0.82rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase;
+            padding:0.45rem 0.85rem; border-radius:6px;
+            transition:color .2s, background .2s;
         }
-        .nav-links a:hover { color:var(--text);background:rgba(255,255,255,.05); }
+        .nav-links a:hover { color:var(--text); background:rgba(255,255,255,.05); }
         .nav-links a.active { color:var(--accent); }
-
         .theme-btn {
-            background:none;border:1px solid var(--line);
-            color:var(--text-2);width:34px;height:34px;
-            border-radius:7px;cursor:pointer;
-            display:flex;align-items:center;justify-content:center;
-            transition:border-color .2s,color .2s;
+            background:none; border:1px solid var(--line); color:var(--text-2);
+            width:34px; height:34px; border-radius:7px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            transition:border-color .2s, color .2s;
         }
-        .theme-btn:hover { border-color:var(--accent);color:var(--accent); }
+        .theme-btn:hover { border-color:var(--accent); color:var(--accent); }
 
-        /* HEADER */
-        header {
-            position:relative;z-index:1;
-            padding:7rem 2.5rem 5.5rem;
-            text-align:center;
-            border-bottom:1px solid var(--line);
+        /* HERO */
+        .hero {
+            position:relative; z-index:1;
+            max-width:1160px; margin:0 auto; width:100%;
+            padding:5.5rem 2.5rem 4rem;
+            display:grid; grid-template-columns:1.05fr 0.95fr; gap:2.5rem; align-items:center;
         }
-
+        .hero-copy { max-width:560px; }
         .header-pill {
-            display:inline-flex;align-items:center;gap:8px;
-            font-family:'JetBrains Mono',monospace;
-            font-size:0.7rem;font-weight:500;
-            letter-spacing:0.13em;text-transform:uppercase;
-            color:var(--accent);
-            background:rgba(0,212,184,.08);
-            border:1px solid rgba(0,212,184,.2);
-            padding:.32rem .9rem;border-radius:20px;
-            margin-bottom:2rem;
+            display:inline-flex; align-items:center; gap:8px;
+            font-family:'JetBrains Mono',monospace; font-size:0.7rem; font-weight:500;
+            letter-spacing:0.13em; text-transform:uppercase; color:var(--accent);
+            background:rgba(0,212,184,.08); border:1px solid rgba(0,212,184,.2);
+            padding:.32rem .9rem; border-radius:20px; margin-bottom:1.8rem;
         }
         .header-pill::before {
-            content:'';width:5px;height:5px;border-radius:50%;
-            background:var(--accent);
+            content:''; width:5px; height:5px; border-radius:50%; background:var(--accent);
             animation:blink 2.2s ease-in-out infinite;
         }
-
-        header h1 {
-            font-family:'Lora',serif;
-            font-weight:500;
-            font-size:clamp(2.2rem,4.8vw,4rem);
-            line-height:1.18;letter-spacing:-.025em;
-            color:#ecf4f9;
-            max-width:700px;margin:0 auto 1.4rem;
+        .hero h1 {
+            font-family:'Lora',serif; font-weight:500;
+            font-size:clamp(2.2rem,4.4vw,3.6rem); line-height:1.15; letter-spacing:-.025em;
+            color:#ecf4f9; margin-bottom:1.3rem;
         }
-        header h1 em { font-style:italic;color:var(--accent); }
-
-        header p {
-            font-size:1rem;font-weight:400;
-            color:var(--text-2);line-height:1.75;
-            max-width:520px;margin:0 auto;
+        .hero h1 em { font-style:italic; color:var(--accent); }
+        .hero p {
+            font-size:1rem; font-weight:400; color:var(--text-2); line-height:1.75;
+            max-width:460px; margin-bottom:2rem;
         }
+        .hero-cta { display:flex; gap:.9rem; flex-wrap:wrap; }
+        .btn {
+            display:inline-flex; align-items:center; gap:.5rem;
+            font-family:'Syne',sans-serif; font-weight:600; font-size:.85rem;
+            padding:.7rem 1.3rem; border-radius:8px; text-decoration:none; cursor:pointer;
+            transition:transform .2s, background .2s, border-color .2s, color .2s;
+        }
+        .btn-primary { background:var(--accent); color:#04121b; border:1px solid var(--accent); }
+        .btn-primary:hover { transform:translateY(-2px); background:#12e4c8; }
+        .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--line); }
+        .btn-ghost:hover { transform:translateY(-2px); border-color:var(--accent); color:var(--accent); }
+        .hero-vis { width:100%; }
+        .hero-vis svg { width:100%; height:auto; display:block; }
 
-        /* SECTIONS */
+        /* SECTION HEADINGS */
         .section-eye {
-            font-family:'JetBrains Mono',monospace;
-            font-size:0.69rem;font-weight:500;
-            letter-spacing:0.14em;text-transform:uppercase;
-            color:var(--text-3);margin-bottom:.5rem;
+            font-family:'JetBrains Mono',monospace; font-size:0.69rem; font-weight:500;
+            letter-spacing:0.14em; text-transform:uppercase; color:var(--text-3); margin-bottom:.5rem;
         }
         .section-h {
-            font-family:'Lora',serif;
-            font-size:clamp(1.4rem,2.8vw,2rem);
-            font-weight:500;letter-spacing:-.015em;
-            color:#ecf4f9;margin-bottom:.4rem;
+            font-family:'Lora',serif; font-size:clamp(1.4rem,2.8vw,2rem);
+            font-weight:500; letter-spacing:-.015em; color:#ecf4f9; margin-bottom:.4rem;
         }
-        .section-sub { font-size:.87rem;color:var(--text-2); }
+        .section-sub { font-size:.87rem; color:var(--text-2); }
 
-        /* MIND MAP */
-        .mm-section {
-            position:relative;z-index:1;
-            padding:5rem 2.5rem;
-            border-bottom:1px solid var(--line);
+        /* TOPICS GRAPH (signature) */
+        .topics-section { position:relative; z-index:1; max-width:1160px; margin:0 auto; width:100%; padding:2rem 2.5rem 3.5rem; }
+        .topics-head { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem; margin-bottom:1.6rem; }
+        .graph-toggle { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+        .graph-toggle button {
+            background:transparent; color:var(--text-2); border:none; cursor:pointer;
+            font-family:'JetBrains Mono',monospace; font-size:.72rem; letter-spacing:.04em;
+            padding:.5rem 1rem; transition:background .2s, color .2s;
         }
-        .mm-wrap {
-            width:100%;max-width:880px;margin:2.5rem auto 0;
-            background:var(--bg-card);
-            border:1px solid var(--line);
-            border-radius:16px;overflow:hidden;
+        .graph-toggle button.active { background:rgba(0,212,184,.12); color:var(--accent); }
+        .graph-wrap {
+            background:radial-gradient(circle at 50% 45%, #0e1e30 0%, var(--bg-card) 70%);
+            border:1px solid var(--line); border-radius:16px; overflow:hidden; position:relative;
         }
-        .mm-wrap svg { width:100%;height:auto;display:block; }
-        .mm-node { cursor:pointer; }
-        .mm-node rect, .mm-node ellipse { transition:opacity .18s; }
-        .mm-node:hover rect, .mm-node:hover ellipse { opacity:.82; }
+        #topic-graph { width:100%; height:auto; display:block; cursor:grab; }
+        .graph-hint {
+            position:absolute; bottom:12px; left:16px;
+            font-family:'JetBrains Mono',monospace; font-size:.66rem; color:var(--text-3);
+            pointer-events:none;
+        }
+
+        /* FEATURED */
+        .featured-section { position:relative; z-index:1; max-width:1160px; margin:0 auto; width:100%; padding:0 2.5rem 1rem; }
+        .featured {
+            background:var(--bg-card); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+            display:grid; grid-template-columns:1fr 0.9fr; align-items:center;
+            text-decoration:none; color:inherit;
+            transition:border-color .25s, box-shadow .25s;
+        }
+        .featured:hover { border-color:rgba(0,212,184,.22); box-shadow:0 18px 55px rgba(0,0,0,.4); }
+        .featured-copy { padding:2.4rem; }
+        .featured-copy h3 { font-family:'Lora',serif; font-size:1.5rem; font-weight:500; color:#eaf4fa; margin:.6rem 0 .7rem; letter-spacing:-.01em; }
+        .featured-copy p { font-size:.9rem; color:var(--text-2); line-height:1.7; max-width:420px; }
+        .featured-meta { margin-top:1.4rem; font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--text-3); letter-spacing:.05em; }
+        .featured-vis { align-self:stretch; min-height:200px; }
+        .featured-vis svg { width:100%; height:100%; display:block; }
 
         /* ARTICLES */
-        .art-section {
-            position:relative;z-index:1;
-            padding:5rem 2.5rem 6rem;
-            max-width:1160px;margin:0 auto;width:100%;
-        }
-        .art-header {
-            display:flex;align-items:flex-end;
-            justify-content:space-between;
-            margin-bottom:2.8rem;
-            flex-wrap:wrap;gap:1rem;
-        }
-        .art-count {
-            font-family:'JetBrains Mono',monospace;
-            font-size:.69rem;color:var(--text-3);letter-spacing:.06em;
-        }
-        .art-grid {
-            display:grid;
-            grid-template-columns:repeat(auto-fill,minmax(295px,1fr));
-            gap:1.4rem;
-        }
+        .art-section { position:relative; z-index:1; padding:2rem 2.5rem 5rem; max-width:1160px; margin:0 auto; width:100%; }
+        .art-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:2.2rem; flex-wrap:wrap; gap:1rem; }
+        .art-all { font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--accent); text-decoration:none; letter-spacing:.04em; }
+        .art-all:hover { text-decoration:underline; }
+        .art-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1.4rem; }
 
-        /* CARD */
         .card {
-            background:var(--bg-card);
-            border:1px solid var(--line);
-            border-radius:13px;
-            padding:1.9rem;
-            text-decoration:none;color:inherit;
-            display:flex;flex-direction:column;
-            position:relative;overflow:hidden;
-            transition:border-color .25s,transform .25s,box-shadow .25s;
+            background:var(--bg-card); border:1px solid var(--line); border-radius:13px;
+            text-decoration:none; color:inherit; display:flex; flex-direction:column;
+            position:relative; overflow:hidden;
+            transition:border-color .25s, transform .25s, box-shadow .25s;
         }
-        .card::after {
-            content:'';position:absolute;inset:0;
-            background:linear-gradient(135deg,rgba(0,212,184,.04) 0%,transparent 55%);
-            opacity:0;transition:opacity .3s;pointer-events:none;
-        }
-        .card:hover {
-            border-color:rgba(0,212,184,.22);
-            transform:translateY(-5px);
-            box-shadow:0 18px 55px rgba(0,0,0,.45), 0 0 0 1px rgba(0,212,184,.08);
-        }
-        .card:hover::after { opacity:1; }
-
-        .card-num {
-            font-family:'JetBrains Mono',monospace;
-            font-size:.66rem;font-weight:500;
-            color:var(--text-3);letter-spacing:.08em;
-            margin-bottom:1.1rem;
-        }
+        .card:hover { border-color:rgba(0,212,184,.22); transform:translateY(-5px); box-shadow:0 18px 55px rgba(0,0,0,.45); }
+        .card-viz { height:132px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.012); }
+        .card-viz svg { width:100%; height:100%; display:block; }
+        .card-body { padding:1.5rem 1.6rem 1.6rem; display:flex; flex-direction:column; flex:1; }
         .card-tag {
-            display:inline-block;
-            font-family:'JetBrains Mono',monospace;
-            font-size:.63rem;font-weight:500;
-            letter-spacing:.1em;text-transform:uppercase;
-            padding:.22rem .65rem;border-radius:4px;
-            margin-bottom:.9rem;
+            display:inline-block; align-self:flex-start;
+            font-family:'JetBrains Mono',monospace; font-size:.63rem; font-weight:500;
+            letter-spacing:.1em; text-transform:uppercase;
+            padding:.22rem .65rem; border-radius:4px; margin-bottom:.85rem;
         }
-        .t-nn  { background:rgba(0,212,184,.1); color:var(--accent); }
-        .t-tr  { background:rgba(240,165,0,.1);  color:var(--gold); }
-        .t-gen { background:rgba(167,139,250,.1);color:var(--violet); }
-        .t-cv  { background:rgba(255,94,87,.1);  color:var(--danger); }
-
-        .card h3 {
-            font-size:1.2rem;font-weight:700;
-            line-height:1.3;letter-spacing:-.01em;
-            color:#dceef7;margin-bottom:.75rem;
-        }
-        .card p {
-            font-size:.86rem;line-height:1.68;
-            color:var(--text-2);flex:1;
-        }
-        .card-foot {
-            display:flex;align-items:center;
-            justify-content:space-between;
-            margin-top:1.5rem;padding-top:1.1rem;
-            border-top:1px solid var(--line);
-        }
-        .card-time {
-            font-family:'JetBrains Mono',monospace;
-            font-size:.69rem;color:var(--text-3);
-        }
+        .t-nn { background:rgba(0,212,184,.1); color:var(--accent); }
+        .t-tr { background:rgba(240,165,0,.1); color:var(--gold); }
+        .t-cv { background:rgba(167,139,250,.1); color:var(--violet); }
+        .card h3 { font-size:1.15rem; font-weight:700; line-height:1.3; letter-spacing:-.01em; color:#dceef7; margin-bottom:.6rem; }
+        .card p { font-size:.85rem; line-height:1.65; color:var(--text-2); flex:1; }
+        .card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:1.4rem; padding-top:1rem; border-top:1px solid var(--line); }
+        .card-time { font-family:'JetBrains Mono',monospace; font-size:.69rem; color:var(--text-3); }
         .card-arr {
-            width:26px;height:26px;
-            border:1px solid var(--text-3);border-radius:50%;
-            display:flex;align-items:center;justify-content:center;
-            color:var(--text-3);
-            transition:border-color .2s,color .2s,transform .2s;
+            width:26px; height:26px; border:1px solid var(--text-3); border-radius:50%;
+            display:flex; align-items:center; justify-content:center; color:var(--text-3);
+            transition:border-color .2s, color .2s, transform .2s;
         }
-        .card:hover .card-arr {
-            border-color:var(--accent);color:var(--accent);
-            transform:rotate(45deg);
-        }
+        .card:hover .card-arr { border-color:var(--accent); color:var(--accent); transform:rotate(45deg); }
 
-/* AUTHOR SECTION */
-        .author-section {
-            max-width: 500px;
-            margin: 0 auto 3rem;
-            background: var(--bg-card);
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
+        /* NEWSLETTER */
+        .news-section { position:relative; z-index:1; max-width:1160px; margin:0 auto 4rem; width:100%; padding:0 2.5rem; }
+        .news {
+            background:var(--bg-card); border:1px solid var(--line); border-radius:16px;
+            padding:2.6rem; display:flex; align-items:center; justify-content:space-between; gap:2rem; flex-wrap:wrap;
         }
-        .author-avatar {
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; font-weight: 700;
-            margin: 0 auto 1rem;
+        .news h3 { font-family:'Lora',serif; font-size:1.5rem; font-weight:500; color:#eaf4fa; margin-bottom:.4rem; }
+        .news p { font-size:.88rem; color:var(--text-2); max-width:360px; }
+        .news-form { display:flex; gap:.6rem; flex-wrap:wrap; }
+        .news-form input {
+            background:var(--bg); border:1px solid var(--line); border-radius:8px;
+            padding:.7rem 1rem; color:var(--text); font-family:'Syne',sans-serif; font-size:.85rem; min-width:220px;
         }
-        .author-section h3 {
-            font-size: 1.4rem;
-            color: var(--text);
-            margin-bottom: 0.3rem;
-        }
-        .author-section .role {
-            color: var(--text-2);
-            font-size: 0.95rem;
-            margin-bottom: 0.3rem;
-        }
-        .author-section .location {
-            color: var(--text-2);
-            font-size: 0.85rem;
-            margin-bottom: 1.2rem;
-        }
-        .author-links {
-            display: flex;
-            justify-content: center;
-            gap: 1.2rem;
-            flex-wrap: wrap;
-        }
-        .author-links a {
-            color: var(--accent);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: opacity 0.2s ease;
-        }
-        .author-links a:hover { opacity: 0.7; }
+        .news-form input:focus { outline:none; border-color:var(--accent); }
+
+        /* AUTHOR */
+        .author-section { max-width:500px; margin:0 auto 3rem; background:var(--bg-card); border:1px solid var(--line); border-radius:12px; padding:2rem; text-align:center; position:relative; z-index:1; }
+        .author-avatar { width:80px; height:80px; border-radius:50%; background:var(--accent); color:#04121b; display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:700; margin:0 auto 1rem; }
+        .author-section h3 { font-size:1.35rem; color:var(--text); margin-bottom:.3rem; }
+        .author-section .role { color:var(--text-2); font-size:.92rem; margin-bottom:.3rem; }
+        .author-section .location { color:var(--text-2); font-size:.83rem; margin-bottom:1.2rem; display:flex; align-items:center; justify-content:center; gap:.35rem; }
+        .author-links { display:flex; justify-content:center; gap:1.2rem; flex-wrap:wrap; }
+        .author-links a { color:var(--accent); text-decoration:none; font-size:.88rem; font-weight:600; transition:opacity .2s; }
+        .author-links a:hover { opacity:.7; }
 
         /* FOOTER */
         footer {
-            position:relative;z-index:1;margin-top:auto;
-            border-top:1px solid var(--line);
-            padding:1.6rem 2.5rem;
-            display:flex;align-items:center;
-            justify-content:space-between;
-            gap:1rem;flex-wrap:wrap;
+            position:relative; z-index:1; margin-top:auto;
+            border-top:1px solid var(--line); padding:1.6rem 2.5rem;
+            display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
         }
-        footer p {
-            font-size:.78rem;color:var(--text-3);
-            font-family:'JetBrains Mono',monospace;
-        }
-        footer a { color:var(--accent);text-decoration:none; }
+        footer p { font-size:.78rem; color:var(--text-3); font-family:'JetBrains Mono',monospace; }
+        footer a { color:var(--accent); text-decoration:none; }
         footer a:hover { text-decoration:underline; }
 
         /* LIGHT MODE */
-        body.light {
-            --bg:#f2f6fb;--bg-card:#ffffff;
-            --line:rgba(0,0,0,.08);
-            --text:#1a2a38;--text-2:#4a6072;--text-3:#8fa5b5;
-            --border:rgba(0,152,140,.3);
-        }
-        body.light header h1,
-        body.light .section-h { color:#1a2a38; }
-        body.light .card h3 { color:#1a2a38; }
+        body.light { --bg:#f2f6fb; --bg-card:#ffffff; --line:rgba(0,0,0,.08); --text:#1a2a38; --text-2:#4a6072; --text-3:#8fa5b5; }
+        body.light .hero h1, body.light .section-h, body.light .card h3,
+        body.light .featured-copy h3, body.light .news h3 { color:#1a2a38; }
+        body.light .btn-primary { color:#ffffff; }
+        body.light .graph-wrap { background:radial-gradient(circle at 50% 45%, #eef4fb 0%, #ffffff 70%); }
 
-        /* ANIMATIONS */
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
-        @keyframes up {
-            from { opacity:0;transform:translateY(22px); }
-            to   { opacity:1;transform:translateY(0); }
-        }
-        .u  { animation:up .7s ease both; }
-        .u1 { animation-delay:.08s; }
-        .u2 { animation-delay:.18s; }
-        .u3 { animation-delay:.28s; }
-        .u4 { animation-delay:.38s; }
-        .u5 { animation-delay:.48s; }
 
         /* RESPONSIVE */
+        @media(max-width:820px){
+            .hero { grid-template-columns:1fr; padding-top:3.5rem; }
+            .hero-vis { max-width:420px; }
+            .featured { grid-template-columns:1fr; }
+            .featured-vis { min-height:150px; order:-1; }
+        }
         @media(max-width:680px){
-            nav{padding:0 1.2rem;}
-            header{padding:4rem 1.2rem 3rem;}
-            .mm-section,.art-section{padding-left:1.2rem;padding-right:1.2rem;}
-            .art-grid{grid-template-columns:1fr;}
-            footer{flex-direction:column;align-items:flex-start;}
+            nav{ padding:0 1.2rem; }
+            .nav-links a{ padding:.4rem .55rem; }
+            .hero,.featured-section,.topics-section,.art-section,.news-section{ padding-left:1.2rem; padding-right:1.2rem; }
+            .art-grid{ grid-template-columns:1fr; }
+            .news{ flex-direction:column; align-items:flex-start; }
+            footer{ flex-direction:column; align-items:flex-start; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation:none !important; transition:none !important; }
+            html { scroll-behavior:auto; }
         }
     </style>
 </head>
@@ -379,344 +290,637 @@
     <nav>
         <a href="index.html" class="nav-logo">
             <div class="logo-mark">
-                <!--
-                    LOGO PLACEHOLDER
-                    Replace the SVG below with your own mark.
-                    Recommended size: 19×19 px viewBox.
-                -->
                 <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="10" cy="10" r="2.8" fill="#00d4b8"/>
-                    <circle cx="3.2" cy="4.2"  r="1.4" fill="#00d4b8" opacity=".5"/>
+                    <circle cx="3.2" cy="4.2" r="1.4" fill="#00d4b8" opacity=".5"/>
                     <circle cx="16.8" cy="4.2" r="1.4" fill="#00d4b8" opacity=".5"/>
                     <circle cx="3.2" cy="15.8" r="1.4" fill="#00d4b8" opacity=".5"/>
                     <circle cx="16.8" cy="15.8" r="1.4" fill="#00d4b8" opacity=".5"/>
-                    <line x1="10" y1="10" x2="3.2"  y2="4.2"  stroke="#00d4b8" stroke-width="1" opacity=".35"/>
-                    <line x1="10" y1="10" x2="16.8" y2="4.2"  stroke="#00d4b8" stroke-width="1" opacity=".35"/>
-                    <line x1="10" y1="10" x2="3.2"  y2="15.8" stroke="#00d4b8" stroke-width="1" opacity=".35"/>
+                    <line x1="10" y1="10" x2="3.2" y2="4.2" stroke="#00d4b8" stroke-width="1" opacity=".35"/>
+                    <line x1="10" y1="10" x2="16.8" y2="4.2" stroke="#00d4b8" stroke-width="1" opacity=".35"/>
+                    <line x1="10" y1="10" x2="3.2" y2="15.8" stroke="#00d4b8" stroke-width="1" opacity=".35"/>
                     <line x1="10" y1="10" x2="16.8" y2="15.8" stroke="#00d4b8" stroke-width="1" opacity=".35"/>
                 </svg>
             </div>
             <span class="logo-text">AI<span>/</span>ML Blog</span>
         </a>
-
         <ul class="nav-links">
             <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="#topics">Topics</a></li>
             <li><a href="#articles">Articles</a></li>
-            <li><a href="https://github.com/egigj-dev/my-blog" target="_blank">GitHub</a></li>
+            <li><a href="https://github.com/egigj-dev/my-blog" target="_blank" rel="noopener">GitHub</a></li>
         </ul>
-
-        <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+        <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path id="themeIco"
-                    d="M7.5 1v1M7.5 13v1M1 7.5H0M15 7.5h-1M3.05 3.05l-.7-.7M12.65 12.65l-.7-.7M3.05 11.95l-.7.7M12.65 2.35l-.7.7M7.5 4.5a3 3 0 100 6 3 3 0 000-6z"
-                    stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path id="themeIco" d="M7.5 1v1M7.5 13v1M1 7.5H0M15 7.5h-1M3.05 3.05l-.7-.7M12.65 12.65l-.7-.7M3.05 11.95l-.7.7M12.65 2.35l-.7.7M7.5 4.5a3 3 0 100 6 3 3 0 000-6z"
+                      stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
             </svg>
         </button>
     </nav>
 
-    <!-- HEADER -->
-    <header>
-        <div class="header-pill u">Deep Learning · Optimization · Computer Vision · Generalization</div>
-        <h1 class="u u1">Where <em>neural networks</em><br>meet clear explanations</h1>
-        <p class="u u2">In-depth articles on deep learning foundations, training strategies,
-        and applied computer vision — built for practitioners.</p>
+    <!-- HERO -->
+    <header class="hero">
+        <div class="hero-copy">
+            <span class="header-pill" data-anim>Deep Learning · Computer Vision · Foundations</span>
+            <h1 data-anim>Where <em>neural networks</em> meet clear explanations.</h1>
+            <p data-anim>In-depth articles on deep learning foundations, optimization, and computer vision — built for practitioners who want the intuition and the math.</p>
+            <div class="hero-cta" data-anim>
+                <a href="#articles" class="btn btn-primary">
+                    Explore articles
+                    <svg width="12" height="12" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+                <a href="#topics" class="btn btn-ghost">Browse topics</a>
+            </div>
+        </div>
+        <div class="hero-vis" data-anim>
+            <svg id="constellation" viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+        </div>
     </header>
 
-    <!-- MIND MAP -->
-    <section class="mm-section" id="mindmap">
-        <div class="section-eye">Knowledge Graph</div>
-        <div class="section-h">Topics at a glance</div>
-        <p class="section-sub u u3">Click any topic node to open the article</p>
-
-        <div class="mm-wrap u u3">
-            <svg viewBox="0 0 880 480" xmlns="http://www.w3.org/2000/svg"
-                 font-family="'Syne',sans-serif">
-                <defs>
-                    <filter id="gf" x="-30%" y="-30%" width="160%" height="160%">
-                        <feGaussianBlur stdDeviation="4" result="b"/>
-                        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-                    </filter>
-                </defs>
-
-                <!-- edges: center → topics -->
-                <path d="M440,230 Q360,185 228,148" stroke="#00d4b8" stroke-width="1.5" fill="none" opacity=".3" stroke-dasharray="5 3"/>
-                <path d="M440,230 Q510,175 650,138" stroke="#f0a500"  stroke-width="1.5" fill="none" opacity=".3" stroke-dasharray="5 3"/>
-                <path d="M440,230 Q348,290 218,322" stroke="#a78bfa"  stroke-width="1.5" fill="none" opacity=".3" stroke-dasharray="5 3"/>
-                <path d="M440,230 Q522,292 660,332" stroke="#ff5e57"  stroke-width="1.5" fill="none" opacity=".3" stroke-dasharray="5 3"/>
-
-                <!-- edges: topics → leaves -->
-                <line x1="228" y1="148" x2="106" y2="100" stroke="#00d4b8" stroke-width=".9" opacity=".18"/>
-                <line x1="228" y1="148" x2="110" y2="182" stroke="#00d4b8" stroke-width=".9" opacity=".18"/>
-                <line x1="228" y1="148" x2="212" y2="66"  stroke="#00d4b8" stroke-width=".9" opacity=".18"/>
-
-                <line x1="650" y1="138" x2="768" y2="88"  stroke="#f0a500" stroke-width=".9" opacity=".18"/>
-                <line x1="650" y1="138" x2="772" y2="155" stroke="#f0a500" stroke-width=".9" opacity=".18"/>
-                <line x1="650" y1="138" x2="668" y2="54"  stroke="#f0a500" stroke-width=".9" opacity=".18"/>
-
-                <line x1="218" y1="322" x2="94"  y2="276" stroke="#a78bfa" stroke-width=".9" opacity=".18"/>
-                <line x1="218" y1="322" x2="90"  y2="358" stroke="#a78bfa" stroke-width=".9" opacity=".18"/>
-                <line x1="218" y1="322" x2="202" y2="402" stroke="#a78bfa" stroke-width=".9" opacity=".18"/>
-
-                <line x1="660" y1="332" x2="778" y2="280" stroke="#ff5e57" stroke-width=".9" opacity=".18"/>
-                <line x1="660" y1="332" x2="782" y2="365" stroke="#ff5e57" stroke-width=".9" opacity=".18"/>
-                <line x1="660" y1="332" x2="668" y2="416" stroke="#ff5e57" stroke-width=".9" opacity=".18"/>
-
-                <!-- CENTER -->
-                <g class="mm-node">
-                    <ellipse cx="440" cy="230" rx="70" ry="37"
-                             fill="#0d2035" stroke="#00d4b8" stroke-width="1.8"
-                             filter="url(#gf)"/>
-                    <text x="440" y="226" text-anchor="middle"
-                          fill="#00d4b8" font-size="12.5" font-weight="700" letter-spacing=".04em">AI / ML</text>
-                    <text x="440" y="242" text-anchor="middle"
-                          fill="#6b8fa8" font-size="9.5">Learning Blog</text>
-                </g>
-
-                <!-- TOPIC: Activation Functions -->
-                <g class="mm-node" onclick="location.href='articles/activation-functions.html'" style="cursor:pointer">
-                    <rect x="146" y="118" width="164" height="58" rx="10"
-                          fill="#081a26" stroke="#00d4b8" stroke-width="1.4"/>
-                    <text x="228" y="143" text-anchor="middle"
-                          fill="#00d4b8" font-size="11.5" font-weight="700">Activation</text>
-                    <text x="228" y="158" text-anchor="middle"
-                          fill="#00d4b8" font-size="11.5" font-weight="700">Functions</text>
-                    <text x="228" y="172" text-anchor="middle"
-                          fill="#2a4a5a" font-size="8.5" font-family="'JetBrains Mono',monospace">→ open</text>
-                </g>
-
-                <!-- TOPIC: Optimization -->
-                <g class="mm-node" onclick="location.href='articles/optimization-techniques.html'" style="cursor:pointer">
-                    <rect x="566" y="106" width="168" height="58" rx="10"
-                          fill="#130f00" stroke="#f0a500" stroke-width="1.4"/>
-                    <text x="650" y="131" text-anchor="middle"
-                          fill="#f0a500" font-size="11.5" font-weight="700">Optimization</text>
-                    <text x="650" y="146" text-anchor="middle"
-                          fill="#f0a500" font-size="11.5" font-weight="700">Techniques</text>
-                    <text x="650" y="160" text-anchor="middle"
-                          fill="#4a3800" font-size="8.5" font-family="'JetBrains Mono',monospace">→ open</text>
-                </g>
-
-                <!-- TOPIC: Regularization -->
-                <g class="mm-node" onclick="location.href='articles/regularization-techniques.html'" style="cursor:pointer">
-                    <rect x="136" y="293" width="164" height="58" rx="10"
-                          fill="#0e091c" stroke="#a78bfa" stroke-width="1.4"/>
-                    <text x="218" y="318" text-anchor="middle"
-                          fill="#a78bfa" font-size="11.5" font-weight="700">Regularization</text>
-                    <text x="218" y="333" text-anchor="middle"
-                          fill="#a78bfa" font-size="11.5" font-weight="700">Techniques</text>
-                    <text x="218" y="347" text-anchor="middle"
-                          fill="#3a2660" font-size="8.5" font-family="'JetBrains Mono',monospace">→ open</text>
-                </g>
-
-                <!-- TOPIC: Transfer Learning -->
-                <g class="mm-node" onclick="location.href='articles/cifar10-transfer-learning.html'" style="cursor:pointer">
-                    <rect x="578" y="304" width="164" height="58" rx="10"
-                          fill="#180908" stroke="#ff5e57" stroke-width="1.4"/>
-                    <text x="660" y="329" text-anchor="middle"
-                          fill="#ff5e57" font-size="11.5" font-weight="700">Transfer</text>
-                    <text x="660" y="344" text-anchor="middle"
-                          fill="#ff5e57" font-size="11.5" font-weight="700">Learning</text>
-                    <text x="660" y="358" text-anchor="middle"
-                          fill="#501a18" font-size="8.5" font-family="'JetBrains Mono',monospace">→ open</text>
-                </g>
-
-                <!-- LEAVES: Activation -->
-                <rect x="32"  y="77"  width="76" height="22" rx="5" fill="#081a26" stroke="#00d4b8" stroke-width=".8" opacity=".7"/>
-                <text x="70"  y="91"  text-anchor="middle" fill="#00d4b8" font-size="9" opacity=".85">ReLU / GELU</text>
-
-                <rect x="36"  y="164" width="80" height="22" rx="5" fill="#081a26" stroke="#00d4b8" stroke-width=".8" opacity=".7"/>
-                <text x="76"  y="178" text-anchor="middle" fill="#00d4b8" font-size="9" opacity=".85">Sigmoid / Tanh</text>
-
-                <rect x="156" y="44"  width="72" height="22" rx="5" fill="#081a26" stroke="#00d4b8" stroke-width=".8" opacity=".7"/>
-                <text x="192" y="58"  text-anchor="middle" fill="#00d4b8" font-size="9" opacity=".85">Softmax</text>
-
-                <!-- LEAVES: Optimization -->
-                <rect x="748" y="70"  width="60" height="22" rx="5" fill="#130f00" stroke="#f0a500" stroke-width=".8" opacity=".7"/>
-                <text x="778" y="84"  text-anchor="middle" fill="#f0a500" font-size="9" opacity=".85">Adam</text>
-
-                <rect x="744" y="140" width="82" height="22" rx="5" fill="#130f00" stroke="#f0a500" stroke-width=".8" opacity=".7"/>
-                <text x="785" y="154" text-anchor="middle" fill="#f0a500" font-size="9" opacity=".85">Batch Norm</text>
-
-                <rect x="634" y="32"  width="74" height="22" rx="5" fill="#130f00" stroke="#f0a500" stroke-width=".8" opacity=".7"/>
-                <text x="671" y="46"  text-anchor="middle" fill="#f0a500" font-size="9" opacity=".85">LR Decay</text>
-
-                <!-- LEAVES: Regularization -->
-                <rect x="24"  y="258" width="68" height="22" rx="5" fill="#0e091c" stroke="#a78bfa" stroke-width=".8" opacity=".7"/>
-                <text x="58"  y="272" text-anchor="middle" fill="#a78bfa" font-size="9" opacity=".85">Dropout</text>
-
-                <rect x="16"  y="342" width="72" height="22" rx="5" fill="#0e091c" stroke="#a78bfa" stroke-width=".8" opacity=".7"/>
-                <text x="52"  y="356" text-anchor="middle" fill="#a78bfa" font-size="9" opacity=".85">L1 / L2</text>
-
-                <rect x="142" y="390" width="100" height="22" rx="5" fill="#0e091c" stroke="#a78bfa" stroke-width=".8" opacity=".7"/>
-                <text x="192" y="404" text-anchor="middle" fill="#a78bfa" font-size="9" opacity=".85">Early Stopping</text>
-
-                <rect x="156" y="434" width="120" height="22" rx="5" fill="#0e091c" stroke="#a78bfa" stroke-width=".8" opacity=".7"/>
-                <text x="216" y="448" text-anchor="middle" fill="#a78bfa" font-size="9" opacity=".85">Data Augmentation</text>
-                <line x1="218" y1="322" x2="216" y2="445" stroke="#a78bfa" stroke-width=".9" opacity=".18"/>
-
-                <!-- LEAVES: Transfer Learning -->
-                <rect x="748" y="262" width="96" height="22" rx="5" fill="#180908" stroke="#ff5e57" stroke-width=".8" opacity=".7"/>
-                <text x="796" y="276" text-anchor="middle" fill="#ff5e57" font-size="9" opacity=".85">EfficientNetB0</text>
-
-                <rect x="752" y="350" width="72" height="22" rx="5" fill="#180908" stroke="#ff5e57" stroke-width=".8" opacity=".7"/>
-                <text x="788" y="364" text-anchor="middle" fill="#ff5e57" font-size="9" opacity=".85">CIFAR-10</text>
-
-                <rect x="604" y="406" width="116" height="22" rx="5" fill="#180908" stroke="#ff5e57" stroke-width=".8" opacity=".7"/>
-                <text x="662" y="420" text-anchor="middle" fill="#ff5e57" font-size="9" opacity=".85">Feature Extraction</text>
-
-                <rect x="602" y="440" width="100" height="22" rx="5" fill="#180908" stroke="#ff5e57" stroke-width=".8" opacity=".7"/>
-                <text x="652" y="454" text-anchor="middle" fill="#ff5e57" font-size="9" opacity=".85">AlexNet</text>
-                <line x1="660" y1="332" x2="652" y2="451" stroke="#ff5e57" stroke-width=".9" opacity=".18"/>
-
-            </svg>
+    <!-- TOPICS GRAPH (signature) -->
+    <section class="topics-section" id="topics" data-reveal>
+        <div class="topics-head">
+            <div>
+                <div class="section-eye">Topics at a glance</div>
+                <div class="section-h">The map of what's here</div>
+                <div class="section-sub">Hover a branch to trace it. Click any article node to open it.</div>
+            </div>
+            <div class="graph-toggle" role="tablist" aria-label="Graph layout">
+                <button id="btn-tree" class="active" role="tab">Radial tree</button>
+                <button id="btn-force" role="tab">Neural web</button>
+            </div>
+        </div>
+        <div class="graph-wrap">
+            <svg id="topic-graph" viewBox="0 0 1100 560" preserveAspectRatio="xMidYMid meet" aria-label="Topic map"></svg>
+            <div class="graph-hint" id="graph-hint">Radial tree — deterministic layout</div>
         </div>
     </section>
 
-<!-- ARTICLES -->
-    <section class="art-section" id="articles">
+    <!-- FEATURED -->
+    <section class="featured-section" data-reveal>
+        <a href="articles/activation-functions.html" class="featured">
+            <div class="featured-copy">
+                <div class="section-eye">Featured</div>
+                <h3>Understanding Activation Functions</h3>
+                <p>A visual, intuitive guide to the non-linear building blocks of every neural network — ReLU, Sigmoid, Tanh, Softmax — and why the choice matters.</p>
+                <div class="featured-meta">10 min read · Neural Networks</div>
+            </div>
+            <div class="featured-vis">
+                <svg id="featured-wave" viewBox="0 0 460 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+            </div>
+        </a>
+    </section>
+
+    <!-- ARTICLES -->
+    <section class="art-section" id="articles" data-reveal>
         <div class="art-header">
             <div>
                 <div class="section-eye">Published</div>
-                <div class="section-h">Articles</div>
+                <div class="section-h">Latest articles</div>
             </div>
-            <div class="art-count">06 articles</div>
+            <a href="#topics" class="art-all">View all topics →</a>
         </div>
 
         <div class="art-grid">
-
-            <a href="articles/activation-functions.html" class="card u u1">
-                <div class="card-num">01 —</div>
-                <span class="card-tag t-nn">Neural Networks</span>
-                <h3>Activation Functions</h3>
-                <p>The non-linear ingredient that makes deep learning possible. ReLU, Sigmoid, Tanh, Softmax — what they do, when to use them, and why the choice matters.</p>
-                <div class="card-foot">
-                    <span class="card-time">10 min read</span>
-                    <div class="card-arr">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
-                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+            <a href="articles/activation-functions.html" class="card" data-viz="gate" data-color="#00d4b8" data-seed="11">
+                <div class="card-viz"></div>
+                <div class="card-body">
+                    <span class="card-tag t-nn">Neural Networks</span>
+                    <h3>Activation Functions</h3>
+                    <p>The non-linear ingredient that makes deep learning possible. ReLU, Sigmoid, Tanh, Softmax — what they do and when to use each.</p>
+                    <div class="card-foot">
+                        <span class="card-time">10 min read</span>
+                        <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
                     </div>
                 </div>
             </a>
 
-            <a href="articles/optimization-techniques.html" class="card u u2">
-                <div class="card-num">02 —</div>
-                <span class="card-tag t-tr">Training</span>
-                <h3>Optimization Techniques</h3>
-                <p>Feature scaling, batch normalization, mini-batch GD, momentum, RMSProp, Adam, and learning rate decay — from first principles to production practice.</p>
-                <div class="card-foot">
-                    <span class="card-time">12 min read</span>
-                    <div class="card-arr">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
-                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+            <a href="articles/optimization-techniques.html" class="card" data-viz="field" data-color="#f0a500" data-seed="27">
+                <div class="card-viz"></div>
+                <div class="card-body">
+                    <span class="card-tag t-tr">Training</span>
+                    <h3>Optimization Techniques</h3>
+                    <p>Feature scaling, batch norm, momentum, RMSProp, Adam, and LR decay — from first principles to production practice.</p>
+                    <div class="card-foot">
+                        <span class="card-time">12 min read</span>
+                        <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
                     </div>
                 </div>
             </a>
 
-            <a href="articles/regularization-techniques.html" class="card u u3">
-                <div class="card-num">03 —</div>
-                <span class="card-tag t-gen">Generalization</span>
-                <h3>Regularization Techniques</h3>
-                <p>Stop your network from memorizing noise. L1, L2, Dropout, Data Augmentation, and Early Stopping — how each works and when to combine them.</p>
-                <div class="card-foot">
-                    <span class="card-time">13 min read</span>
-                    <div class="card-arr">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
-                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+            <a href="articles/regularization-techniques.html" class="card" data-viz="prune" data-color="#00d4b8" data-seed="42">
+                <div class="card-viz"></div>
+                <div class="card-body">
+                    <span class="card-tag t-nn">Generalization</span>
+                    <h3>Regularization Techniques</h3>
+                    <p>Stop your network memorizing noise. L1, L2, Dropout, and Early Stopping — how each works and when to combine them.</p>
+                    <div class="card-foot">
+                        <span class="card-time">13 min read</span>
+                        <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
                     </div>
                 </div>
             </a>
 
-            <a href="articles/cifar10-transfer-learning.html" class="card u u4">
-                <div class="card-num">04 —</div>
-                <span class="card-tag t-cv">Computer Vision</span>
-                <h3>Transfer Learning for CIFAR-10</h3>
-                <p>A frozen EfficientNetB0 backbone reaching 87–89% accuracy in under 3 minutes. Feature caching, the resolution mismatch problem, and classifier head design.</p>
-                <div class="card-foot">
-                    <span class="card-time">15 min read</span>
-                    <div class="card-arr">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
-                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+            <a href="articles/cifar10-transfer-learning.html" class="card" data-viz="transfer" data-color="#a78bfa" data-seed="8">
+                <div class="card-viz"></div>
+                <div class="card-body">
+                    <span class="card-tag t-cv">Computer Vision</span>
+                    <h3>Transfer Learning for CIFAR-10</h3>
+                    <p>A frozen EfficientNetB0 backbone at 87–89% accuracy in under 3 minutes. Feature caching and classifier-head design.</p>
+                    <div class="card-foot">
+                        <span class="card-time">15 min read</span>
+                        <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
                     </div>
                 </div>
             </a>
 
-            <a href="articles/data-augmentation.html" class="card u u5">
-                <div class="card-num">05 —</div>
-                <span class="card-tag t-gen">Generalization</span>
-                <h3>Data Augmentation</h3>
-                <p>Expand your dataset with flips, rotations, crops, color jitter, and more — covering both classical techniques and modern approaches like MixUp and CutMix.</p>
-                <div class="card-foot">
-                    <span class="card-time">11 min read</span>
-                    <div class="card-arr">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
-                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+            <a href="articles/data-augmentation.html" class="card" data-viz="sampling" data-color="#f0a500" data-seed="63">
+                <div class="card-viz"></div>
+                <div class="card-body">
+                    <span class="card-tag t-tr">Generalization</span>
+                    <h3>Data Augmentation</h3>
+                    <p>Expand your dataset with flips, crops, and color jitter — plus modern approaches like MixUp and CutMix.</p>
+                    <div class="card-foot">
+                        <span class="card-time">11 min read</span>
+                        <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
                     </div>
                 </div>
             </a>
 
-            <a href="articles/alexnet-paper.html" class="card u u6">
-                <div class="card-num">06 —</div>
-                <span class="card-tag t-cv">Computer Vision</span>
-                <h3>AlexNet Paper Walkthrough</h3>
-                <p>A deep dive into Krizhevsky et al. (2012) — the architecture that won ImageNet by a landslide and kicked off the deep learning revolution.</p>
-                <div class="card-foot">
-                    <span class="card-time">12 min read</span>
-                    <div class="card-arr">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor"
-                                  stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+            <a href="articles/alexnet-paper.html" class="card" data-viz="cascade" data-color="#a78bfa" data-seed="19">
+                <div class="card-viz"></div>
+                <div class="card-body">
+                    <span class="card-tag t-cv">Computer Vision</span>
+                    <h3>AlexNet Paper Walkthrough</h3>
+                    <p>A deep dive into Krizhevsky et al. (2012) — the architecture that won ImageNet and kicked off the deep learning era.</p>
+                    <div class="card-foot">
+                        <span class="card-time">12 min read</span>
+                        <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
                     </div>
                 </div>
             </a>
-
         </div>
     </section>
 
-    <!-- Author Section -->
-    <section class="author-section">
+    <!-- NEWSLETTER (drop-in ready; add a Formspree/Buttondown action to activate) -->
+    <section class="news-section" data-reveal>
+        <div class="news">
+            <div>
+                <div class="section-eye">Stay updated</div>
+                <h3>New articles, in your inbox</h3>
+                <p>Occasional posts on deep learning and computer vision. No spam.</p>
+            </div>
+            <!-- To activate: set action="https://formspree.io/f/XXXX" method="POST" and remove onsubmit -->
+            <form class="news-form" onsubmit="return false;">
+                <input type="email" name="email" placeholder="you@example.com" aria-label="Email address" required>
+                <button type="submit" class="btn btn-primary">Subscribe</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- AUTHOR -->
+    <section class="author-section" data-reveal>
         <div class="author-avatar">EG</div>
         <h3>Egi Gjineci</h3>
         <p class="role">AI/ML Engineer at Credins Bank</p>
-        <p class="location">📍 Tirana, Albania</p>
+        <p class="location">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1a3.2 3.2 0 00-3.2 3.2C2.8 6.8 6 11 6 11s3.2-4.2 3.2-6.8A3.2 3.2 0 006 1z" stroke="currentColor" stroke-width="1"/><circle cx="6" cy="4.2" r="1.1" stroke="currentColor" stroke-width="1"/></svg>
+            Tirana, Albania
+        </p>
         <div class="author-links">
-            <a href="https://linkedin.com/in/egigjineci" target="_blank">💼 LinkedIn</a>
-            <a href="https://github.com/egigj-dev" target="_blank">💻 GitHub</a>
-            <a href="mailto:egigj.dev@gmail.com">✉️ Email</a>
+            <a href="https://linkedin.com/in/egigjineci" target="_blank" rel="noopener">LinkedIn</a>
+            <a href="https://github.com/egigj-dev" target="_blank" rel="noopener">GitHub</a>
+            <a href="mailto:egigj.dev@gmail.com">Email</a>
         </div>
     </section>
 
     <footer>
         <p>© 2026 AI/ML Learning Blog</p>
-        <p>Hosted on <a href="https://github.com/egigj-dev/my-blog" target="_blank">GitHub Pages</a></p>
+        <p>Hosted on <a href="https://github.com/egigj-dev/my-blog" target="_blank" rel="noopener">GitHub Pages</a></p>
     </footer>
 
-    <script>
-        const btn  = document.getElementById('themeBtn');
-        const ico  = document.getElementById('themeIco');
-        const MOON = "M7.5 1.5A6 6 0 1012.5 13 4.5 4.5 0 017.5 1.5z";
-        const SUN  = "M7.5 1v1M7.5 13v1M1 7.5H0M15 7.5h-1M3.05 3.05l-.7-.7M12.65 12.65l-.7-.7M3.05 11.95l-.7.7M12.65 2.35l-.7.7M7.5 4.5a3 3 0 100 6 3 3 0 000-6z";
+    <!-- Libraries (load in browser; blocked in sandboxes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
-        if (localStorage.getItem('theme') === 'light') {
-            document.body.classList.add('light');
-            ico.setAttribute('d', MOON);
+    <script>
+    /* ======================================================================
+       DATA + HELPERS
+       - REDUCED : prefers-reduced-motion flag (kills all sims/pulses)
+       - COLORS  : named hex values reused by every D3 visual
+       - TOPICS  : topic hierarchy driving BOTH graph engines
+                   (add an article = add one leaf; layout auto-computes)
+       ====================================================================== */
+    const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const COLORS  = { accent:'#00d4b8', gold:'#f0a500', violet:'#a78bfa', danger:'#ff5e57', dim:'#3a5570' };
+
+    const TOPICS = {
+        name: 'AI / ML',
+        children: [
+            { name:'Neural Networks', color:COLORS.accent, children:[
+                { name:'Activation Functions', url:'articles/activation-functions.html' },
+                { name:'Regularization',       url:'articles/regularization-techniques.html' },
+            ]},
+            { name:'Optimization', color:COLORS.gold, children:[
+                { name:'Optimization Techniques', url:'articles/optimization-techniques.html' },
+                { name:'Data Augmentation',       url:'articles/data-augmentation.html' },
+            ]},
+            { name:'Computer Vision', color:COLORS.violet, children:[
+                { name:'Transfer Learning', url:'articles/cifar10-transfer-learning.html' },
+                { name:'AlexNet Paper',     url:'articles/alexnet-paper.html' },
+            ]},
+        ]
+    };
+
+    // Deterministic seeded RNG (mulberry32); seed:int -> ()=>float in [0,1)
+    function rng(seed){
+        return function(){
+            seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+            let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+            t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+    }
+    // Colour of a node's depth-1 ancestor (its "branch" colour)
+    function branchColor(node){ let n=node; while(n.depth>1) n=n.parent; return (n.data&&n.data.color)||COLORS.accent; }
+    // Gradient-id key for a node ('hub' for centre, else branch colour name)
+    function colorKey(hex){ return hex===COLORS.gold?'gold':hex===COLORS.violet?'violet':'accent'; }
+    function keyOf(d){ return d.depth===0?'hub':colorKey(branchColor(d)); }
+    // Node radius by depth: centre > category > article
+    function nodeR(d){ return d.depth===0?12:d.depth===1?7.5:5.5; }
+
+    /* ======================================================================
+       HERO CONSTELLATION (D3, decorative) — drifting nodes + proximity links
+       ====================================================================== */
+    function heroConstellation(){
+        const svg=d3.select('#constellation'), W=500,H=400,N=34,LINK=90, gen=rng(7);
+        const nodes=d3.range(N).map(()=>({x:gen()*W,y:gen()*H,vx:(gen()-0.5)*0.35,vy:(gen()-0.5)*0.35,r:1+gen()*2.2}));
+        const linkG=svg.append('g'), nodeG=svg.append('g');
+        const dots=nodeG.selectAll('circle').data(nodes).join('circle')
+            .attr('r',d=>d.r).attr('fill',COLORS.accent).attr('opacity',d=>0.35+d.r/6);
+        function draw(){
+            const links=[];
+            for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
+                const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,dist=Math.hypot(dx,dy);
+                if(dist<LINK) links.push({a:nodes[i],b:nodes[j],o:1-dist/LINK});
+            }
+            linkG.selectAll('line').data(links).join('line')
+                .attr('x1',d=>d.a.x).attr('y1',d=>d.a.y).attr('x2',d=>d.b.x).attr('y2',d=>d.b.y)
+                .attr('stroke',COLORS.accent).attr('stroke-width',0.6).attr('opacity',d=>d.o*0.25);
+            dots.attr('cx',d=>d.x).attr('cy',d=>d.y);
+        }
+        function tick(){ for(const p of nodes){ p.x+=p.vx;p.y+=p.vy; if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1; } draw(); }
+        draw(); if(!REDUCED) gsap.ticker.add(tick);
+    }
+
+    /* ======================================================================
+       FEATURED WAVE (D3, decorative) — layered phase-animated sine paths
+       ====================================================================== */
+    function featuredWave(){
+        const svg=d3.select('#featured-wave'), W=460,H=260, cols=[COLORS.accent,COLORS.violet,COLORS.gold];
+        const line=d3.line().x(d=>d[0]).y(d=>d[1]).curve(d3.curveBasis);
+        const paths=cols.map((c,i)=>svg.append('path').attr('fill','none').attr('stroke',c).attr('stroke-width',1.6).attr('opacity',0.55-i*0.12));
+        function build(phase){
+            paths.forEach((p,i)=>{
+                const amp=26+i*10,freq=0.022+i*0.006,yOff=H*0.5+(i-1)*24;
+                const pts=d3.range(0,W+8,8).map(x=>[x, yOff+Math.sin(x*freq+phase+i)*amp*Math.sin(x*0.006+phase*0.5)]);
+                p.attr('d',line(pts));
+            });
+        }
+        let phase=0; build(phase); if(!REDUCED) gsap.ticker.add(()=>{ phase+=0.012; build(phase); });
+    }
+
+    /* ======================================================================
+       TOPIC GRAPH — neural aesthetic, two interchangeable engines.
+       Shared bits: neuralDefs() (glow filters + gradients), drawNeuron(),
+       addLabels(). Each renderer is self-contained; to keep only one later,
+       delete its function + its toggle button.
+       ====================================================================== */
+    const GW=1100, GH=560;
+    const svgG=d3.select('#topic-graph');
+    function clearGraph(){ svgG.selectAll('*').remove(); }
+    function go(url){ if(url) window.location.href=url; }
+
+    // <defs>: node glow, soft halo glow, per-colour core gradients, bg glow
+    function neuralDefs(svg){
+        const defs=svg.append('defs');
+        const f=defs.append('filter').attr('id','glow').attr('x','-60%').attr('y','-60%').attr('width','220%').attr('height','220%');
+        f.append('feGaussianBlur').attr('stdDeviation',2.6).attr('result','b');
+        const m=f.append('feMerge'); m.append('feMergeNode').attr('in','b'); m.append('feMergeNode').attr('in','SourceGraphic');
+        defs.append('filter').attr('id','glow-soft').attr('x','-120%').attr('y','-120%').attr('width','340%').attr('height','340%')
+            .append('feGaussianBlur').attr('stdDeviation',8);
+        const cmap={hub:'#d9fff8',accent:COLORS.accent,gold:COLORS.gold,violet:COLORS.violet};
+        Object.entries(cmap).forEach(([k,c])=>{
+            const g=defs.append('radialGradient').attr('id','core-'+k);
+            g.append('stop').attr('offset','0%').attr('stop-color', k==='hub'?'#ffffff':d3.color(c).brighter(1).formatHex());
+            g.append('stop').attr('offset','50%').attr('stop-color',c);
+            g.append('stop').attr('offset','100%').attr('stop-color',c).attr('stop-opacity',0.2);
+        });
+        const bg=defs.append('radialGradient').attr('id','bg-glow');
+        bg.append('stop').attr('offset','0%').attr('stop-color',COLORS.accent).attr('stop-opacity',0.10);
+        bg.append('stop').attr('offset','70%').attr('stop-color',COLORS.accent).attr('stop-opacity',0);
+    }
+    function centerGlow(sel,cx,cy,r){ sel.append('circle').attr('cx',cx).attr('cy',cy).attr('r',r).attr('fill','url(#bg-glow)').attr('pointer-events','none'); }
+
+    // Neuron = soft halo (breathing) + gradient core (glow) + thin ring
+    function drawNeuron(node){
+        node.append('circle').attr('class','halo').attr('r',d=>nodeR(d)*2.6)
+            .attr('fill',d=>d.depth===0?COLORS.accent:branchColor(d)).attr('opacity',0.16).attr('filter','url(#glow-soft)');
+        if(!REDUCED) node.select('.halo').each(function(d,i){
+            d3.select(this).append('animate').attr('attributeName','opacity')
+              .attr('values','0.10;0.22;0.10').attr('dur',(3+(i%4)*0.7)+'s').attr('repeatCount','indefinite');
+        });
+        node.append('circle').attr('r',d=>nodeR(d)).attr('fill',d=>'url(#core-'+keyOf(d)+')').attr('filter','url(#glow)');
+        node.append('circle').attr('r',d=>nodeR(d)+2.5).attr('fill','none')
+            .attr('stroke',d=>d.depth===0?COLORS.accent:branchColor(d)).attr('stroke-opacity',0.55).attr('stroke-width',1);
+    }
+
+    // Labels with a dark halo (paint-order stroke) so they read over glow/links
+    function addLabels(node,mode){
+        node.each(function(d){
+            if(d.depth===0) return;
+            const t=d3.select(this).append('text');
+            if(mode==='tree'){
+                const flip=d.x>=Math.PI;
+                t.attr('transform',flip?'rotate(180)':null).attr('text-anchor',flip?'end':'start')
+                 .attr('x',flip?-(nodeR(d)+7):nodeR(d)+7).attr('dy','0.32em');
+            } else {
+                t.attr('x',nodeR(d)+7).attr('dy','0.32em');
+            }
+            t.text(d.data.name)
+             .attr('font-family',"'Syne',sans-serif").attr('font-weight',d.depth===1?700:600)
+             .attr('font-size',d.depth===1?13:11)
+             .attr('fill',d.depth===1?'#e6f2f8':'#8fb0c4')
+             .attr('paint-order','stroke').attr('stroke','#07111e').attr('stroke-width',3).attr('stroke-linejoin','round');
+        });
+    }
+
+    // ---- Engine A: radial tree (deterministic) ----
+    function renderTree(){
+        clearGraph(); neuralDefs(svgG);
+        const root=d3.hierarchy(TOPICS);
+        const radius=Math.min(GW,GH)/2-120;
+        d3.tree().size([2*Math.PI,radius]).separation((a,b)=>(a.parent===b.parent?1:2)/a.depth)(root);
+        const g=svgG.append('g').attr('transform','translate('+GW/2+','+GH/2+')');
+        centerGlow(g,0,0,radius*0.9);
+
+        const linkGen=d3.linkRadial().angle(d=>d.x).radius(d=>d.y);
+        const link=g.append('g').selectAll('path').data(root.links()).join('path')
+            .attr('fill','none').attr('stroke',d=>branchColor(d.target))
+            .attr('stroke-width',1.4).attr('stroke-opacity',0.32).attr('d',linkGen);
+
+        // Signal pulses travelling outward along each synapse (native SMIL)
+        if(!REDUCED){
+            const pg=g.append('g');
+            root.links().forEach((l,i)=>{
+                pg.append('circle').attr('r',2.2).attr('fill',branchColor(l.target)).attr('filter','url(#glow)').attr('opacity',0.9)
+                  .append('animateMotion').attr('dur',(2.4+(i%3)*0.6)+'s').attr('repeatCount','indefinite')
+                  .attr('begin',(i*0.35)+'s').attr('path',linkGen(l));
+            });
         }
 
-        btn.addEventListener('click', () => {
-            const light = document.body.classList.toggle('light');
-            ico.setAttribute('d', light ? MOON : SUN);
-            localStorage.setItem('theme', light ? 'light' : 'dark');
+        const node=g.append('g').selectAll('g').data(root.descendants()).join('g')
+            .attr('transform',d=>'rotate('+(d.x*180/Math.PI-90)+') translate('+d.y+',0)')
+            .style('cursor',d=>d.data.url?'pointer':'default')
+            .on('click',(e,d)=>go(d.data.url))
+            .on('mouseenter',(e,d)=>hl(d)).on('mouseleave',rst);
+        drawNeuron(node); addLabels(node,'tree');
+
+        // Centre "AI / ML" label, upright, just under the hub
+        g.append('text').attr('x',0).attr('y',nodeR(root)+22).attr('text-anchor','middle')
+         .attr('font-family',"'Lora',serif").attr('font-style','italic').attr('font-size',16).attr('fill',COLORS.accent)
+         .attr('paint-order','stroke').attr('stroke','#07111e').attr('stroke-width',3).text('AI / ML');
+
+        function hl(d){ const path=new Set(d.ancestors());
+            link.attr('stroke-opacity',l=>path.has(l.target)?0.95:0.05); node.attr('opacity',n=>path.has(n)?1:0.2); }
+        function rst(){ link.attr('stroke-opacity',0.32); node.attr('opacity',1); }
+    }
+
+    // ---- Engine B: force-directed neural web (physics, draggable) ----
+    function renderForce(){
+        clearGraph(); neuralDefs(svgG);
+        centerGlow(svgG,GW/2,GH/2,Math.min(GW,GH)/2-40);
+        const root=d3.hierarchy(TOPICS), nodes=root.descendants(), links=root.links();
+        links.forEach(l=>l.__ph=Math.random());  // pulse phase offset per synapse
+
+        const sim=d3.forceSimulation(nodes)
+            .force('link',d3.forceLink(links).distance(d=>d.target.children?120:78).strength(0.55))
+            .force('charge',d3.forceManyBody().strength(-340))
+            .force('center',d3.forceCenter(GW/2,GH/2))
+            .force('collide',d3.forceCollide(40));
+
+        const link=svgG.append('g').selectAll('path').data(links).join('path')
+            .attr('fill','none').attr('stroke',d=>branchColor(d.target)).attr('stroke-width',1.4).attr('stroke-opacity',0.34);
+
+        let pulse=null;
+        if(!REDUCED) pulse=svgG.append('g').selectAll('circle').data(links).join('circle')
+            .attr('r',2.2).attr('fill',d=>branchColor(d.target)).attr('filter','url(#glow)').attr('opacity',0.9);
+
+        const node=svgG.append('g').selectAll('g').data(nodes).join('g')
+            .style('cursor',d=>d.data.url?'pointer':'grab')
+            .on('click',(e,d)=>{ if(!e.defaultPrevented) go(d.data.url); })
+            .call(d3.drag()
+                .on('start',(e,d)=>{ if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+                .on('drag',(e,d)=>{ d.fx=e.x; d.fy=e.y; })
+                .on('end',(e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }));
+        drawNeuron(node); addLabels(node,'force');
+
+        let t=0;
+        const curve=d=>{ const mx=(d.source.x+d.target.x)/2,my=(d.source.y+d.target.y)/2,
+                               dx=d.target.x-d.source.x,dy=d.target.y-d.source.y;
+            return 'M'+d.source.x+','+d.source.y+' Q'+(mx-dy*0.12)+','+(my+dx*0.12)+' '+d.target.x+','+d.target.y; };
+        sim.on('tick',()=>{
+            link.attr('d',curve);
+            node.attr('transform',d=>'translate('+d.x+','+d.y+')');
+            if(pulse){ t+=0.006; pulse
+                .attr('cx',d=>{const p=(t+d.__ph)%1; return d.source.x+(d.target.x-d.source.x)*p;})
+                .attr('cy',d=>{const p=(t+d.__ph)%1; return d.source.y+(d.target.y-d.source.y)*p;}); }
         });
+        if(REDUCED){ sim.stop(); for(let i=0;i<320;i++) sim.tick();
+            link.attr('d',curve); node.attr('transform',d=>'translate('+d.x+','+d.y+')'); }
+    }
+
+    // Toggle wiring
+    const btnTree=document.getElementById('btn-tree'), btnForce=document.getElementById('btn-force'), hint=document.getElementById('graph-hint');
+    function setEngine(e){
+        btnTree.classList.toggle('active',e==='tree');
+        btnForce.classList.toggle('active',e==='force');
+        hint.textContent = e==='tree' ? 'Radial tree — deterministic layout' : 'Neural web — drag the neurons';
+        e==='tree' ? renderTree() : renderForce();
+    }
+    btnTree.addEventListener('click',()=>setEngine('tree'));
+    btnForce.addEventListener('click',()=>setEngine('force'));
+
+    /* ======================================================================
+       CARD THUMBNAILS (D3) — abstract, animated mathematical behaviours.
+       Each generator builds a scene and returns update(t, intensity):
+         t         = seconds since load (one shared clock)
+         intensity = 1 at rest, eases toward ~1.7 while the card is hovered
+       A single ticker drives every card; only in-view cards update
+       (IntersectionObserver). prefers-reduced-motion draws one still frame.
+       ====================================================================== */
+    const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+    const smooth=k=>{ k=clamp(k,0,1); return k*k*(3-2*k); };
+
+    // One shared soft-glow filter for all card SVGs (defined once, document-wide)
+    function cardGlobalDefs(){
+        if(document.getElementById('cardGlow')) return;
+        const s=d3.select('body').append('svg').attr('width',0).attr('height',0).style('position','absolute');
+        const f=s.append('defs').append('filter').attr('id','cardGlow').attr('x','-60%').attr('y','-60%').attr('width','220%').attr('height','220%');
+        f.append('feGaussianBlur').attr('stdDeviation',1.7).attr('result','b');
+        const m=f.append('feMerge'); m.append('feMergeNode').attr('in','b'); m.append('feMergeNode').attr('in','SourceGraphic');
+    }
+
+    // Activation — energy through a nonlinear gate: a uniform field enters, the
+    // gate squashes it (tanh), so even spacing becomes compressed on the way out.
+    function vizGate(svg,{color,gen,W,H}){
+        const cy=H/2, scale=H*0.34, N=16;
+        svg.append('line').attr('x1',W*0.5).attr('x2',W*0.5).attr('y1',H*0.14).attr('y2',H*0.86)
+           .attr('stroke',color).attr('stroke-width',1).attr('opacity',0.3).attr('filter','url(#cardGlow)');
+        const parts=d3.range(N).map(i=>({lane:(i/(N-1)-0.5), off:gen(), r:1.3+gen()*1.0}));
+        const dots=svg.selectAll('circle').data(parts).join('circle').attr('r',d=>d.r).attr('fill',color);
+        const gate=v=>Math.tanh(v*2.2)/2.2;
+        return (t,inten)=>{ const sp=0.12*inten;
+            dots.each(function(d){
+                const x=(t*sp+d.off)%1, yIn=cy+d.lane*scale, yOut=cy+gate(d.lane)*scale, b=smooth((x-0.42)/0.16);
+                d3.select(this).attr('cx',x*W).attr('cy',yIn+(yOut-yIn)*b).attr('opacity',0.2+0.7*Math.sin(x*Math.PI));
+            });
+        };
+    }
+
+    // Optimization — a particle traversing a vector field toward an attractor,
+    // respawning at the edge so the trajectory keeps re-drawing.
+    function vizField(svg,{color,gen,W,H}){
+        const ax=W*0.62, ay=H*0.5;
+        const V=(x,y)=>{ const dx=ax-x,dy=ay-y,vx=dx*0.02-dy*0.014,vy=dy*0.02+dx*0.014,m=Math.hypot(vx,vy)||1; return [vx/m,vy/m]; };
+        for(let x=18;x<W-8;x+=32) for(let y=16;y<H-8;y+=32){ const v=V(x,y);
+            svg.append('line').attr('x1',x).attr('y1',y).attr('x2',x+v[0]*8).attr('y2',y+v[1]*8).attr('stroke','#6b8fa8').attr('stroke-width',0.7).attr('opacity',0.16); }
+        const spawn=()=>({x:10+gen()*18,y:12+gen()*(H-24),life:0}), parts=d3.range(3).map(spawn);
+        const dots=svg.selectAll('circle').data(parts).join('circle').attr('r',2.3).attr('fill',color).attr('filter','url(#cardGlow)');
+        let last=0;
+        return (t,inten)=>{ let dt=t-last; last=t; if(!(dt>0)||dt>0.05) dt=0.016; const sp=80*inten;
+            parts.forEach(p=>{ const v=V(p.x,p.y); p.x+=v[0]*sp*dt; p.y+=v[1]*sp*dt; p.life+=dt;
+                if(Math.hypot(ax-p.x,ay-p.y)<9||p.life>4) Object.assign(p,spawn()); });
+            dots.attr('cx',d=>d.x).attr('cy',d=>d.y).attr('opacity',d=>Math.min(d.life*2.2,1)*0.9);
+        };
+    }
+
+    // Regularization — a dense graph simplifying as redundant edges fade out,
+    // leaving only the essential connections, then re-forming on a loop.
+    function vizPrune(svg,{color,gen,W,H}){
+        const M=8, nodes=d3.range(M).map(()=>({x:20+gen()*(W-40),y:16+gen()*(H-32)})), edges=[];
+        for(let i=0;i<M;i++)for(let j=i+1;j<M;j++) if(gen()<0.55) edges.push({a:nodes[i],b:nodes[j],ess:gen()<0.25,ph:0.15+gen()*0.8});
+        const lines=svg.selectAll('line').data(edges).join('line')
+            .attr('x1',d=>d.a.x).attr('y1',d=>d.a.y).attr('x2',d=>d.b.x).attr('y2',d=>d.b.y).attr('stroke',color).attr('stroke-width',1);
+        svg.selectAll('circle').data(nodes).join('circle').attr('cx',d=>d.x).attr('cy',d=>d.y).attr('r',2.6).attr('fill',color).attr('opacity',0.85);
+        return (t)=>{ const cyc=(t*0.15)%1;
+            lines.attr('opacity',d=> d.ess?0.7 : 0.08+smooth((d.ph-cyc)/0.08+0.5)*0.5 );
+        };
+    }
+
+    // Transfer Learning — a gradient pulse flows back from the output but stops
+    // at the frozen boundary: only the trainable layers light up.
+    function vizTransferFlow(svg,{color,gen,W,H}){
+        const n=5, pad=28, gap=(W-2*pad)/(n-1), y=H/2, frozen=2, bx=i=>pad+i*gap;
+        for(let i=0;i<n-1;i++) svg.append('line').attr('x1',bx(i)).attr('x2',bx(i+1)).attr('y1',y).attr('y2',y).attr('stroke','#3a5570').attr('stroke-width',1).attr('opacity',0.4);
+        const blocks=svg.selectAll('rect').data(d3.range(n)).join('rect')
+            .attr('x',i=>bx(i)-9).attr('y',y-16).attr('width',18).attr('height',32).attr('rx',4)
+            .attr('fill',i=>i<frozen?'#1b2c40':'none').attr('stroke',i=>i<frozen?'#3a5570':color).attr('stroke-width',1.3);
+        const pulse=svg.append('circle').attr('r',2.6).attr('fill',color).attr('filter','url(#cardGlow)');
+        const startX=bx(n-1), stopX=bx(frozen);
+        return (t,inten)=>{ const cyc=(t*0.5)%1, x=startX-(startX-stopX)*cyc;
+            pulse.attr('cx',x).attr('cy',y).attr('opacity',0.85*(1-cyc)+0.1);
+            blocks.attr('opacity',(d,i)=> i<frozen?0.5 : (Math.abs(bx(i)-x)<gap*0.5?1:0.7));
+        };
+    }
+
+    // Data Augmentation — one seed point emitting perturbed variants (rotated,
+    // scaled, shifted) that drift outward and fade: one sample becomes many.
+    function vizSampling(svg,{color,gen,W,H}){
+        const cx=W/2, cy=H/2, K=14;
+        svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',3).attr('fill',color).attr('filter','url(#cardGlow)');
+        const parts=d3.range(K).map(()=>({ph:gen(),ang:gen()*6.283,dist:22+gen()*72,rot:gen()*2-1,sc:0.5+gen()*0.7}));
+        const g=svg.selectAll('g').data(parts).join('g');
+        g.append('rect').attr('x',-6).attr('y',-5).attr('width',12).attr('height',10).attr('rx',2).attr('fill','none').attr('stroke',color).attr('stroke-width',1.1);
+        return (t,inten)=>{ const sp=0.26*inten;
+            g.attr('transform',d=>{ const p=(t*sp+d.ph)%1, r=d.dist*p; return 'translate('+(cx+Math.cos(d.ang)*r)+','+(cy+Math.sin(d.ang)*r)+') rotate('+(d.rot*p*80)+') scale('+d.sc+')'; })
+             .attr('opacity',d=>{ const p=(t*sp+d.ph)%1; return (1-p)*0.65; });
+        };
+    }
+
+    // AlexNet — a signal front sweeping through narrowing feature layers:
+    // each stage is shorter than the last, the active one brightens.
+    function vizCascade(svg,{color,gen,W,H}){
+        const L=6, pad=22, gap=(W-2*pad)/(L-1), bh=i=>H*0.72*(1-i/(L*1.3));
+        const bars=svg.selectAll('line').data(d3.range(L)).join('line')
+            .attr('x1',i=>pad+i*gap).attr('x2',i=>pad+i*gap)
+            .attr('y1',i=>H/2-bh(i)/2).attr('y2',i=>H/2+bh(i)/2)
+            .attr('stroke',color).attr('stroke-width',1).attr('stroke-linecap','round');
+        return (t)=>{ const front=pad+(W-2*pad)*((t*0.3)%1);
+            bars.attr('opacity',(d,i)=>Math.abs(pad+i*gap-front)<gap*0.55?0.85:0.22)
+                .attr('stroke-width',(d,i)=>Math.abs(pad+i*gap-front)<gap*0.55?2.4:1);
+        };
+    }
+
+    const CARD_VIZ={gate:vizGate,field:vizField,prune:vizPrune,transfer:vizTransferFlow,sampling:vizSampling,cascade:vizCascade};
+
+    function initCards(){
+        cardGlobalDefs();
+        const anim=[];  // {card, update, intensity, target, visible}
+        document.querySelectorAll('.card[data-viz]').forEach(card=>{
+            const build=CARD_VIZ[card.dataset.viz]; if(!build) return;
+            const holder=card.querySelector('.card-viz'); if(!holder) return;
+            const W=300,H=132, svg=d3.select(holder).append('svg').attr('viewBox','0 0 '+W+' '+H).attr('preserveAspectRatio','xMidYMid slice');
+            const update=build(svg,{color:card.dataset.color,gen:rng(+card.dataset.seed),W,H}); if(!update) return;
+            const a={card,update,intensity:1,target:1,visible:false};
+            card.addEventListener('mouseenter',()=>a.target=1.7);
+            card.addEventListener('mouseleave',()=>a.target=1);
+            anim.push(a);
+        });
+        if(REDUCED){ anim.forEach(a=>a.update(0.7,1)); return; }   // one still frame
+        if('IntersectionObserver' in window){
+            const io=new IntersectionObserver(es=>es.forEach(e=>{ const a=anim.find(x=>x.card===e.target); if(a) a.visible=e.isIntersecting; }),{threshold:0.05});
+            anim.forEach(a=>io.observe(a.card));
+        } else anim.forEach(a=>a.visible=true);
+        const frame=time=>anim.forEach(a=>{ if(!a.visible) return; a.intensity+=(a.target-a.intensity)*0.08; a.update(time,a.intensity); });
+        if(typeof gsap!=='undefined') gsap.ticker.add(frame);
+        else { const t0=performance.now(), loop=now=>{ frame((now-t0)/1000); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+    }
+
+
+    /* ======================================================================
+       GSAP ENTRANCE + SCROLL REVEALS
+       ====================================================================== */
+    function animateIn(){
+        if(REDUCED || typeof gsap==='undefined'){ document.querySelectorAll('[data-anim],[data-reveal]').forEach(el=>el.style.opacity=1); return; }
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.from('[data-anim]',{ y:24, opacity:0, duration:0.8, stagger:0.12, ease:'power3.out' });
+        gsap.utils.toArray('[data-reveal]').forEach(sec=>gsap.from(sec,{ y:40, opacity:0, duration:0.7, ease:'power2.out', scrollTrigger:{ trigger:sec, start:'top 82%' } }));
+        gsap.from('.art-grid .card',{ y:30, opacity:0, duration:0.6, stagger:0.08, ease:'power2.out', scrollTrigger:{ trigger:'.art-grid', start:'top 80%' } });
+    }
+
+    /* ======================================================================
+       THEME TOGGLE (localStorage-backed)
+       ====================================================================== */
+    (function theme(){
+        const btn=document.getElementById('themeBtn'), ico=document.getElementById('themeIco');
+        const MOON="M7.5 1.5A6 6 0 1012.5 13 4.5 4.5 0 017.5 1.5z";
+        const SUN ="M7.5 1v1M7.5 13v1M1 7.5H0M15 7.5h-1M3.05 3.05l-.7-.7M12.65 12.65l-.7-.7M3.05 11.95l-.7.7M12.65 2.35l-.7.7M7.5 4.5a3 3 0 100 6 3 3 0 000-6z";
+        if(localStorage.getItem('theme')==='light'){ document.body.classList.add('light'); ico.setAttribute('d',MOON); }
+        btn.addEventListener('click',()=>{ const light=document.body.classList.toggle('light'); ico.setAttribute('d',light?MOON:SUN); localStorage.setItem('theme',light?'light':'dark'); });
+    })();
+
+    /* ======================================================================
+       BOOT — guard against libraries failing to load (offline / blocked CDN)
+       ====================================================================== */
+    window.addEventListener('DOMContentLoaded',()=>{
+        if(typeof d3!=='undefined'){
+            heroConstellation(); featuredWave(); setEngine('tree');
+            initCards();
+        }
+        animateIn();
+    });
     </script>
 </body>
 </html>
