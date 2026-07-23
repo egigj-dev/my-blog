@@ -357,7 +357,7 @@
         </div>
 
         <div class="art-grid">
-            <a href="articles/activation-functions.html" class="card card--lead" data-viz="gate3d" data-fallback="gate" data-color="#00d4b8" data-seed="11">
+            <a href="articles/activation-functions.html" class="card card--lead" data-viz="curves" data-color="#00d4b8" data-seed="11">
                 <div class="card-viz"></div>
                 <div class="card-body">
                     <span class="card-tag t-nn">Neural Networks</span>
@@ -370,7 +370,7 @@
                 </div>
             </a>
 
-            <a href="articles/optimization-techniques.html" class="card" data-viz="field" data-color="#f0a500" data-seed="27">
+            <a href="articles/optimization-techniques.html" class="card" data-viz="landscape3d" data-fallback="field" data-color="#f0a500" data-seed="27">
                 <div class="card-viz"></div>
                 <div class="card-body">
                     <span class="card-tag t-tr">Training</span>
@@ -383,7 +383,7 @@
                 </div>
             </a>
 
-            <a href="articles/regularization-techniques.html" class="card" data-viz="prune" data-color="#00d4b8" data-seed="42">
+            <a href="articles/regularization-techniques.html" class="card" data-viz="dropout" data-color="#00d4b8" data-seed="42">
                 <div class="card-viz"></div>
                 <div class="card-body">
                     <span class="card-tag t-nn">Generalization</span>
@@ -732,23 +732,58 @@
 
     // Activation — energy through a nonlinear gate: a uniform field enters, the
     // gate squashes it (tanh), so even spacing becomes compressed on the way out.
-    function vizGate(svg,{color,gen,W,H}){
-        const cy=H/2, scale=H*0.34, N=16;
-        svg.append('line').attr('x1',W*0.5).attr('x2',W*0.5).attr('y1',H*0.14).attr('y2',H*0.86)
-           .attr('stroke',color).attr('stroke-width',1).attr('opacity',0.3).attr('filter','url(#cardGlow)');
-        const parts=d3.range(N).map(i=>({lane:(i/(N-1)-0.5), off:gen(), r:1.3+gen()*1.0}));
-        const dots=svg.selectAll('circle').data(parts).join('circle').attr('r',d=>d.r).attr('fill',color);
-        const gate=v=>Math.tanh(v*2.2)/2.2;
-        return (t,inten)=>{ const sp=0.12*inten;
-            dots.each(function(d){
-                const x=(t*sp+d.off)%1, yIn=cy+d.lane*scale, yOut=cy+gate(d.lane)*scale, b=smooth((x-0.42)/0.16);
-                d3.select(this).attr('cx',x*W).attr('cy',yIn+(yOut-yIn)*b).attr('opacity',0.2+0.7*Math.sin(x*Math.PI));
-            });
-        };
+    // Activation — the canonical curves on one axis, morphing ReLU -> Sigmoid
+    // -> Tanh. Softmax is deliberately absent: it maps a vector to a vector, so
+    // it has no single-curve form here (its two-class case is just the sigmoid).
+    // ReLU is drawn as its true ramp, scaled to fit, not as a step.
+    function vizCurves(svg,{color,gen,W,H}){
+        const pad=14, X=d3.scaleLinear([-6,6],[pad,W-pad]), Y=d3.scaleLinear([-1.2,1.2],[H-pad,pad]);
+        const grid=svg.append('g');
+        [-1,-0.5,0.5,1].forEach(v=>grid.append('line').attr('x1',pad).attr('x2',W-pad)
+            .attr('y1',Y(v)).attr('y2',Y(v)).attr('stroke','#3a5570').attr('stroke-width',0.5).attr('opacity',0.16));
+        [-4,-2,2,4].forEach(v=>grid.append('line').attr('y1',pad).attr('y2',H-pad)
+            .attr('x1',X(v)).attr('x2',X(v)).attr('stroke','#3a5570').attr('stroke-width',0.5).attr('opacity',0.16));
+        grid.append('line').attr('x1',pad).attr('x2',W-pad).attr('y1',Y(0)).attr('y2',Y(0))
+            .attr('stroke','#3a5570').attr('stroke-width',0.9).attr('opacity',0.45);
+        grid.append('line').attr('y1',pad).attr('y2',H-pad).attr('x1',X(0)).attr('x2',X(0))
+            .attr('stroke','#3a5570').attr('stroke-width',0.9).attr('opacity',0.45);
+
+        const FN=[ v=>Math.max(0,v)/5.2, v=>1/(1+Math.exp(-v)), v=>Math.tanh(v) ];
+        const XS=d3.range(-6,6.001,0.12);
+        const line=d3.line().x(d=>X(d[0])).y(d=>Y(d[1])).curve(d3.curveBasis);
+        const trail=svg.append('g'), path=svg.append('path')
+            .attr('fill','none').attr('stroke',color).attr('filter','url(#cardGlow)').attr('stroke-linecap','round');
+        const dot=svg.append('circle').attr('fill',color).attr('filter','url(#cardGlow)');
+        const hist=[];
+        // st.h is tweened 0..1 by GSAP on hover: it thickens the stroke, speeds
+        // the tracer and lengthens its particle trail.
+        const st={h:0};
+        const DWELL=2.6, MORPH=1.0, PERIOD=DWELL+MORPH;
+
+        function api(t,inten){
+            const cyc=t/PERIOD, i=Math.floor(cyc)%FN.length, nx=(i+1)%FN.length;
+            const local=(cyc-Math.floor(cyc))*PERIOD;
+            const m=local<DWELL?0:smooth((local-DWELL)/MORPH);
+            const f=v=>lerp(FN[i](v),FN[nx](v),m);
+            path.attr('d',line(XS.map(v=>[v,f(v)])))
+                .attr('stroke-width',1.6+st.h*1.5).attr('opacity',0.75+st.h*0.25);
+
+            const u=(t*(0.16+st.h*0.26))%1, xv=-6+12*u, pt=[X(xv),Y(f(xv))];
+            dot.attr('cx',pt[0]).attr('cy',pt[1]).attr('r',2.2+st.h*1.9).attr('opacity',0.35+st.h*0.65);
+            hist.push(pt); while(hist.length> (6+Math.round(st.h*16))) hist.shift();
+            trail.selectAll('circle').data(hist).join('circle')
+                .attr('cx',d=>d[0]).attr('cy',d=>d[1])
+                .attr('r',(d,k)=>0.6+(k/hist.length)*(1.4+st.h*1.4))
+                .attr('fill',color).attr('opacity',(d,k)=>(k/hist.length)*0.5*(0.25+st.h));
+        }
+        return { update:api, onHover(on){
+            if(typeof gsap==='undefined'){ st.h=on?1:0; return; }
+            gsap.to(st,{h:on?1:0,duration:on?0.45:0.6,ease:on?'power2.out':'power2.inOut',overwrite:true});
+        }};
     }
 
-    // Optimization — a particle traversing a vector field toward an attractor,
-    // respawning at the edge so the trajectory keeps re-drawing.
+    // Optimization fallback — a particle traversing a vector field toward an
+    // attractor, respawning at the edge so the trajectory keeps re-drawing.
     function vizField(svg,{color,gen,W,H}){
         const ax=W*0.62, ay=H*0.5;
         const V=(x,y)=>{ const dx=ax-x,dy=ay-y,vx=dx*0.02-dy*0.014,vy=dy*0.02+dx*0.014,m=Math.hypot(vx,vy)||1; return [vx/m,vy/m]; };
@@ -766,15 +801,50 @@
 
     // Regularization — a dense graph simplifying as redundant edges fade out,
     // leaving only the essential connections, then re-forming on a loop.
-    function vizPrune(svg,{color,gen,W,H}){
-        const M=8, nodes=d3.range(M).map(()=>({x:20+gen()*(W-40),y:16+gen()*(H-32)})), edges=[];
-        for(let i=0;i<M;i++)for(let j=i+1;j<M;j++) if(gen()<0.55) edges.push({a:nodes[i],b:nodes[j],ess:gen()<0.25,ph:0.15+gen()*0.8});
-        const lines=svg.selectAll('line').data(edges).join('line')
-            .attr('x1',d=>d.a.x).attr('y1',d=>d.a.y).attr('x2',d=>d.b.x).attr('y2',d=>d.b.y).attr('stroke',color).attr('stroke-width',1);
-        svg.selectAll('circle').data(nodes).join('circle').attr('cx',d=>d.x).attr('cy',d=>d.y).attr('r',2.6).attr('fill',color).attr('opacity',0.85);
-        return (t)=>{ const cyc=(t*0.15)%1;
-            lines.attr('opacity',d=> d.ess?0.7 : 0.08+smooth((d.ph-cyc)/0.08+0.5)*0.5 );
-        };
+    // Regularization — a force-directed web under dropout. Units switch off at
+    // random, their edges go with them, and the simulation re-settles the rest:
+    // a different subnetwork every pass, which is what dropout actually does.
+    function vizDropout(svg,{color,gen,W,H}){
+        const N=16;
+        const nodes=d3.range(N).map(i=>({ i, x:20+gen()*(W-40), y:16+gen()*(H-32), o:1 }));
+        const links=[];
+        for(let a=0;a<N;a++) for(let b=a+1;b<N;b++) if(gen()<0.20) links.push({source:nodes[a],target:nodes[b]});
+        nodes.forEach(n=>{ if(!links.some(l=>l.source===n||l.target===n)) links.push({source:n,target:nodes[(n.i+1)%N]}); });
+
+        const sim=d3.forceSimulation(nodes)
+            .force('link',d3.forceLink(links).distance(34).strength(0.45))
+            .force('charge',d3.forceManyBody().strength(-42))
+            .force('center',d3.forceCenter(W/2,H/2))
+            .force('collide',d3.forceCollide(11))
+            .alphaDecay(0.045).stop();
+        for(let i=0;i<220;i++) sim.tick();                    // settle before first paint
+
+        const lg=svg.append('g'), ng=svg.append('g');
+        const ls=lg.selectAll('line').data(links).join('line').attr('stroke',color).attr('stroke-width',1);
+        const ns=ng.selectAll('circle').data(nodes).join('circle').attr('r',3.2).attr('fill',color);
+
+        let acc=0, cycle=1.45;
+        function resample(rate){
+            nodes.forEach(n=>{
+                const drop=Math.random()<rate;
+                if(typeof gsap==='undefined'){ n.o=drop?0:1; return; }
+                gsap.to(n,{o:drop?0:1,duration:0.35,ease:'power2.out',overwrite:true});
+            });
+            sim.alpha(0.55).restart();                        // survivors rearrange
+        }
+        resample(0.3);
+
+        return { update(t,inten){
+            acc+=1/60;
+            if(acc>cycle/inten){ acc=0; resample(0.22+Math.random()*0.2); }
+            sim.tick();
+            ns.attr('cx',d=>d.x=clamp(d.x,8,W-8)).attr('cy',d=>d.y=clamp(d.y,8,H-8))
+              .attr('r',d=>2.4+d.o*1.4).attr('opacity',d=>0.12+d.o*0.85);
+            ls.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+              .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y)
+              .attr('stroke-width',d=>0.5+Math.min(d.source.o,d.target.o)*1.1)
+              .attr('opacity',d=>0.06+Math.min(d.source.o,d.target.o)*0.42);
+        }};
     }
 
     // Transfer Learning — a gradient pulse flows back from the output but stops
@@ -822,18 +892,20 @@
     }
 
     /* ----------------------------------------------------------------------
-       3D PARTICLE GATE (card variant) — Three.js, lazy-loaded.
-       Only fetched when the card nears the viewport, and only if WebGL is
-       available; otherwise the card silently falls back to vizGate above.
+       3D LOSS LANDSCAPE (card variant) — Three.js, lazy-loaded.
+       Fetched only when the card nears the viewport and only if WebGL is
+       available; otherwise the card falls back to the flat vector field above.
+       The marbles run real gradient descent with momentum on the analytic
+       gradient of the surface, matching the article's landscape.
        ---------------------------------------------------------------------- */
     const THREE_URL='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
     const _loaded={};                       // src -> Promise, so a lib loads once
     function loadScript(src){
         if(_loaded[src]) return _loaded[src];
         _loaded[src]=new Promise((res,rej)=>{
-            const s=document.createElement('script'); s.src=src; s.async=true;
-            s.onload=()=>res(); s.onerror=()=>rej(new Error('load failed'));
-            document.head.appendChild(s);
+            const el=document.createElement('script'); el.src=src; el.async=true;
+            el.onload=()=>res(); el.onerror=()=>rej(new Error('load failed'));
+            document.head.appendChild(el);
         });
         return _loaded[src];
     }
@@ -843,17 +915,15 @@
         }catch(e){ return false; }
     }
 
-    // Compact activation set the card cycles through: f=value, a=post-gate
-    // opacity (0 dissolves), s=post-gate speed (0 stops at the gate).
-    const G_FNS=[
-        {f:v=>Math.max(0,v),                       a:v=>v<0?0:1,      s:v=>v<0?0:1},  // ReLU
-        {f:v=>Math.tanh(v),                        a:()=>1,           s:()=>1},       // Tanh
-        {f:v=>1/(1+Math.exp(-v)),                  a:()=>1,           s:()=>1},       // Sigmoid
-        {f:v=>0.5*v*(1+Math.tanh(0.7978845608*(v+0.044715*v*v*v))),
-                                                   a:v=>v<-2.2?0.15:1, s:()=>1},      // GELU
-    ];
+    // Surface: shallow bowl minus two Gaussian wells. Gradient is analytic.
+    const LSW=[{A:1.45,cx:1.35,cy:0.95,s:0.85},{A:0.95,cx:-1.4,cy:-1.15,s:0.95}], LSB=0.10;
+    function lsLoss(x,y){ let v=LSB*(x*x+y*y);
+        for(const w of LSW) v-=w.A*Math.exp(-(((x-w.cx)**2)+((y-w.cy)**2))/w.s); return v; }
+    function lsGrad(x,y){ let gx=2*LSB*x, gy=2*LSB*y;
+        for(const w of LSW){ const e=Math.exp(-(((x-w.cx)**2)+((y-w.cy)**2))/w.s);
+            gx+=w.A*e*2*(x-w.cx)/w.s; gy+=w.A*e*2*(y-w.cy)/w.s; } return [gx,gy]; }
 
-    function buildGate3D(holder,accent){
+    function buildLandscape3D(holder,accent){
         if(typeof THREE==='undefined') return null;
         const canvas=document.createElement('canvas');
         canvas.style.cssText='display:block;width:100%;height:100%;';
@@ -864,71 +934,76 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 
         const scene=new THREE.Scene();
-        const camera=new THREE.PerspectiveCamera(38,300/132,0.1,100);
-        camera.position.set(0.35,0.45,7.4); camera.lookAt(0,0,0);
+        const camera=new THREE.PerspectiveCamera(42,300/210,0.1,100);
+        const LIM=3.0, HS=0.95;
 
-        // Chamber + translucent gate at x = 0
-        scene.add(new THREE.LineSegments(
-            new THREE.EdgesGeometry(new THREE.BoxGeometry(8.2,3.1,1.4)),
-            new THREE.LineBasicMaterial({color:0x24405c,transparent:true,opacity:0.3})));
-        const gate=new THREE.Mesh(new THREE.PlaneGeometry(3.1,1.4),
-            new THREE.MeshBasicMaterial({color:new THREE.Color(accent),transparent:true,opacity:0.1,side:THREE.DoubleSide}));
-        gate.rotation.y=Math.PI/2; scene.add(gate);
-        const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(3.1,1.4)),
-            new THREE.LineBasicMaterial({color:new THREE.Color(accent),transparent:true,opacity:0.5}));
-        edge.rotation.y=Math.PI/2; scene.add(edge);
+        // Warm wireframe terrain
+        const geo=new THREE.PlaneGeometry(2*LIM,2*LIM,44,44), pos=geo.attributes.position;
+        for(let i=0;i<pos.count;i++) pos.setZ(i, lsLoss(pos.getX(i),pos.getY(i))*HS);
+        geo.computeVertexNormals();
+        const mesh=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({
+            color:new THREE.Color(accent), wireframe:true, transparent:true, opacity:0.42 }));
+        mesh.rotation.x=-Math.PI/2; scene.add(mesh);
 
-        const N=420, XMIN=-4.1, XMAX=4.1, GATE_W=1.05, YSCALE=0.32;
-        const mesh=new THREE.InstancedMesh(
-            new THREE.SphereGeometry(0.05,5,4),
-            new THREE.MeshBasicMaterial({transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}),N);
-        mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-        const dummy=new THREE.Object3D(), col=new THREE.Color();
-        const px=new Float32Array(N), pv=new Float32Array(N), ps=new Float32Array(N);
-        const spawn=(i,any)=>{ px[i]=any?XMIN+Math.random()*(XMAX-XMIN):XMIN-Math.random()*0.5;
-                               pv[i]=(Math.random()*2-1)*4; ps[i]=Math.random(); };
-        for(let i=0;i<N;i++) spawn(i,true);
-        for(let i=0;i<N;i++) mesh.setColorAt(i,col.setRGB(1,1,1));
-        scene.add(mesh);
+        const M=4, marbles=[], trails=[], TRL=26;
+        const g0=rng(5);
+        function spawn(i){ return { x:(g0()*2-1)*2.6, y:(g0()*2-1)*2.6, vx:0, vy:0, age:0, hist:[] }; }
+        const P=d3.range(M).map(spawn);
+        P.forEach(()=>{
+            const m=new THREE.Mesh(new THREE.SphereGeometry(0.10,12,10),
+                new THREE.MeshBasicMaterial({color:new THREE.Color('#ffb020')}));
+            scene.add(m); marbles.push(m);
+            const g=new THREE.BufferGeometry();
+            g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(TRL*3),3));
+            const l=new THREE.Line(g,new THREE.LineBasicMaterial({
+                color:new THREE.Color('#ffb020'), transparent:true, opacity:0.5 }));
+            l.frustumCulled=false; scene.add(l); trails.push(l);
+        });
 
-        // Slow cycle through the activation set so the card shows the range
-        const DWELL=4.2, MORPH=1.2, PERIOD=DWELL+MORPH, L=G_FNS.length;
-        let lastW=0,lastH=0,prev=0;
-        return function(t,inten){
-            const w=holder.clientWidth,h=holder.clientHeight;
+        // st.h tweened by GSAP on hover: tilts the camera and speeds descent
+        const st={h:0};
+        let az=0.75, prev=0, lastW=0, lastH=0;
+
+        function update(t,inten){
+            const w=holder.clientWidth, h=holder.clientHeight;
             if(!w||!h) return;
             if(w!==lastW||h!==lastH){ lastW=w; lastH=h; renderer.setSize(w,h,false);
                 camera.aspect=w/h; camera.updateProjectionMatrix(); }
             let dt=t-prev; prev=t; if(!(dt>0)||dt>0.05) dt=0.016;
 
-            const cyc=t/PERIOD, i=Math.floor(cyc)%L, nx=(i+1)%L, local=(cyc-Math.floor(cyc))*PERIOD;
-            const mt=local<DWELL?0:smooth((local-DWELL)/MORPH);
-            const A=G_FNS[i], B=G_FNS[nx];
-            const F=v=>lerp(A.f(v),B.f(v),mt), AL=v=>lerp(A.a(v),B.a(v),mt), SPD=v=>lerp(A.s(v),B.s(v),mt);
-
-            for(let k=0;k<N;k++){
-                const v=pv[k], past=px[k]>0;
-                const gk=past?smooth(px[k]/GATE_W):0;
-                const sp=past?lerp(1,SPD(v),gk):1;
-                px[k]+=1.5*inten*sp*dt;
-                const y=lerp(v,F(v),gk)*YSCALE, al=lerp(1,AL(v),gk);
-                if(px[k]>XMAX||(al<0.03&&sp<0.02&&past)){ spawn(k,false); continue; }
-                dummy.position.set(px[k],clamp(y,-1.5,1.5),(ps[k]-0.5)*1.1);
-                dummy.scale.setScalar((0.7+ps[k]*0.5)*(0.35+0.65*al));
-                dummy.updateMatrix(); mesh.setMatrixAt(k,dummy.matrix);
-                const q=clamp((v+4)/8,0,1); let r,g,b;
-                if(q<0.5){ const u=q*2; r=lerp(0.31,0.87,u); g=lerp(0.62,0.91,u); b=lerp(1.0,0.96,u); }
-                else     { const u=(q-0.5)*2; r=lerp(0.87,1.0,u); g=lerp(0.91,0.37,u); b=lerp(0.96,0.43,u); }
-                const m=al*0.8*inten;
-                mesh.setColorAt(k,col.setRGB(r*m,g*m,b*m));
+            const speed=0.55+st.h*1.5;
+            for(let i=0;i<M;i++){
+                const p=P[i], g=lsGrad(p.x,p.y);
+                p.vx=0.86*p.vx-g[0]*0.055*speed; p.vy=0.86*p.vy-g[1]*0.055*speed;
+                p.x=clamp(p.x+p.vx,-LIM,LIM); p.y=clamp(p.y+p.vy,-LIM,LIM);
+                p.age+=dt;
+                if(Math.hypot(p.vx,p.vy)<0.0018 && p.age>3.2){ Object.assign(P[i],spawn(i)); }
+                const z=lsLoss(p.x,p.y)*HS;
+                marbles[i].position.set(p.x,z+0.1,-p.y);
+                p.hist.push([p.x,z+0.05,-p.y]); if(p.hist.length>TRL) p.hist.shift();
+                const arr=trails[i].geometry.attributes.position.array;
+                for(let k=0;k<p.hist.length;k++){ arr[k*3]=p.hist[k][0]; arr[k*3+1]=p.hist[k][1]; arr[k*3+2]=p.hist[k][2]; }
+                trails[i].geometry.attributes.position.needsUpdate=true;
+                trails[i].geometry.setDrawRange(0,Math.max(2,p.hist.length));
             }
-            mesh.instanceMatrix.needsUpdate=true;
-            if(mesh.instanceColor) mesh.instanceColor.needsUpdate=true;
+            az+=dt*0.10;
+            const pol=1.16-st.h*0.42, rad=7.6-st.h*0.7;      // hover tilts the view
+            camera.position.set(rad*Math.sin(pol)*Math.cos(az), rad*Math.cos(pol)+0.6, rad*Math.sin(pol)*Math.sin(az));
+            camera.lookAt(0,0,0);
+            mesh.material.opacity=0.42+st.h*0.22;
             renderer.render(scene,camera);
-        };
+        }
+        return { update, onHover(on){
+            if(typeof gsap==='undefined'){ st.h=on?1:0; return; }
+            gsap.to(st,{h:on?1:0,duration:on?0.7:0.9,ease:'power2.inOut',overwrite:true});
+        }};
     }
 
-    const CARD_VIZ={gate:vizGate,field:vizField,prune:vizPrune,transfer:vizTransferFlow,sampling:vizSampling,cascade:vizCascade};
+    const CARD_VIZ={curves:vizCurves,field:vizField,dropout:vizDropout,
+                    transfer:vizTransferFlow,sampling:vizSampling,cascade:vizCascade};
+    // Cards whose primary renderer needs WebGL. Each must set data-fallback to
+    // a CARD_VIZ key used when WebGL or the library is unavailable.
+    const CARD_3D={landscape3d:buildLandscape3D};
 
     function initCards(){
         cardGlobalDefs();
@@ -939,45 +1014,46 @@
                 const a=anim.find(x=>x.card===e.target); if(a) a.visible=e.isIntersecting;
             }),{threshold:0.05});
         }
-        // register(): wire hover intensity + visibility for any card renderer
-        function register(card,update){
+        // A renderer may return either update(t,i) or {update, onHover(bool)}.
+        function register(card,api){
+            if(!api) return;
+            const update=typeof api==='function'?api:api.update;
+            const onHover=typeof api==='function'?null:api.onHover;
+            if(!update) return;
             if(REDUCED){ update(0.7,1); return; }
             const a={card,update,intensity:1,target:1,visible:!io};
-            card.addEventListener('mouseenter',()=>a.target=1.7);
-            card.addEventListener('mouseleave',()=>a.target=1);
+            card.addEventListener('mouseenter',()=>{ a.target=1.7; if(onHover) onHover(true); });
+            card.addEventListener('mouseleave',()=>{ a.target=1;   if(onHover) onHover(false); });
             anim.push(a); if(io) io.observe(card);
         }
-        // Fall back to the flat SVG gate when 3D is unavailable
-        function svgFallback(card,holder){
-            const build=CARD_VIZ[card.dataset.fallback||'gate']; if(!build) return;
-            const svg=d3.select(holder).append('svg').attr('viewBox','0 0 300 132').attr('preserveAspectRatio','xMidYMid slice');
-            const u=build(svg,{color:card.dataset.color,gen:rng(+card.dataset.seed),W:300,H:132});
-            if(u) register(card,u);
+        function mountSvg(card,holder,key){
+            const build=CARD_VIZ[key]; if(!build) return;
+            const svg=d3.select(holder).append('svg').attr('viewBox','0 0 300 132')
+                .attr('preserveAspectRatio','xMidYMid slice');
+            register(card,build(svg,{color:card.dataset.color,gen:rng(+card.dataset.seed),W:300,H:132}));
         }
-        function setupGate3D(card,holder){
-            if(REDUCED||!webglOK()){ svgFallback(card,holder); return; }
-            const start=()=>loadScript(THREE_URL)
-                .then(()=>{ const u=buildGate3D(holder,card.dataset.color);
-                            if(u) register(card,u); else svgFallback(card,holder); })
-                .catch(()=>svgFallback(card,holder));
+        function setup3D(card,holder,builder){
+            const fall=()=>mountSvg(card,holder,card.dataset.fallback);
+            if(REDUCED||!webglOK()){ fall(); return; }
+            const go=()=>loadScript(THREE_URL)
+                .then(()=>{ const api=builder(holder,card.dataset.color); api?register(card,api):fall(); })
+                .catch(fall);
             if('IntersectionObserver' in window){
-                const pre=new IntersectionObserver((es,o)=>{ if(es.some(e=>e.isIntersecting)){ o.disconnect(); start(); } },{rootMargin:'320px'});
+                const pre=new IntersectionObserver((es,o)=>{ if(es.some(e=>e.isIntersecting)){ o.disconnect(); go(); } },{rootMargin:'320px'});
                 pre.observe(card);
-            } else start();
+            } else go();
         }
 
         document.querySelectorAll('.card[data-viz]').forEach(card=>{
             const holder=card.querySelector('.card-viz'); if(!holder) return;
-            if(card.dataset.viz==='gate3d'){ setupGate3D(card,holder); return; }
-            const build=CARD_VIZ[card.dataset.viz]; if(!build) return;
-            const W=300,H=132;
-            const svg=d3.select(holder).append('svg').attr('viewBox','0 0 '+W+' '+H).attr('preserveAspectRatio','xMidYMid slice');
-            const update=build(svg,{color:card.dataset.color,gen:rng(+card.dataset.seed),W,H});
-            if(update) register(card,update);
+            const key=card.dataset.viz;
+            if(CARD_3D[key]){ setup3D(card,holder,CARD_3D[key]); return; }
+            mountSvg(card,holder,key);
         });
 
         if(REDUCED) return;
-        const frame=time=>anim.forEach(a=>{ if(!a.visible) return; a.intensity+=(a.target-a.intensity)*0.08; a.update(time,a.intensity); });
+        const frame=time=>anim.forEach(a=>{ if(!a.visible) return;
+            a.intensity+=(a.target-a.intensity)*0.08; a.update(time,a.intensity); });
         if(typeof gsap!=='undefined') gsap.ticker.add(frame);
         else { const t0=performance.now(), loop=now=>{ frame((now-t0)/1000); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
     }
