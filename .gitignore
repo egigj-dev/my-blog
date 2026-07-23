@@ -46,3 +46,8 @@ temp/
 tmp/
 *.tmp
 *.bak
+
+# Extra Files
+card-thumbnails.js
+card-thumbnails.css
+demo.html

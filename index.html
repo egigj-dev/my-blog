@@ -357,8 +357,8 @@
         </div>
 
         <div class="art-grid">
-            <a href="articles/activation-functions.html" class="card card--lead" data-viz="curves" data-color="#00d4b8" data-seed="11">
-                <div class="card-viz"></div>
+            <a href="articles/activation-functions.html" class="card card--lead" data-thumb-hover>
+                    <div class="card-viz" data-thumb="activation" data-accent="#00d4b8" data-seed="11"></div>
                 <div class="card-body">
                     <span class="card-tag t-nn">Neural Networks</span>
                     <h3>Activation Functions</h3>
@@ -370,8 +370,8 @@
                 </div>
             </a>
 
-            <a href="articles/optimization-techniques.html" class="card" data-viz="landscape3d" data-fallback="field" data-color="#f0a500" data-seed="27">
-                <div class="card-viz"></div>
+            <a href="articles/optimization-techniques.html" class="card" data-thumb-hover>
+                    <div class="card-viz" data-thumb="optimization" data-accent="#f0a500" data-seed="27"></div>
                 <div class="card-body">
                     <span class="card-tag t-tr">Training</span>
                     <h3>Optimization Techniques</h3>
@@ -383,8 +383,8 @@
                 </div>
             </a>
 
-            <a href="articles/regularization-techniques.html" class="card" data-viz="dropout" data-color="#00d4b8" data-seed="42">
-                <div class="card-viz"></div>
+            <a href="articles/regularization-techniques.html" class="card" data-thumb-hover>
+                    <div class="card-viz" data-thumb="regularization" data-accent="#00d4b8" data-seed="42"></div>
                 <div class="card-body">
                     <span class="card-tag t-nn">Generalization</span>
                     <h3>Regularization Techniques</h3>
@@ -396,8 +396,8 @@
                 </div>
             </a>
 
-            <a href="articles/cifar10-transfer-learning.html" class="card" data-viz="transfer" data-color="#a78bfa" data-seed="8">
-                <div class="card-viz"></div>
+            <a href="articles/cifar10-transfer-learning.html" class="card" data-thumb-hover>
+                    <div class="card-viz" data-thumb="transfer" data-accent="#a78bfa" data-seed="8"></div>
                 <div class="card-body">
                     <span class="card-tag t-cv">Computer Vision</span>
                     <h3>Transfer Learning for CIFAR-10</h3>
@@ -409,8 +409,8 @@
                 </div>
             </a>
 
-            <a href="articles/data-augmentation.html" class="card" data-viz="sampling" data-color="#f0a500" data-seed="63">
-                <div class="card-viz"></div>
+            <a href="articles/data-augmentation.html" class="card" data-thumb-hover>
+                    <div class="card-viz" data-thumb="sampling" data-accent="#f0a500" data-seed="63"></div>
                 <div class="card-body">
                     <span class="card-tag t-tr">Generalization</span>
                     <h3>Data Augmentation</h3>
@@ -422,8 +422,8 @@
                 </div>
             </a>
 
-            <a href="articles/alexnet-paper.html" class="card" data-viz="cascade" data-color="#a78bfa" data-seed="19">
-                <div class="card-viz"></div>
+            <a href="articles/alexnet-paper.html" class="card" data-thumb-hover>
+                    <div class="card-viz" data-thumb="cascade" data-accent="#a78bfa" data-seed="19"></div>
                 <div class="card-body">
                     <span class="card-tag t-cv">Computer Vision</span>
                     <h3>AlexNet Paper Walkthrough</h3>
@@ -478,6 +478,880 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <!-- Card thumbnail visuals (self-contained, no dependencies).
+         Also available standalone as assets/card-thumbnails.js -->
+    <script>
+/* ============================================================================
+ * card-thumbnails.js  —  three animated card-header visuals, zero dependencies
+ *
+ *   CardThumbnails.activation(el, opts)      animated ReLU / Sigmoid / Tanh
+ *   CardThumbnails.optimization(el, opts)    vector field + descent particles
+ *   CardThumbnails.regularization(el, opts)  node graph with dropout
+ *   CardThumbnails.mountAll(root)            auto-mount every [data-thumb]
+ *
+ * Each factory returns { destroy() }. Instances share one requestAnimationFrame
+ * loop, pause when scrolled off-screen, and render a single static frame when
+ * the user has "reduce motion" enabled.
+ *
+ * opts: { palette, seed, speed }  — all optional.
+ * ==========================================================================*/
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.CardThumbnails = factory();
+}(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- palette */
+  var PALETTE = {
+    bg:      '#0B132B',   // card background (slate)
+    bgAlt:   '#0F172A',   // alternate slate
+    cyan:    '#00E5FF',   // primary accent
+    cyanLit: '#00F2FE',   // brighter cyan for glow / highlights
+    amber:   '#FF9F1C',   // warm accent
+    violet:  '#A78BFA',   // third accent (computer-vision topics)
+    grid:    '#1B2846',   // grid + inactive strokes
+    dim:     '#2C3E63'    // secondary strokes
+  };
+
+  /* ------------------------------------------------------------- utilities */
+  var REDUCED = window.matchMedia &&
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function smooth(k) { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); }
+
+  // Deterministic PRNG (mulberry32) so a given seed always yields the same layout.
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function hexToRgba(hex, a) {
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var n = parseInt(h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+
+  /* ------------------------------------------------------- shared RAF loop */
+  // One loop for every mounted instance; it stops entirely when none are visible.
+  var live = [], rafId = null, t0 = 0, last = 0;
+
+  function tick(now) {
+    var t = (now - t0) / 1000;
+    var dt = t - last; last = t;
+    if (!(dt > 0) || dt > 0.05) dt = 1 / 60;      // clamp tab-switch spikes
+
+    var anyVisible = false;
+    for (var i = 0; i < live.length; i++) {
+      var inst = live[i];
+      if (!inst.visible) continue;
+      anyVisible = true;
+      // ease hover 0..1 so speed/glow ramp instead of snapping
+      inst.ease = clamp(inst.ease + ((inst.hover ? 1 : 0) - inst.ease) * 0.09, 0, 1);
+      inst.frame(t, dt, inst.ease);
+    }
+    // Park entirely when every instance is off-screen; wake() restarts us.
+    rafId = anyVisible ? requestAnimationFrame(tick) : null;
+  }
+
+  function wake() {
+    if (rafId !== null || !live.length) return;
+    t0 = performance.now() - last * 1000;         // resume the clock, don't reset it
+    rafId = requestAnimationFrame(tick);
+  }
+  function join(inst) {
+    live.push(inst);
+    wake();
+  }
+  function leave(inst) {
+    var i = live.indexOf(inst);
+    if (i >= 0) live.splice(i, 1);
+    if (!live.length && rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  /* ------------------------------------------------- per-instance lifecycle */
+  // Wires visibility, hover and teardown around a frame() callback.
+  function makeInstance(el, frame, cleanup) {
+    var inst = { visible: true, hover: false, ease: 0, frame: frame };
+
+    var io = null;
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) inst.visible = entries[i].isIntersecting;
+        if (inst.visible) wake();                 // loop may be parked
+      }, { threshold: 0.01 });
+      io.observe(el);
+    }
+
+    function onEnter() { inst.hover = true; }
+    function onLeave() { inst.hover = false; }
+
+    // The card, not just the canvas, is the hover target where one exists.
+    var hoverTarget = el.closest ? (el.closest('[data-thumb-hover]') || el) : el;
+    hoverTarget.addEventListener('mouseenter', onEnter);
+    hoverTarget.addEventListener('mouseleave', onLeave);
+
+    if (REDUCED) { frame(0.8, 1 / 60, 0); }      // one static frame, no loop
+    else join(inst);
+
+    return {
+      destroy: function () {
+        leave(inst);
+        if (io) io.disconnect();
+        hoverTarget.removeEventListener('mouseenter', onEnter);
+        hoverTarget.removeEventListener('mouseleave', onLeave);
+        if (cleanup) cleanup();
+      }
+    };
+  }
+
+  /* ------------------------------------------------------- canvas plumbing */
+  function makeCanvas(el) {
+    var c = document.createElement('canvas');
+    c.style.cssText = 'display:block;width:100%;height:100%';
+    el.appendChild(c);
+    return c;
+  }
+
+  // Resizes the backing store to the CSS box * DPR. Returns true if it changed.
+  function fit(canvas) {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var r = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+    if (canvas._w === w && canvas._h === h && canvas._dpr === dpr) return false;
+    canvas._w = w; canvas._h = h; canvas._dpr = dpr;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    return true;
+  }
+
+  var uid = 0;
+
+  /* ========================================================================
+   * CARD 1 — Activation Functions
+   * SVG. A path morphs ReLU -> Sigmoid -> Tanh over a faint grid while a
+   * glowing tracer slides along it, trailing particles.
+   *
+   * Note: ReLU is drawn as its real ramp (max(0,x)), scaled to fit the box —
+   * not as a step. Softmax is intentionally absent: it maps a vector to a
+   * vector, so it has no single-curve form on these axes.
+   * ==================================================================== */
+  function activation(el, opts) {
+    opts = opts || {};
+    var P = Object.assign({}, PALETTE, opts.palette || {});
+    var SPEED = opts.speed || 1;
+
+    var W = 600, H = 260, PAD = 26;   // H is recomputed from the container
+    var NS = 'http://www.w3.org/2000/svg';
+    var id = 'ct' + (++uid);
+
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    svg.style.cssText = 'display:block;width:100%;height:100%';
+    el.appendChild(svg);
+
+    // glow filter (unique id so multiple instances can coexist)
+    var defs = document.createElementNS(NS, 'defs');
+    defs.innerHTML =
+      '<filter id="' + id + '-glow" x="-60%" y="-60%" width="220%" height="220%">' +
+      '<feGaussianBlur stdDeviation="4" result="b"/>' +
+      '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+    svg.appendChild(defs);
+
+    function add(parent, tag, attrs) {
+      var n = document.createElementNS(NS, tag);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      parent.appendChild(n);
+      return n;
+    }
+
+    // axes -------------------------------------------------------------
+    var X = function (v) { return PAD + (v + 6) / 12 * (W - 2 * PAD); };
+    var Y = function (v) { return H - PAD - (v + 1.2) / 2.4 * (H - 2 * PAD); };
+
+    var gGrid = add(svg, 'g', {});
+    var hLines = [-1, -0.5, 0.5, 1].map(function (v) {
+      return { v: v, node: add(gGrid, 'line', { stroke: P.grid, 'stroke-width': 1 }) };
+    });
+    var vLines = [-4, -2, 2, 4].map(function (v) {
+      return { v: v, node: add(gGrid, 'line', { stroke: P.grid, 'stroke-width': 1 }) };
+    });
+    var axH = add(gGrid, 'line', { stroke: P.dim, 'stroke-width': 1.4 });
+    var axV = add(gGrid, 'line', { stroke: P.dim, 'stroke-width': 1.4 });
+
+    var gTrail = add(svg, 'g', {});
+    var path = add(svg, 'path', {
+      fill: 'none', stroke: P.cyan, 'stroke-width': 3,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      filter: 'url(#' + id + '-glow)'
+    });
+    var dot = add(svg, 'circle', { r: 5, fill: P.cyanLit, filter: 'url(#' + id + '-glow)' });
+    var label = add(svg, 'text', {
+      x: W - PAD, y: PAD + 4, 'text-anchor': 'end',
+      fill: P.cyan, 'font-size': 15, 'font-family': 'ui-monospace,SFMono-Regular,Menlo,monospace',
+      'letter-spacing': '0.14em', opacity: 0.75
+    });
+
+    // Match the viewBox to the container's aspect ratio, so the curve is never
+    // cropped in a wide banner nor letterboxed in a narrow one.
+    function relayout() {
+      var r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var want = clamp(Math.round(W * r.height / r.width), 130, 460);
+      if (want === H) return;
+      H = want;
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      hLines.forEach(function (o) {
+        o.node.setAttribute('x1', PAD); o.node.setAttribute('x2', W - PAD);
+        o.node.setAttribute('y1', Y(o.v)); o.node.setAttribute('y2', Y(o.v));
+      });
+      vLines.forEach(function (o) {
+        o.node.setAttribute('x1', X(o.v)); o.node.setAttribute('x2', X(o.v));
+        o.node.setAttribute('y1', PAD); o.node.setAttribute('y2', H - PAD);
+      });
+      axH.setAttribute('x1', PAD); axH.setAttribute('x2', W - PAD);
+      axH.setAttribute('y1', Y(0)); axH.setAttribute('y2', Y(0));
+      axV.setAttribute('x1', X(0)); axV.setAttribute('x2', X(0));
+      axV.setAttribute('y1', PAD); axV.setAttribute('y2', H - PAD);
+    }
+    relayout();
+
+    // the three curves, each scaled to sit inside y ∈ [-1.2, 1.2]
+    var FNS = [
+      { name: 'RELU',    f: function (v) { return Math.max(0, v) / 5.2; } },
+      { name: 'SIGMOID', f: function (v) { return 1 / (1 + Math.exp(-v)); } },
+      { name: 'TANH',    f: function (v) { return Math.tanh(v); } }
+    ];
+
+    var XS = [];
+    for (var v = -6; v <= 6.0001; v += 0.1) XS.push(v);
+
+    var trail = [], trailNodes = [];
+    for (var i = 0; i < 22; i++) trailNodes.push(add(gTrail, 'circle', { r: 2, fill: P.cyanLit, opacity: 0 }));
+
+    var DWELL = 2.4, MORPH = 1.1, PERIOD = DWELL + MORPH;
+
+    function frame(t, dt, hov) {
+      relayout();
+      t *= SPEED;
+      var cyc = t / PERIOD;
+      var i0 = Math.floor(cyc) % FNS.length;
+      var i1 = (i0 + 1) % FNS.length;
+      var local = (cyc - Math.floor(cyc)) * PERIOD;
+      var m = local < DWELL ? 0 : smooth((local - DWELL) / MORPH);
+      var f = function (x) { return lerp(FNS[i0].f(x), FNS[i1].f(x), m); };
+
+      var d = '';
+      for (var k = 0; k < XS.length; k++) d += (k ? 'L' : 'M') + X(XS[k]).toFixed(2) + ',' + Y(f(XS[k])).toFixed(2);
+      path.setAttribute('d', d);
+      path.setAttribute('stroke-width', (2.6 + hov * 1.6).toFixed(2));
+
+      label.textContent = m > 0.5 ? FNS[i1].name : FNS[i0].name;
+      label.setAttribute('opacity', (0.55 + hov * 0.45).toFixed(2));
+
+      // tracer
+      var u = (t * (0.15 + hov * 0.22)) % 1;
+      var xv = -6 + 12 * u, px = X(xv), py = Y(f(xv));
+      dot.setAttribute('cx', px.toFixed(2));
+      dot.setAttribute('cy', py.toFixed(2));
+      dot.setAttribute('r', (4 + hov * 2.5).toFixed(2));
+
+      trail.push([px, py]);
+      var maxLen = 8 + Math.round(hov * 14);
+      while (trail.length > maxLen) trail.shift();
+      for (var n = 0; n < trailNodes.length; n++) {
+        var pt = trail[trail.length - 1 - n];
+        var node = trailNodes[n];
+        if (!pt || n >= maxLen) { node.setAttribute('opacity', 0); continue; }
+        var fall = 1 - n / maxLen;
+        node.setAttribute('cx', pt[0].toFixed(2));
+        node.setAttribute('cy', pt[1].toFixed(2));
+        node.setAttribute('r', (1 + fall * (1.6 + hov * 1.4)).toFixed(2));
+        node.setAttribute('opacity', (fall * fall * (0.25 + hov * 0.55)).toFixed(3));
+      }
+    }
+
+    return makeInstance(el, frame, function () { if (svg.parentNode) svg.parentNode.removeChild(svg); });
+  }
+
+  /* ========================================================================
+   * CARD 2 — Optimization Techniques
+   * Canvas. A real vector field (arrows point along the negative gradient of
+   * an analytic loss surface) with amber particles running gradient descent
+   * with momentum, trailing their paths into the basin.
+   * ==================================================================== */
+  // Loss surface: shallow bowl minus two Gaussian wells. Gradient is analytic
+  // and verified against central differences.
+  var WELLS = [
+    { A: 1.45, cx: 1.30, cy: 0.55, s: 0.90 },
+    { A: 0.95, cx: -1.45, cy: -0.70, s: 1.00 }
+  ];
+  var BOWL = 0.10;
+
+  function lossAt(x, y) {
+    var v = BOWL * (x * x + y * y);
+    for (var i = 0; i < WELLS.length; i++) {
+      var w = WELLS[i];
+      v -= w.A * Math.exp(-(((x - w.cx) * (x - w.cx)) + ((y - w.cy) * (y - w.cy))) / w.s);
+    }
+    return v;
+  }
+  function gradAt(x, y) {
+    var gx = 2 * BOWL * x, gy = 2 * BOWL * y;
+    for (var i = 0; i < WELLS.length; i++) {
+      var w = WELLS[i];
+      var e = Math.exp(-(((x - w.cx) * (x - w.cx)) + ((y - w.cy) * (y - w.cy))) / w.s);
+      gx += w.A * e * 2 * (x - w.cx) / w.s;
+      gy += w.A * e * 2 * (y - w.cy) / w.s;
+    }
+    return [gx, gy];
+  }
+
+  function optimization(el, opts) {
+    opts = opts || {};
+    var P = Object.assign({}, PALETTE, opts.palette || {});
+    var SPEED = opts.speed || 1;
+    var g = rng(opts.seed || 21);
+
+    var canvas = makeCanvas(el);
+    var ctx = canvas.getContext('2d');
+
+    var XR = 3.4, YR = 1.9;                       // world extents (wide banner)
+    var N = 7;                                    // particles
+    var TRAIL = 30;
+
+    function spawn() {
+      return {
+        x: (g() * 2 - 1) * XR, y: (g() * 2 - 1) * YR,
+        vx: 0, vy: 0, age: 0, hist: []
+      };
+    }
+    var parts = [];
+    for (var i = 0; i < N; i++) parts.push(spawn());
+
+    function frame(t, dt, hov) {
+      fit(canvas);
+      var w = canvas._w, h = canvas._h;
+      if (!w || !h) return;
+
+      var toX = function (x) { return (x + XR) / (2 * XR) * w; };
+      var toY = function (y) { return h - (y + YR) / (2 * YR) * h; };
+
+      ctx.clearRect(0, 0, w, h);
+
+      // --- vector field -------------------------------------------------
+      var step = Math.max(26, Math.round(w / 22));
+      ctx.lineWidth = 1;
+      for (var px = step * 0.6; px < w; px += step) {
+        for (var py = step * 0.6; py < h; py += step) {
+          var wx = px / w * 2 * XR - XR;
+          var wy = (1 - py / h) * 2 * YR - YR;
+          var gr = gradAt(wx, wy);
+          var mag = Math.hypot(gr[0], gr[1]) || 1e-6;
+          var ux = -gr[0] / mag, uy = -gr[1] / mag;         // downhill direction
+          var len = clamp(mag * 7, 3, step * 0.42) * (1 + hov * 0.35);
+          var ex = px + ux * len, ey = py - uy * len;
+          ctx.strokeStyle = hexToRgba(P.dim, clamp(0.16 + mag * 0.30, 0.10, 0.60) * (0.75 + hov * 0.5));
+          ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke();
+          // arrowhead
+          var a = Math.atan2(-uy, ux), hd = 3.2;
+          ctx.beginPath();
+          ctx.moveTo(ex, ey);
+          ctx.lineTo(ex - hd * Math.cos(a - 0.42), ey - hd * Math.sin(a - 0.42));
+          ctx.moveTo(ex, ey);
+          ctx.lineTo(ex - hd * Math.cos(a + 0.42), ey - hd * Math.sin(a + 0.42));
+          ctx.stroke();
+        }
+      }
+
+      // --- basin glow ---------------------------------------------------
+      var deep = WELLS[0];
+      var bx = toX(deep.cx), by = toY(deep.cy);
+      var rg = ctx.createRadialGradient(bx, by, 0, bx, by, Math.min(w, h) * 0.45);
+      rg.addColorStop(0, hexToRgba(P.amber, 0.16 + hov * 0.10));
+      rg.addColorStop(1, hexToRgba(P.amber, 0));
+      ctx.fillStyle = rg;
+      ctx.fillRect(0, 0, w, h);
+
+      // --- particles: real gradient descent with momentum ---------------
+      var boost = (0.55 + hov * 1.25) * SPEED;
+      for (var k = 0; k < parts.length; k++) {
+        var p = parts[k];
+        var gr2 = gradAt(p.x, p.y);
+        p.vx = 0.86 * p.vx - gr2[0] * 0.05 * boost;
+        p.vy = 0.86 * p.vy - gr2[1] * 0.05 * boost;
+        p.x = clamp(p.x + p.vx, -XR, XR);
+        p.y = clamp(p.y + p.vy, -YR, YR);
+        p.age += dt;
+
+        p.hist.push([toX(p.x), toY(p.y)]);
+        if (p.hist.length > TRAIL) p.hist.shift();
+
+        // recycle once it has settled so the animation keeps breathing
+        if (Math.hypot(p.vx, p.vy) < 0.0022 && p.age > 2.8) {
+          parts[k] = spawn();
+          continue;
+        }
+
+        // trail
+        ctx.lineWidth = 1.4 + hov * 0.8;
+        for (var q = 1; q < p.hist.length; q++) {
+          var f2 = q / p.hist.length;
+          ctx.strokeStyle = hexToRgba(P.amber, f2 * f2 * (0.30 + hov * 0.35));
+          ctx.beginPath();
+          ctx.moveTo(p.hist[q - 1][0], p.hist[q - 1][1]);
+          ctx.lineTo(p.hist[q][0], p.hist[q][1]);
+          ctx.stroke();
+        }
+        // head
+        var hx = toX(p.x), hy = toY(p.y), r = 2.6 + hov * 1.5;
+        var hg = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 4);
+        hg.addColorStop(0, hexToRgba(P.amber, 0.95));
+        hg.addColorStop(1, hexToRgba(P.amber, 0));
+        ctx.fillStyle = hg;
+        ctx.beginPath(); ctx.arc(hx, hy, r * 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFD9A0';
+        ctx.beginPath(); ctx.arc(hx, hy, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    return makeInstance(el, frame, function () { if (canvas.parentNode) canvas.parentNode.removeChild(canvas); });
+  }
+
+  /* ========================================================================
+   * CARD 3 — Regularization Techniques
+   * Canvas. A small force-directed graph (hand-rolled springs + repulsion).
+   * On a repeating beat a random subset of units drops out: they fade, their
+   * edges go with them, and the survivors re-settle into a new subnetwork —
+   * which is what dropout actually does at train time.
+   * ==================================================================== */
+  function regularization(el, opts) {
+    opts = opts || {};
+    var P = Object.assign({}, PALETTE, opts.palette || {});
+    var SPEED = opts.speed || 1;
+    var g = rng(opts.seed || 42);
+
+    var canvas = makeCanvas(el);
+    var ctx = canvas.getContext('2d');
+
+    var N = 18;
+    var nodes = [], links = [];
+    for (var i = 0; i < N; i++) {
+      nodes.push({ x: g(), y: g(), vx: 0, vy: 0, alive: 1, target: 1 });
+    }
+    for (var a = 0; a < N; a++) {
+      for (var b = a + 1; b < N; b++) if (g() < 0.16) links.push([a, b]);
+    }
+    // guarantee no isolated node
+    for (var n = 0; n < N; n++) {
+      var has = links.some(function (l) { return l[0] === n || l[1] === n; });
+      if (!has) links.push([n, (n + 1) % N]);
+    }
+
+    var beat = 0, CYCLE = 1.6;
+
+    function dropout(rate) {
+      for (var i = 0; i < nodes.length; i++) nodes[i].target = Math.random() < rate ? 0 : 1;
+    }
+    dropout(0.28);
+
+    // Physics in normalised [0,1] space so it is resolution independent.
+    function physics(dt) {
+      var REST = 0.20, K = 2.4, REP = 0.0016, DAMP = 0.86;
+      var i, j;
+      for (i = 0; i < N; i++) {
+        var p = nodes[i];
+        // pull toward centre
+        p.vx += (0.5 - p.x) * 0.6 * dt;
+        p.vy += (0.5 - p.y) * 0.6 * dt;
+        // pairwise repulsion
+        for (j = i + 1; j < N; j++) {
+          var q = nodes[j];
+          var dx = p.x - q.x, dy = p.y - q.y;
+          var d2 = dx * dx + dy * dy + 1e-4;
+          var f = REP / d2;
+          var d = Math.sqrt(d2);
+          var ux = dx / d, uy = dy / d;
+          p.vx += ux * f; p.vy += uy * f;
+          q.vx -= ux * f; q.vy -= uy * f;
+        }
+      }
+      // springs, but only between units that are both switched on: dropped
+      // units stop exerting structure, so survivors genuinely rearrange
+      for (i = 0; i < links.length; i++) {
+        var A = nodes[links[i][0]], B = nodes[links[i][1]];
+        var w = Math.min(A.alive, B.alive);
+        if (w < 0.02) continue;
+        var ddx = B.x - A.x, ddy = B.y - A.y;
+        var dist = Math.hypot(ddx, ddy) || 1e-4;
+        var force = (dist - REST) * K * w * dt;
+        var nx = ddx / dist, ny = ddy / dist;
+        A.vx += nx * force; A.vy += ny * force;
+        B.vx -= nx * force; B.vy -= ny * force;
+      }
+      for (i = 0; i < N; i++) {
+        var s = nodes[i];
+        s.vx *= DAMP; s.vy *= DAMP;
+        s.x = clamp(s.x + s.vx * dt * 6, 0.06, 0.94);
+        s.y = clamp(s.y + s.vy * dt * 6, 0.10, 0.90);
+        s.alive += (s.target - s.alive) * Math.min(1, dt * 6);
+      }
+    }
+
+    // settle before the first paint so it never appears mid-explosion
+    for (var w0 = 0; w0 < 240; w0++) physics(1 / 60);
+
+    function frame(t, dt, hov) {
+      fit(canvas);
+      var cw = canvas._w, ch = canvas._h;
+      if (!cw || !ch) return;
+
+      beat += dt * SPEED * (1 + hov * 0.9);
+      if (beat > CYCLE) { beat = 0; dropout(0.22 + Math.random() * 0.20); }
+
+      physics(dt * SPEED * (1 + hov * 0.5));
+      ctx.clearRect(0, 0, cw, ch);
+
+      var toX = function (x) { return x * cw; };
+      var toY = function (y) { return y * ch; };
+
+      // edges
+      for (var i = 0; i < links.length; i++) {
+        var A = nodes[links[i][0]], B = nodes[links[i][1]];
+        var w = Math.min(A.alive, B.alive);
+        ctx.strokeStyle = hexToRgba(P.cyan, 0.05 + w * (0.34 + hov * 0.22));
+        ctx.lineWidth = 0.6 + w * (1.1 + hov * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(toX(A.x), toY(A.y));
+        ctx.lineTo(toX(B.x), toY(B.y));
+        ctx.stroke();
+      }
+
+      // nodes
+      for (var k = 0; k < N; k++) {
+        var p = nodes[k];
+        var x = toX(p.x), y = toY(p.y);
+        var r = 2.2 + p.alive * (2.2 + hov * 1.2);
+        if (p.alive > 0.05) {
+          var rg = ctx.createRadialGradient(x, y, 0, x, y, r * 3.6);
+          rg.addColorStop(0, hexToRgba(P.cyanLit, 0.55 * p.alive));
+          rg.addColorStop(1, hexToRgba(P.cyanLit, 0));
+          ctx.fillStyle = rg;
+          ctx.beginPath(); ctx.arc(x, y, r * 3.6, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = p.alive > 0.05
+          ? hexToRgba(P.cyanLit, 0.35 + p.alive * 0.65)
+          : hexToRgba(P.grid, 0.9);
+        ctx.beginPath(); ctx.arc(x, y, Math.max(1.4, r), 0, Math.PI * 2); ctx.fill();
+
+        // dropped units leave a hollow ring behind
+        if (p.alive < 0.4) {
+          ctx.strokeStyle = hexToRgba(P.dim, 0.55 * (1 - p.alive));
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(x, y, 4.6, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+    }
+
+    return makeInstance(el, frame, function () { if (canvas.parentNode) canvas.parentNode.removeChild(canvas); });
+  }
+
+  /* ========================================================================
+   * CARD 4 — Transfer Learning
+   * Canvas. A backbone of frozen blocks feeding a trainable head. A gradient
+   * pulse travels backwards from the output and stops dead at the freeze
+   * boundary: nothing upstream of it receives an update.
+   * ==================================================================== */
+  function transfer(el, opts) {
+    opts = opts || {};
+    var P = Object.assign({}, PALETTE, opts.palette || {});
+    var SPEED = opts.speed || 1;
+    var ACCENT = (opts.palette && opts.palette.accent) || P.violet;
+
+    var canvas = makeCanvas(el);
+    var ctx = canvas.getContext('2d');
+    var BLOCKS = 6, FROZEN = 4;                  // last two blocks train
+
+    function frame(t, dt, hov) {
+      fit(canvas);
+      var w = canvas._w, h = canvas._h;
+      if (!w || !h) return;
+      ctx.clearRect(0, 0, w, h);
+
+      var pad = Math.max(26, w * 0.09);
+      var gap = (w - 2 * pad) / (BLOCKS - 1);
+      var cy = h / 2;
+      var bx = function (i) { return pad + i * gap; };
+
+      // connections
+      ctx.strokeStyle = hexToRgba(P.dim, 0.55);
+      ctx.lineWidth = 1;
+      for (var i = 0; i < BLOCKS - 1; i++) {
+        ctx.beginPath();
+        ctx.moveTo(bx(i) + gap * 0.16, cy);
+        ctx.lineTo(bx(i + 1) - gap * 0.16, cy);
+        ctx.stroke();
+      }
+
+      // backwards pulse, halted at the boundary between frozen and trainable
+      var startX = bx(BLOCKS - 1), stopX = bx(FROZEN - 1);
+      var cyc = (t * SPEED * (0.42 + hov * 0.55)) % 1;
+      var px = startX - (startX - stopX) * cyc;
+
+      // blocks
+      var bw = Math.min(gap * 0.42, h * 0.20);
+      var bh = h * 0.42;
+      for (var k = 0; k < BLOCKS; k++) {
+        var frozen = k < FROZEN;
+        var x = bx(k);
+        var near = Math.abs(x - px) < gap * 0.5 ? 1 : 0;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x - bw / 2, cy - bh / 2, bw, bh, 4);
+        else ctx.rect(x - bw / 2, cy - bh / 2, bw, bh);
+        if (frozen) {
+          ctx.fillStyle = hexToRgba(P.grid, 0.75);
+          ctx.fill();
+          ctx.strokeStyle = hexToRgba(P.dim, 0.9);
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = hexToRgba(ACCENT, 0.14 + near * 0.16);
+          ctx.fill();
+          ctx.strokeStyle = hexToRgba(ACCENT, 0.6 + near * 0.4 + hov * 0.1);
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      }
+
+      // the pulse itself
+      var g = ctx.createRadialGradient(px, cy, 0, px, cy, 16 + hov * 8);
+      g.addColorStop(0, hexToRgba(P.amber, 0.9 * (1 - cyc) + 0.1));
+      g.addColorStop(1, hexToRgba(P.amber, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(px, cy, 16 + hov * 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = hexToRgba('#FFD9A0', 0.85 * (1 - cyc) + 0.15);
+      ctx.beginPath(); ctx.arc(px, cy, 3 + hov * 1.4, 0, Math.PI * 2); ctx.fill();
+
+      // freeze boundary
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = hexToRgba(ACCENT, 0.35 + hov * 0.2);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo((bx(FROZEN - 1) + bx(FROZEN)) / 2, h * 0.16);
+      ctx.lineTo((bx(FROZEN - 1) + bx(FROZEN)) / 2, h * 0.84);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    return makeInstance(el, frame, function () { if (canvas.parentNode) canvas.parentNode.removeChild(canvas); });
+  }
+
+  /* ========================================================================
+   * CARD 5 — Data Augmentation
+   * Canvas. One seed sample emits transformed copies that drift outward,
+   * rotating and rescaling as they go: one example becomes many.
+   * ==================================================================== */
+  function sampling(el, opts) {
+    opts = opts || {};
+    var P = Object.assign({}, PALETTE, opts.palette || {});
+    var SPEED = opts.speed || 1;
+    var ACCENT = (opts.palette && opts.palette.accent) || P.amber;
+    var g = rng(opts.seed || 63);
+
+    var canvas = makeCanvas(el);
+    var ctx = canvas.getContext('2d');
+
+    var K = 16, variants = [];
+    for (var i = 0; i < K; i++) {
+      variants.push({
+        ph: g(), ang: g() * Math.PI * 2, dist: 0.28 + g() * 0.62,
+        spin: g() * 2 - 1, sc: 0.5 + g() * 0.7
+      });
+    }
+
+    function glyph(size) {
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.55, size * 0.45);
+      ctx.lineTo(0, -size * 0.6);
+      ctx.lineTo(size * 0.6, size * 0.3);
+      ctx.closePath();
+    }
+
+    function frame(t, dt, hov) {
+      fit(canvas);
+      var w = canvas._w, h = canvas._h;
+      if (!w || !h) return;
+      ctx.clearRect(0, 0, w, h);
+
+      var cx = w / 2, cy = h / 2;
+      var reach = Math.min(w, h) * 0.62;
+      var speed = 0.20 * SPEED * (1 + hov * 1.1);
+
+      for (var i = 0; i < variants.length; i++) {
+        var v = variants[i];
+        var u = (t * speed + v.ph) % 1;
+        var r = v.dist * reach * u;
+        var x = cx + Math.cos(v.ang) * r;
+        var y = cy + Math.sin(v.ang) * r * 0.72;
+        var a = (1 - u) * (0.5 + hov * 0.4);
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(v.spin * u * 1.4);
+        ctx.scale(v.sc, v.sc);
+        ctx.strokeStyle = hexToRgba(ACCENT, a);
+        ctx.lineWidth = 1.4 / v.sc;
+        var s = Math.min(w, h) * 0.13;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(-s * 0.8, -s * 0.66, s * 1.6, s * 1.32, 3);
+        else ctx.rect(-s * 0.8, -s * 0.66, s * 1.6, s * 1.32);
+        ctx.stroke();
+        glyph(s * 0.9);
+        ctx.fillStyle = hexToRgba(ACCENT, a * 0.55);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // the original sample, held at the centre
+      var s0 = Math.min(w, h) * 0.15;
+      var gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, s0 * 2.6);
+      gl.addColorStop(0, hexToRgba(ACCENT, 0.30 + hov * 0.16));
+      gl.addColorStop(1, hexToRgba(ACCENT, 0));
+      ctx.fillStyle = gl;
+      ctx.beginPath(); ctx.arc(cx, cy, s0 * 2.6, 0, Math.PI * 2); ctx.fill();
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.strokeStyle = hexToRgba(ACCENT, 0.95);
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-s0 * 0.8, -s0 * 0.66, s0 * 1.6, s0 * 1.32, 3);
+      else ctx.rect(-s0 * 0.8, -s0 * 0.66, s0 * 1.6, s0 * 1.32);
+      ctx.stroke();
+      glyph(s0 * 0.9);
+      ctx.fillStyle = hexToRgba(ACCENT, 0.9);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    return makeInstance(el, frame, function () { if (canvas.parentNode) canvas.parentNode.removeChild(canvas); });
+  }
+
+  /* ========================================================================
+   * CARD 6 — AlexNet / architecture cascade
+   * Canvas. A signal front sweeps through progressively narrower feature
+   * layers, brightening whichever stage it is passing through.
+   * ==================================================================== */
+  function cascade(el, opts) {
+    opts = opts || {};
+    var P = Object.assign({}, PALETTE, opts.palette || {});
+    var SPEED = opts.speed || 1;
+    var ACCENT = (opts.palette && opts.palette.accent) || P.violet;
+
+    var canvas = makeCanvas(el);
+    var ctx = canvas.getContext('2d');
+    var L = 8;
+
+    function frame(t, dt, hov) {
+      fit(canvas);
+      var w = canvas._w, h = canvas._h;
+      if (!w || !h) return;
+      ctx.clearRect(0, 0, w, h);
+
+      var pad = Math.max(24, w * 0.08);
+      var span = w - 2 * pad;
+      var front = pad + span * ((t * SPEED * (0.26 + hov * 0.32)) % 1);
+      var cy = h / 2;
+
+      for (var i = 0; i < L; i++) {
+        var x = pad + span * (i / (L - 1));
+        var bh = h * 0.74 * (1 - i / (L * 1.22));      // spatial extent collapses
+        var near = clamp(1 - Math.abs(x - front) / (span / L * 0.9), 0, 1);
+        var lw = 1 + near * (2.6 + hov * 1.2);
+
+        if (near > 0.05) {
+          ctx.strokeStyle = hexToRgba(ACCENT, near * 0.22);
+          ctx.lineWidth = lw * 4;
+          ctx.beginPath();
+          ctx.moveTo(x, cy - bh / 2); ctx.lineTo(x, cy + bh / 2);
+          ctx.stroke();
+        }
+        ctx.strokeStyle = hexToRgba(ACCENT, 0.24 + near * 0.7);
+        ctx.lineWidth = lw;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x, cy - bh / 2); ctx.lineTo(x, cy + bh / 2);
+        ctx.stroke();
+
+        // channel depth grows as resolution falls
+        var dots = Math.min(6, 1 + Math.round(i * 0.8));
+        for (var d = 0; d < dots; d++) {
+          var dy = cy - bh / 2 + (bh / (dots + 1)) * (d + 1);
+          ctx.fillStyle = hexToRgba(ACCENT, 0.18 + near * 0.55);
+          ctx.beginPath(); ctx.arc(x, dy, 1.1 + near * 0.9, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    }
+
+    return makeInstance(el, frame, function () { if (canvas.parentNode) canvas.parentNode.removeChild(canvas); });
+  }
+
+  /* ---------------------------------------------------------------- mount */
+  var REGISTRY = {
+    activation: activation,
+    optimization: optimization,
+    regularization: regularization,
+    transfer: transfer,
+    sampling: sampling,
+    cascade: cascade
+  };
+
+  // Auto-mount: <div class="ct-thumb" data-thumb="activation" data-seed="11">
+  function mountAll(rootEl) {
+    var scope = rootEl || document;
+    var out = [];
+    var els = scope.querySelectorAll('[data-thumb]');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      var name = el.getAttribute('data-thumb');
+      var fn = REGISTRY[name];
+      if (!fn) {
+        if (window.console) console.warn('[CardThumbnails] unknown renderer "' + name + '"');
+        continue;
+      }
+      var seed = parseInt(el.getAttribute('data-seed'), 10);
+      var accent = el.getAttribute('data-accent');
+      out.push(fn(el, {
+        seed: isNaN(seed) ? undefined : seed,
+        palette: accent ? { accent: accent, cyan: accent, cyanLit: accent, amber: accent } : undefined
+      }));
+    }
+    return {
+      instances: out,
+      destroy: function () { out.forEach(function (o) { o.destroy(); }); }
+    };
+  }
+
+  return {
+    activation: activation,
+    optimization: optimization,
+    regularization: regularization,
+    transfer: transfer,
+    sampling: sampling,
+    cascade: cascade,
+    mountAll: mountAll,
+    PALETTE: PALETTE
+  };
+}));
+    </script>
 
     <script>
     /* ======================================================================
@@ -711,354 +1585,6 @@
     btnForce.addEventListener('click',()=>setEngine('force'));
 
     /* ======================================================================
-       CARD THUMBNAILS (D3) — abstract, animated mathematical behaviours.
-       Each generator builds a scene and returns update(t, intensity):
-         t         = seconds since load (one shared clock)
-         intensity = 1 at rest, eases toward ~1.7 while the card is hovered
-       A single ticker drives every card; only in-view cards update
-       (IntersectionObserver). prefers-reduced-motion draws one still frame.
-       ====================================================================== */
-    const clamp=(v,a,b)=>v<a?a:v>b?b:v;
-    const smooth=k=>{ k=clamp(k,0,1); return k*k*(3-2*k); };
-
-    // One shared soft-glow filter for all card SVGs (defined once, document-wide)
-    function cardGlobalDefs(){
-        if(document.getElementById('cardGlow')) return;
-        const s=d3.select('body').append('svg').attr('width',0).attr('height',0).style('position','absolute');
-        const f=s.append('defs').append('filter').attr('id','cardGlow').attr('x','-60%').attr('y','-60%').attr('width','220%').attr('height','220%');
-        f.append('feGaussianBlur').attr('stdDeviation',1.7).attr('result','b');
-        const m=f.append('feMerge'); m.append('feMergeNode').attr('in','b'); m.append('feMergeNode').attr('in','SourceGraphic');
-    }
-
-    // Activation — energy through a nonlinear gate: a uniform field enters, the
-    // gate squashes it (tanh), so even spacing becomes compressed on the way out.
-    // Activation — the canonical curves on one axis, morphing ReLU -> Sigmoid
-    // -> Tanh. Softmax is deliberately absent: it maps a vector to a vector, so
-    // it has no single-curve form here (its two-class case is just the sigmoid).
-    // ReLU is drawn as its true ramp, scaled to fit, not as a step.
-    function vizCurves(svg,{color,gen,W,H}){
-        const pad=14, X=d3.scaleLinear([-6,6],[pad,W-pad]), Y=d3.scaleLinear([-1.2,1.2],[H-pad,pad]);
-        const grid=svg.append('g');
-        [-1,-0.5,0.5,1].forEach(v=>grid.append('line').attr('x1',pad).attr('x2',W-pad)
-            .attr('y1',Y(v)).attr('y2',Y(v)).attr('stroke','#3a5570').attr('stroke-width',0.5).attr('opacity',0.16));
-        [-4,-2,2,4].forEach(v=>grid.append('line').attr('y1',pad).attr('y2',H-pad)
-            .attr('x1',X(v)).attr('x2',X(v)).attr('stroke','#3a5570').attr('stroke-width',0.5).attr('opacity',0.16));
-        grid.append('line').attr('x1',pad).attr('x2',W-pad).attr('y1',Y(0)).attr('y2',Y(0))
-            .attr('stroke','#3a5570').attr('stroke-width',0.9).attr('opacity',0.45);
-        grid.append('line').attr('y1',pad).attr('y2',H-pad).attr('x1',X(0)).attr('x2',X(0))
-            .attr('stroke','#3a5570').attr('stroke-width',0.9).attr('opacity',0.45);
-
-        const FN=[ v=>Math.max(0,v)/5.2, v=>1/(1+Math.exp(-v)), v=>Math.tanh(v) ];
-        const XS=d3.range(-6,6.001,0.12);
-        const line=d3.line().x(d=>X(d[0])).y(d=>Y(d[1])).curve(d3.curveBasis);
-        const trail=svg.append('g'), path=svg.append('path')
-            .attr('fill','none').attr('stroke',color).attr('filter','url(#cardGlow)').attr('stroke-linecap','round');
-        const dot=svg.append('circle').attr('fill',color).attr('filter','url(#cardGlow)');
-        const hist=[];
-        // st.h is tweened 0..1 by GSAP on hover: it thickens the stroke, speeds
-        // the tracer and lengthens its particle trail.
-        const st={h:0};
-        const DWELL=2.6, MORPH=1.0, PERIOD=DWELL+MORPH;
-
-        function api(t,inten){
-            const cyc=t/PERIOD, i=Math.floor(cyc)%FN.length, nx=(i+1)%FN.length;
-            const local=(cyc-Math.floor(cyc))*PERIOD;
-            const m=local<DWELL?0:smooth((local-DWELL)/MORPH);
-            const f=v=>lerp(FN[i](v),FN[nx](v),m);
-            path.attr('d',line(XS.map(v=>[v,f(v)])))
-                .attr('stroke-width',1.6+st.h*1.5).attr('opacity',0.75+st.h*0.25);
-
-            const u=(t*(0.16+st.h*0.26))%1, xv=-6+12*u, pt=[X(xv),Y(f(xv))];
-            dot.attr('cx',pt[0]).attr('cy',pt[1]).attr('r',2.2+st.h*1.9).attr('opacity',0.35+st.h*0.65);
-            hist.push(pt); while(hist.length> (6+Math.round(st.h*16))) hist.shift();
-            trail.selectAll('circle').data(hist).join('circle')
-                .attr('cx',d=>d[0]).attr('cy',d=>d[1])
-                .attr('r',(d,k)=>0.6+(k/hist.length)*(1.4+st.h*1.4))
-                .attr('fill',color).attr('opacity',(d,k)=>(k/hist.length)*0.5*(0.25+st.h));
-        }
-        return { update:api, onHover(on){
-            if(typeof gsap==='undefined'){ st.h=on?1:0; return; }
-            gsap.to(st,{h:on?1:0,duration:on?0.45:0.6,ease:on?'power2.out':'power2.inOut',overwrite:true});
-        }};
-    }
-
-    // Optimization fallback — a particle traversing a vector field toward an
-    // attractor, respawning at the edge so the trajectory keeps re-drawing.
-    function vizField(svg,{color,gen,W,H}){
-        const ax=W*0.62, ay=H*0.5;
-        const V=(x,y)=>{ const dx=ax-x,dy=ay-y,vx=dx*0.02-dy*0.014,vy=dy*0.02+dx*0.014,m=Math.hypot(vx,vy)||1; return [vx/m,vy/m]; };
-        for(let x=18;x<W-8;x+=32) for(let y=16;y<H-8;y+=32){ const v=V(x,y);
-            svg.append('line').attr('x1',x).attr('y1',y).attr('x2',x+v[0]*8).attr('y2',y+v[1]*8).attr('stroke','#6b8fa8').attr('stroke-width',0.7).attr('opacity',0.16); }
-        const spawn=()=>({x:10+gen()*18,y:12+gen()*(H-24),life:0}), parts=d3.range(3).map(spawn);
-        const dots=svg.selectAll('circle').data(parts).join('circle').attr('r',2.3).attr('fill',color).attr('filter','url(#cardGlow)');
-        let last=0;
-        return (t,inten)=>{ let dt=t-last; last=t; if(!(dt>0)||dt>0.05) dt=0.016; const sp=80*inten;
-            parts.forEach(p=>{ const v=V(p.x,p.y); p.x+=v[0]*sp*dt; p.y+=v[1]*sp*dt; p.life+=dt;
-                if(Math.hypot(ax-p.x,ay-p.y)<9||p.life>4) Object.assign(p,spawn()); });
-            dots.attr('cx',d=>d.x).attr('cy',d=>d.y).attr('opacity',d=>Math.min(d.life*2.2,1)*0.9);
-        };
-    }
-
-    // Regularization — a dense graph simplifying as redundant edges fade out,
-    // leaving only the essential connections, then re-forming on a loop.
-    // Regularization — a force-directed web under dropout. Units switch off at
-    // random, their edges go with them, and the simulation re-settles the rest:
-    // a different subnetwork every pass, which is what dropout actually does.
-    function vizDropout(svg,{color,gen,W,H}){
-        const N=16;
-        const nodes=d3.range(N).map(i=>({ i, x:20+gen()*(W-40), y:16+gen()*(H-32), o:1 }));
-        const links=[];
-        for(let a=0;a<N;a++) for(let b=a+1;b<N;b++) if(gen()<0.20) links.push({source:nodes[a],target:nodes[b]});
-        nodes.forEach(n=>{ if(!links.some(l=>l.source===n||l.target===n)) links.push({source:n,target:nodes[(n.i+1)%N]}); });
-
-        const sim=d3.forceSimulation(nodes)
-            .force('link',d3.forceLink(links).distance(34).strength(0.45))
-            .force('charge',d3.forceManyBody().strength(-42))
-            .force('center',d3.forceCenter(W/2,H/2))
-            .force('collide',d3.forceCollide(11))
-            .alphaDecay(0.045).stop();
-        for(let i=0;i<220;i++) sim.tick();                    // settle before first paint
-
-        const lg=svg.append('g'), ng=svg.append('g');
-        const ls=lg.selectAll('line').data(links).join('line').attr('stroke',color).attr('stroke-width',1);
-        const ns=ng.selectAll('circle').data(nodes).join('circle').attr('r',3.2).attr('fill',color);
-
-        let acc=0, cycle=1.45;
-        function resample(rate){
-            nodes.forEach(n=>{
-                const drop=Math.random()<rate;
-                if(typeof gsap==='undefined'){ n.o=drop?0:1; return; }
-                gsap.to(n,{o:drop?0:1,duration:0.35,ease:'power2.out',overwrite:true});
-            });
-            sim.alpha(0.55).restart();                        // survivors rearrange
-        }
-        resample(0.3);
-
-        return { update(t,inten){
-            acc+=1/60;
-            if(acc>cycle/inten){ acc=0; resample(0.22+Math.random()*0.2); }
-            sim.tick();
-            ns.attr('cx',d=>d.x=clamp(d.x,8,W-8)).attr('cy',d=>d.y=clamp(d.y,8,H-8))
-              .attr('r',d=>2.4+d.o*1.4).attr('opacity',d=>0.12+d.o*0.85);
-            ls.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
-              .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y)
-              .attr('stroke-width',d=>0.5+Math.min(d.source.o,d.target.o)*1.1)
-              .attr('opacity',d=>0.06+Math.min(d.source.o,d.target.o)*0.42);
-        }};
-    }
-
-    // Transfer Learning — a gradient pulse flows back from the output but stops
-    // at the frozen boundary: only the trainable layers light up.
-    function vizTransferFlow(svg,{color,gen,W,H}){
-        const n=5, pad=28, gap=(W-2*pad)/(n-1), y=H/2, frozen=2, bx=i=>pad+i*gap;
-        for(let i=0;i<n-1;i++) svg.append('line').attr('x1',bx(i)).attr('x2',bx(i+1)).attr('y1',y).attr('y2',y).attr('stroke','#3a5570').attr('stroke-width',1).attr('opacity',0.4);
-        const blocks=svg.selectAll('rect').data(d3.range(n)).join('rect')
-            .attr('x',i=>bx(i)-9).attr('y',y-16).attr('width',18).attr('height',32).attr('rx',4)
-            .attr('fill',i=>i<frozen?'#1b2c40':'none').attr('stroke',i=>i<frozen?'#3a5570':color).attr('stroke-width',1.3);
-        const pulse=svg.append('circle').attr('r',2.6).attr('fill',color).attr('filter','url(#cardGlow)');
-        const startX=bx(n-1), stopX=bx(frozen);
-        return (t,inten)=>{ const cyc=(t*0.5)%1, x=startX-(startX-stopX)*cyc;
-            pulse.attr('cx',x).attr('cy',y).attr('opacity',0.85*(1-cyc)+0.1);
-            blocks.attr('opacity',(d,i)=> i<frozen?0.5 : (Math.abs(bx(i)-x)<gap*0.5?1:0.7));
-        };
-    }
-
-    // Data Augmentation — one seed point emitting perturbed variants (rotated,
-    // scaled, shifted) that drift outward and fade: one sample becomes many.
-    function vizSampling(svg,{color,gen,W,H}){
-        const cx=W/2, cy=H/2, K=14;
-        svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',3).attr('fill',color).attr('filter','url(#cardGlow)');
-        const parts=d3.range(K).map(()=>({ph:gen(),ang:gen()*6.283,dist:22+gen()*72,rot:gen()*2-1,sc:0.5+gen()*0.7}));
-        const g=svg.selectAll('g').data(parts).join('g');
-        g.append('rect').attr('x',-6).attr('y',-5).attr('width',12).attr('height',10).attr('rx',2).attr('fill','none').attr('stroke',color).attr('stroke-width',1.1);
-        return (t,inten)=>{ const sp=0.26*inten;
-            g.attr('transform',d=>{ const p=(t*sp+d.ph)%1, r=d.dist*p; return 'translate('+(cx+Math.cos(d.ang)*r)+','+(cy+Math.sin(d.ang)*r)+') rotate('+(d.rot*p*80)+') scale('+d.sc+')'; })
-             .attr('opacity',d=>{ const p=(t*sp+d.ph)%1; return (1-p)*0.65; });
-        };
-    }
-
-    // AlexNet — a signal front sweeping through narrowing feature layers:
-    // each stage is shorter than the last, the active one brightens.
-    function vizCascade(svg,{color,gen,W,H}){
-        const L=6, pad=22, gap=(W-2*pad)/(L-1), bh=i=>H*0.72*(1-i/(L*1.3));
-        const bars=svg.selectAll('line').data(d3.range(L)).join('line')
-            .attr('x1',i=>pad+i*gap).attr('x2',i=>pad+i*gap)
-            .attr('y1',i=>H/2-bh(i)/2).attr('y2',i=>H/2+bh(i)/2)
-            .attr('stroke',color).attr('stroke-width',1).attr('stroke-linecap','round');
-        return (t)=>{ const front=pad+(W-2*pad)*((t*0.3)%1);
-            bars.attr('opacity',(d,i)=>Math.abs(pad+i*gap-front)<gap*0.55?0.85:0.22)
-                .attr('stroke-width',(d,i)=>Math.abs(pad+i*gap-front)<gap*0.55?2.4:1);
-        };
-    }
-
-    /* ----------------------------------------------------------------------
-       3D LOSS LANDSCAPE (card variant) — Three.js, lazy-loaded.
-       Fetched only when the card nears the viewport and only if WebGL is
-       available; otherwise the card falls back to the flat vector field above.
-       The marbles run real gradient descent with momentum on the analytic
-       gradient of the surface, matching the article's landscape.
-       ---------------------------------------------------------------------- */
-    const THREE_URL='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-    const _loaded={};                       // src -> Promise, so a lib loads once
-    function loadScript(src){
-        if(_loaded[src]) return _loaded[src];
-        _loaded[src]=new Promise((res,rej)=>{
-            const el=document.createElement('script'); el.src=src; el.async=true;
-            el.onload=()=>res(); el.onerror=()=>rej(new Error('load failed'));
-            document.head.appendChild(el);
-        });
-        return _loaded[src];
-    }
-    function webglOK(){
-        try{ const c=document.createElement('canvas');
-            return !!(window.WebGLRenderingContext && (c.getContext('webgl')||c.getContext('experimental-webgl')));
-        }catch(e){ return false; }
-    }
-
-    // Surface: shallow bowl minus two Gaussian wells. Gradient is analytic.
-    const LSW=[{A:1.45,cx:1.35,cy:0.95,s:0.85},{A:0.95,cx:-1.4,cy:-1.15,s:0.95}], LSB=0.10;
-    function lsLoss(x,y){ let v=LSB*(x*x+y*y);
-        for(const w of LSW) v-=w.A*Math.exp(-(((x-w.cx)**2)+((y-w.cy)**2))/w.s); return v; }
-    function lsGrad(x,y){ let gx=2*LSB*x, gy=2*LSB*y;
-        for(const w of LSW){ const e=Math.exp(-(((x-w.cx)**2)+((y-w.cy)**2))/w.s);
-            gx+=w.A*e*2*(x-w.cx)/w.s; gy+=w.A*e*2*(y-w.cy)/w.s; } return [gx,gy]; }
-
-    function buildLandscape3D(holder,accent){
-        if(typeof THREE==='undefined') return null;
-        const canvas=document.createElement('canvas');
-        canvas.style.cssText='display:block;width:100%;height:100%;';
-        holder.appendChild(canvas);
-        let renderer;
-        try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true}); }
-        catch(e){ holder.removeChild(canvas); return null; }
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-
-        const scene=new THREE.Scene();
-        const camera=new THREE.PerspectiveCamera(42,300/210,0.1,100);
-        const LIM=3.0, HS=0.95;
-
-        // Warm wireframe terrain
-        const geo=new THREE.PlaneGeometry(2*LIM,2*LIM,44,44), pos=geo.attributes.position;
-        for(let i=0;i<pos.count;i++) pos.setZ(i, lsLoss(pos.getX(i),pos.getY(i))*HS);
-        geo.computeVertexNormals();
-        const mesh=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({
-            color:new THREE.Color(accent), wireframe:true, transparent:true, opacity:0.42 }));
-        mesh.rotation.x=-Math.PI/2; scene.add(mesh);
-
-        const M=4, marbles=[], trails=[], TRL=26;
-        const g0=rng(5);
-        function spawn(i){ return { x:(g0()*2-1)*2.6, y:(g0()*2-1)*2.6, vx:0, vy:0, age:0, hist:[] }; }
-        const P=d3.range(M).map(spawn);
-        P.forEach(()=>{
-            const m=new THREE.Mesh(new THREE.SphereGeometry(0.10,12,10),
-                new THREE.MeshBasicMaterial({color:new THREE.Color('#ffb020')}));
-            scene.add(m); marbles.push(m);
-            const g=new THREE.BufferGeometry();
-            g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(TRL*3),3));
-            const l=new THREE.Line(g,new THREE.LineBasicMaterial({
-                color:new THREE.Color('#ffb020'), transparent:true, opacity:0.5 }));
-            l.frustumCulled=false; scene.add(l); trails.push(l);
-        });
-
-        // st.h tweened by GSAP on hover: tilts the camera and speeds descent
-        const st={h:0};
-        let az=0.75, prev=0, lastW=0, lastH=0;
-
-        function update(t,inten){
-            const w=holder.clientWidth, h=holder.clientHeight;
-            if(!w||!h) return;
-            if(w!==lastW||h!==lastH){ lastW=w; lastH=h; renderer.setSize(w,h,false);
-                camera.aspect=w/h; camera.updateProjectionMatrix(); }
-            let dt=t-prev; prev=t; if(!(dt>0)||dt>0.05) dt=0.016;
-
-            const speed=0.55+st.h*1.5;
-            for(let i=0;i<M;i++){
-                const p=P[i], g=lsGrad(p.x,p.y);
-                p.vx=0.86*p.vx-g[0]*0.055*speed; p.vy=0.86*p.vy-g[1]*0.055*speed;
-                p.x=clamp(p.x+p.vx,-LIM,LIM); p.y=clamp(p.y+p.vy,-LIM,LIM);
-                p.age+=dt;
-                if(Math.hypot(p.vx,p.vy)<0.0018 && p.age>3.2){ Object.assign(P[i],spawn(i)); }
-                const z=lsLoss(p.x,p.y)*HS;
-                marbles[i].position.set(p.x,z+0.1,-p.y);
-                p.hist.push([p.x,z+0.05,-p.y]); if(p.hist.length>TRL) p.hist.shift();
-                const arr=trails[i].geometry.attributes.position.array;
-                for(let k=0;k<p.hist.length;k++){ arr[k*3]=p.hist[k][0]; arr[k*3+1]=p.hist[k][1]; arr[k*3+2]=p.hist[k][2]; }
-                trails[i].geometry.attributes.position.needsUpdate=true;
-                trails[i].geometry.setDrawRange(0,Math.max(2,p.hist.length));
-            }
-            az+=dt*0.10;
-            const pol=1.16-st.h*0.42, rad=7.6-st.h*0.7;      // hover tilts the view
-            camera.position.set(rad*Math.sin(pol)*Math.cos(az), rad*Math.cos(pol)+0.6, rad*Math.sin(pol)*Math.sin(az));
-            camera.lookAt(0,0,0);
-            mesh.material.opacity=0.42+st.h*0.22;
-            renderer.render(scene,camera);
-        }
-        return { update, onHover(on){
-            if(typeof gsap==='undefined'){ st.h=on?1:0; return; }
-            gsap.to(st,{h:on?1:0,duration:on?0.7:0.9,ease:'power2.inOut',overwrite:true});
-        }};
-    }
-
-    const CARD_VIZ={curves:vizCurves,field:vizField,dropout:vizDropout,
-                    transfer:vizTransferFlow,sampling:vizSampling,cascade:vizCascade};
-    // Cards whose primary renderer needs WebGL. Each must set data-fallback to
-    // a CARD_VIZ key used when WebGL or the library is unavailable.
-    const CARD_3D={landscape3d:buildLandscape3D};
-
-    function initCards(){
-        cardGlobalDefs();
-        const anim=[];   // {card, update, intensity, target, visible}
-        let io=null;
-        if(!REDUCED && 'IntersectionObserver' in window){
-            io=new IntersectionObserver(es=>es.forEach(e=>{
-                const a=anim.find(x=>x.card===e.target); if(a) a.visible=e.isIntersecting;
-            }),{threshold:0.05});
-        }
-        // A renderer may return either update(t,i) or {update, onHover(bool)}.
-        function register(card,api){
-            if(!api) return;
-            const update=typeof api==='function'?api:api.update;
-            const onHover=typeof api==='function'?null:api.onHover;
-            if(!update) return;
-            if(REDUCED){ update(0.7,1); return; }
-            const a={card,update,intensity:1,target:1,visible:!io};
-            card.addEventListener('mouseenter',()=>{ a.target=1.7; if(onHover) onHover(true); });
-            card.addEventListener('mouseleave',()=>{ a.target=1;   if(onHover) onHover(false); });
-            anim.push(a); if(io) io.observe(card);
-        }
-        function mountSvg(card,holder,key){
-            const build=CARD_VIZ[key]; if(!build) return;
-            const svg=d3.select(holder).append('svg').attr('viewBox','0 0 300 132')
-                .attr('preserveAspectRatio','xMidYMid slice');
-            register(card,build(svg,{color:card.dataset.color,gen:rng(+card.dataset.seed),W:300,H:132}));
-        }
-        function setup3D(card,holder,builder){
-            const fall=()=>mountSvg(card,holder,card.dataset.fallback);
-            if(REDUCED||!webglOK()){ fall(); return; }
-            const go=()=>loadScript(THREE_URL)
-                .then(()=>{ const api=builder(holder,card.dataset.color); api?register(card,api):fall(); })
-                .catch(fall);
-            if('IntersectionObserver' in window){
-                const pre=new IntersectionObserver((es,o)=>{ if(es.some(e=>e.isIntersecting)){ o.disconnect(); go(); } },{rootMargin:'320px'});
-                pre.observe(card);
-            } else go();
-        }
-
-        document.querySelectorAll('.card[data-viz]').forEach(card=>{
-            const holder=card.querySelector('.card-viz'); if(!holder) return;
-            const key=card.dataset.viz;
-            if(CARD_3D[key]){ setup3D(card,holder,CARD_3D[key]); return; }
-            mountSvg(card,holder,key);
-        });
-
-        if(REDUCED) return;
-        const frame=time=>anim.forEach(a=>{ if(!a.visible) return;
-            a.intensity+=(a.target-a.intensity)*0.08; a.update(time,a.intensity); });
-        if(typeof gsap!=='undefined') gsap.ticker.add(frame);
-        else { const t0=performance.now(), loop=now=>{ frame((now-t0)/1000); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-    }
-
-    /* ======================================================================
        GSAP ENTRANCE + SCROLL REVEALS
        ====================================================================== */
     function animateIn(){
@@ -1086,8 +1612,8 @@
     window.addEventListener('DOMContentLoaded',()=>{
         if(typeof d3!=='undefined'){
             heroConstellation(); setEngine('tree');
-            initCards();
         }
+        CardThumbnails.mountAll();
         animateIn();
     });
     </script>
