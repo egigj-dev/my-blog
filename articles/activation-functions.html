@@ -11,7 +11,8 @@
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -325,6 +326,26 @@
             background: rgba(52, 152, 219, 0.1);
             border-left-color: #3498db;
         }
+
+        /* --- Interactive activation explorer --- */
+        .fx-explorer { margin: 2.5rem 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .fx-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .85rem 1.2rem; border-bottom: 1px solid var(--border); }
+        .fx-tabs { display: flex; gap: .35rem; flex-wrap: wrap; }
+        .fx-tab { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; font-family: inherit; font-size: .8rem; padding: .35rem .75rem; border-radius: 5px; transition: color .2s, border-color .2s; }
+        .fx-tab:hover { color: var(--text-primary); }
+        .fx-tab.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+        .fx-key { display: flex; gap: 1rem; font-size: .75rem; color: var(--text-secondary); }
+        .fx-key i { display: inline-block; width: 16px; height: 0; border-top: 2px solid var(--accent); margin-right: 6px; vertical-align: middle; }
+        .fx-key i.fx-dash { border-top: 2px dashed #ff9f1c; }
+        .fx-plotwrap { position: relative; height: 360px; }
+        #fx-plot { display: block; width: 100%; height: 100%; }
+        .fx-readout { position: absolute; top: 10px; right: 14px; text-align: right; font-size: .75rem; line-height: 1.7; color: var(--text-secondary); pointer-events: none; }
+        .fx-readout b { color: var(--accent); font-weight: 600; }
+        .fx-warn { position: absolute; left: 50%; transform: translateX(-50%); bottom: 12px; background: rgba(255,159,28,.14); border: 1px solid rgba(255,159,28,.45); color: #ff9f1c; font-size: .75rem; padding: .3rem .7rem; border-radius: 5px; opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; }
+        .fx-warn.on { opacity: 1; }
+        .fx-note { padding: .9rem 1.2rem; border-top: 1px solid var(--border); font-size: .85rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        @media (max-width: 640px) { .fx-plotwrap { height: 280px; } }
+
     </style>
 </head>
 <body>
@@ -362,8 +383,20 @@
                 Activation functions break this limitation. By introducing non-linearity at each layer, they enable the network to approximate any continuous function. This is why deep learning is possible.
             </p>
 
-            <div class="chart-container">
-                <canvas id="comparisonChart"></canvas>
+            <div class="fx-explorer" id="fx">
+                <div class="fx-bar">
+                    <div class="fx-tabs" id="fx-tabs" role="tablist" aria-label="Activation function"></div>
+                    <div class="fx-key">
+                        <span><i></i>f(x)</span>
+                        <span><i class="fx-dash"></i>f&prime;(x)</span>
+                    </div>
+                </div>
+                <div class="fx-plotwrap">
+                    <div class="fx-readout" id="fx-readout"></div>
+                    <svg id="fx-plot" aria-label="Activation function and its derivative"></svg>
+                    <div class="fx-warn" id="fx-warn">Vanishing gradient &mdash; f&prime;(x) &asymp; 0</div>
+                </div>
+                <p class="fx-note" id="fx-note"></p>
             </div>
 
             <h2>Binary Step Function</h2>
@@ -638,72 +671,142 @@
             themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
         });
 
-        // Chart
-        new Chart(document.getElementById('comparisonChart'), {
-            type: 'line',
-            data: {
-                labels: Array.from({length: 51}, (_, i) => (i - 25) * 0.2),
-                datasets: [
-                    {
-                        label: 'Sigmoid',
-                        data: Array.from({length: 51}, (_, i) => 1 / (1 + Math.exp(-((i - 25) * 0.2)))),
-                        borderColor: '#00d9ff',
-                        backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                        borderWidth: 2.5,
-                        tension: 0.3,
-                        pointRadius: 0,
-                        fill: false
-                    },
-                    {
-                        label: 'Tanh',
-                        data: Array.from({length: 51}, (_, i) => Math.tanh((i - 25) * 0.2)),
-                        borderColor: '#ff6b6b',
-                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                        borderWidth: 2.5,
-                        tension: 0.3,
-                        pointRadius: 0,
-                        fill: false
-                    },
-                    {
-                        label: 'ReLU',
-                        data: Array.from({length: 51}, (_, i) => Math.max(0, (i - 25) * 0.2)),
-                        borderColor: '#27ae60',
-                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                        borderWidth: 2.5,
-                        tension: 0.3,
-                        pointRadius: 0,
-                        fill: false
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 15,
-                            font: { size: 12, weight: '500' },
-                            color: document.body.classList.contains('light-mode') ? '#2c3e50' : '#e8f0f5'
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        grid: { color: 'rgba(0, 217, 255, 0.1)' },
-                        ticks: { color: document.body.classList.contains('light-mode') ? '#5a6c7d' : '#a0adb8' }
-                    },
-                    x: {
-                        grid: { color: 'rgba(0, 217, 255, 0.1)' },
-                        ticks: { color: document.body.classList.contains('light-mode') ? '#5a6c7d' : '#a0adb8' }
-                    }
-                }
+        /* ==================================================================
+           INTERACTIVE ACTIVATION EXPLORER
+           Plots f(x) solid and f'(x) dashed. A tracker sweeps the curves
+           (or follows the pointer) and flags where the gradient vanishes.
+           Switching functions morphs both paths by re-sampling and lerping.
+           ================================================================== */
+        (function(){
+            const H = 1e-3;                                    // numeric-derivative step
+            const numD = f => v => (f(v+H) - f(v-H)) / (2*H);
+            const sigF  = v => 1/(1 + Math.exp(-v));
+            const geluF = v => 0.5*v*(1 + Math.tanh(Math.sqrt(2/Math.PI)*(v + 0.044715*v*v*v)));
+
+            const FNS = {
+                linear:  { label:'Linear',  f:v=>v,             d:()=>1,
+                    note:'f(x) = x. The derivative is constant, so gradients never vanish \u2014 but stacking linear layers collapses to a single linear map. No non-linearity, no deep learning.' },
+                relu:    { label:'ReLU',    f:v=>Math.max(0,v), d:v=>v>0?1:0,
+                    note:'f(x) = max(0, x). Gradient is exactly 1 for positive inputs and exactly 0 for negative ones \u2014 cheap and sparse, but a unit stuck below zero receives no gradient and stops learning.' },
+                sigmoid: { label:'Sigmoid', f:sigF,             d:v=>{const s=sigF(v);return s*(1-s);},
+                    note:'f(x) = 1 / (1 + e\u207b\u02e3). Output is squashed into (0, 1). Drag the tracker toward the edges: the derivative flattens toward zero, which is the vanishing gradient problem in one picture.' },
+                tanh:    { label:'Tanh',    f:v=>Math.tanh(v),  d:v=>1-Math.tanh(v)**2,
+                    note:'f(x) = tanh(x). Same squashing as sigmoid but zero-centred, into (-1, 1). Its peak gradient is 1.0 versus sigmoid\u2019s 0.25, so it trains faster \u2014 yet still saturates at the extremes.' },
+                gelu:    { label:'GELU',    f:geluF,            d:numD(geluF),
+                    note:'f(x) = x \u00b7 \u03a6(x). A smooth, probabilistic gate: slightly negative inputs dip below zero instead of being clipped, so gradient keeps flowing. The default in modern transformers.' },
+            };
+            const ORDER = ['linear','relu','sigmoid','tanh','gelu'];
+
+            const S = { from:'sigmoid', to:'sigmoid', mt:1, cur:'sigmoid', probe:-4, userProbe:false };
+            const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const lerp  = (a,b,t) => a + (b-a)*t;
+            const clamp = (v,a,b) => v<a?a:v>b?b:v;
+            const F = v => lerp(FNS[S.from].f(v), FNS[S.to].f(v), S.mt);
+            const D = v => lerp(FNS[S.from].d(v), FNS[S.to].d(v), S.mt);
+
+            const SAMPLES = d3.range(-4, 4.001, 0.05);
+            const svg = d3.select('#fx-plot');
+            let xS, yS, W, Hh, grid, guide, pathF, pathD, trackF, trackD;
+
+            const defs = svg.append('defs');
+            defs.append('clipPath').attr('id','fx-clip').append('rect').attr('id','fx-cliprect');
+            const g = svg.append('g');
+            grid  = g.append('g');
+            guide = g.append('line').attr('stroke-dasharray','3 3').attr('stroke-width',0.8).attr('opacity',0.35);
+            const clipped = g.append('g').attr('clip-path','url(#fx-clip)');
+            pathD = clipped.append('path').attr('fill','none').attr('stroke','#ff9f1c').attr('stroke-width',1.7).attr('stroke-dasharray','5 4').attr('opacity',0.85);
+            pathF = clipped.append('path').attr('fill','none').attr('stroke-width',2.3);
+            trackD = g.append('circle').attr('r',3.2).attr('fill','#ff9f1c');
+            trackF = g.append('circle').attr('r',4.6);
+
+            // Colours come from the article's CSS variables, so the plot
+            // follows the existing light/dark toggle with no extra wiring.
+            function palette(){
+                const cs = getComputedStyle(document.body);
+                return { accent:(cs.getPropertyValue('--accent')||'#00d9ff').trim(),
+                         muted:(cs.getPropertyValue('--text-secondary')||'#a0adb8').trim() };
             }
-        });
+            function restyle(){
+                const p = palette();
+                pathF.attr('stroke',p.accent); trackF.attr('fill',p.accent); guide.attr('stroke',p.accent);
+                grid.selectAll('.fx-ax').attr('stroke',p.muted);
+                grid.selectAll('text').attr('fill',p.muted);
+            }
+
+            function resize(){
+                const wrap = document.getElementById('fx-plot').parentElement;
+                W = wrap.clientWidth; Hh = wrap.clientHeight;
+                if(!W || !Hh) return;
+                svg.attr('viewBox','0 0 '+W+' '+Hh);
+                const m = {t:26, r:22, b:28, l:38};
+                xS = d3.scaleLinear([-4,4],[m.l, W-m.r]);
+                yS = d3.scaleLinear([-2,2],[Hh-m.b, m.t]);
+                d3.select('#fx-cliprect').attr('x',m.l).attr('y',m.t).attr('width',W-m.l-m.r).attr('height',Hh-m.t-m.b);
+
+                grid.selectAll('*').remove();
+                [-2,-1,1,2].forEach(t=>grid.append('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',yS(t)).attr('y2',yS(t))
+                    .attr('stroke','currentColor').attr('stroke-width',0.5).attr('opacity',0.13));
+                [-4,-2,2,4].forEach(t=>grid.append('line').attr('y1',m.t).attr('y2',Hh-m.b).attr('x1',xS(t)).attr('x2',xS(t))
+                    .attr('stroke','currentColor').attr('stroke-width',0.5).attr('opacity',0.13));
+                grid.append('line').attr('class','fx-ax').attr('x1',m.l).attr('x2',W-m.r).attr('y1',yS(0)).attr('y2',yS(0)).attr('stroke-width',1).attr('opacity',0.6);
+                grid.append('line').attr('class','fx-ax').attr('y1',m.t).attr('y2',Hh-m.b).attr('x1',xS(0)).attr('x2',xS(0)).attr('stroke-width',1).attr('opacity',0.6);
+                [[-4,'-4'],[4,'4']].forEach(d=>grid.append('text').attr('x',xS(d[0])).attr('y',Hh-m.b+16).attr('text-anchor','middle').attr('font-size',10).text(d[1]));
+                [[1,'1'],[-1,'-1']].forEach(d=>grid.append('text').attr('x',m.l-8).attr('y',yS(d[0])+3).attr('text-anchor','end').attr('font-size',10).text(d[1]));
+                guide.attr('y1',m.t).attr('y2',Hh-m.b);
+                restyle(); draw();
+            }
+
+            function draw(){
+                if(!xS) return;
+                const line = d3.line().x(d=>xS(d[0])).y(d=>yS(clamp(d[1],-2.6,2.6))).curve(d3.curveMonotoneX);
+                pathF.attr('d', line(SAMPLES.map(v=>[v,F(v)])));
+                pathD.attr('d', line(SAMPLES.map(v=>[v,D(v)])));
+                const p = S.probe, fv = F(p), dv = D(p);
+                guide.attr('x1',xS(p)).attr('x2',xS(p));
+                trackF.attr('cx',xS(p)).attr('cy',yS(clamp(fv,-2.6,2.6)));
+                trackD.attr('cx',xS(p)).attr('cy',yS(clamp(dv,-2.6,2.6)));
+                document.getElementById('fx-readout').innerHTML =
+                    'x = <b>'+p.toFixed(2)+'</b><br>f(x) = '+fv.toFixed(3)+'<br>f&prime;(x) = '+dv.toFixed(3);
+                document.getElementById('fx-warn').classList.toggle('on', Math.abs(dv) < 0.1);
+            }
+
+            function setFn(key){
+                if(key === S.cur) return;
+                S.from = S.cur; S.to = key; S.cur = key; S.mt = 0;
+                document.querySelectorAll('.fx-tab').forEach(b=>b.classList.toggle('on', b.dataset.k===key));
+                document.getElementById('fx-note').textContent = FNS[key].note;
+                if(REDUCED || typeof gsap === 'undefined'){ S.mt = 1; draw(); return; }
+                gsap.killTweensOf(S);
+                gsap.to(S, {mt:1, duration:0.8, ease:'power2.inOut', onUpdate:draw});
+            }
+
+            const tabs = document.getElementById('fx-tabs');
+            ORDER.forEach(k=>{
+                const b = document.createElement('button');
+                b.className = 'fx-tab' + (k===S.cur?' on':''); b.dataset.k = k;
+                b.textContent = FNS[k].label; b.setAttribute('role','tab');
+                b.addEventListener('click', ()=>setFn(k));
+                tabs.appendChild(b);
+            });
+            document.getElementById('fx-note').textContent = FNS[S.cur].note;
+
+            svg.on('pointermove', ev=>{ const [mx]=d3.pointer(ev); S.userProbe=true; S.probe=clamp(xS.invert(mx),-4,4); draw(); })
+               .on('pointerleave', ()=>{ S.userProbe=false; });
+
+            resize();
+            window.addEventListener('resize', resize);
+            new MutationObserver(restyle).observe(document.body,{attributes:true,attributeFilter:['class']});
+
+            if(!REDUCED){
+                let last = performance.now();
+                (function frame(now){
+                    let dt=(now-last)/1000; last=now;
+                    if(!(dt>0)||dt>0.05) dt=0.016;
+                    if(!S.userProbe){ S.probe += dt*1.3; if(S.probe>4) S.probe=-4; draw(); }
+                    requestAnimationFrame(frame);
+                })(last);
+            }
+        })();
     </script>
 </body>
 </html>
