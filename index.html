@@ -382,7 +382,7 @@
         </div>
 
         <div class="art-grid">
-            <a href="articles/activation-functions.html" class="card" data-viz="gate" data-color="#00d4b8" data-seed="11">
+            <a href="articles/activation-functions.html" class="card" data-viz="gate3d" data-fallback="gate" data-color="#00d4b8" data-seed="11">
                 <div class="card-viz"></div>
                 <div class="card-body">
                     <span class="card-tag t-nn">Neural Networks</span>
@@ -863,31 +863,166 @@
         };
     }
 
+    /* ----------------------------------------------------------------------
+       3D PARTICLE GATE (card variant) — Three.js, lazy-loaded.
+       Only fetched when the card nears the viewport, and only if WebGL is
+       available; otherwise the card silently falls back to vizGate above.
+       ---------------------------------------------------------------------- */
+    const THREE_URL='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    const _loaded={};                       // src -> Promise, so a lib loads once
+    function loadScript(src){
+        if(_loaded[src]) return _loaded[src];
+        _loaded[src]=new Promise((res,rej)=>{
+            const s=document.createElement('script'); s.src=src; s.async=true;
+            s.onload=()=>res(); s.onerror=()=>rej(new Error('load failed'));
+            document.head.appendChild(s);
+        });
+        return _loaded[src];
+    }
+    function webglOK(){
+        try{ const c=document.createElement('canvas');
+            return !!(window.WebGLRenderingContext && (c.getContext('webgl')||c.getContext('experimental-webgl')));
+        }catch(e){ return false; }
+    }
+
+    // Compact activation set the card cycles through: f=value, a=post-gate
+    // opacity (0 dissolves), s=post-gate speed (0 stops at the gate).
+    const G_FNS=[
+        {f:v=>Math.max(0,v),                       a:v=>v<0?0:1,      s:v=>v<0?0:1},  // ReLU
+        {f:v=>Math.tanh(v),                        a:()=>1,           s:()=>1},       // Tanh
+        {f:v=>1/(1+Math.exp(-v)),                  a:()=>1,           s:()=>1},       // Sigmoid
+        {f:v=>0.5*v*(1+Math.tanh(0.7978845608*(v+0.044715*v*v*v))),
+                                                   a:v=>v<-2.2?0.15:1, s:()=>1},      // GELU
+    ];
+
+    function buildGate3D(holder,accent){
+        if(typeof THREE==='undefined') return null;
+        const canvas=document.createElement('canvas');
+        canvas.style.cssText='display:block;width:100%;height:100%;';
+        holder.appendChild(canvas);
+        let renderer;
+        try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true}); }
+        catch(e){ holder.removeChild(canvas); return null; }
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+
+        const scene=new THREE.Scene();
+        const camera=new THREE.PerspectiveCamera(38,300/132,0.1,100);
+        camera.position.set(0.35,0.45,7.4); camera.lookAt(0,0,0);
+
+        // Chamber + translucent gate at x = 0
+        scene.add(new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.BoxGeometry(8.2,3.1,1.4)),
+            new THREE.LineBasicMaterial({color:0x24405c,transparent:true,opacity:0.3})));
+        const gate=new THREE.Mesh(new THREE.PlaneGeometry(3.1,1.4),
+            new THREE.MeshBasicMaterial({color:new THREE.Color(accent),transparent:true,opacity:0.1,side:THREE.DoubleSide}));
+        gate.rotation.y=Math.PI/2; scene.add(gate);
+        const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(3.1,1.4)),
+            new THREE.LineBasicMaterial({color:new THREE.Color(accent),transparent:true,opacity:0.5}));
+        edge.rotation.y=Math.PI/2; scene.add(edge);
+
+        const N=420, XMIN=-4.1, XMAX=4.1, GATE_W=1.05, YSCALE=0.32;
+        const mesh=new THREE.InstancedMesh(
+            new THREE.SphereGeometry(0.05,5,4),
+            new THREE.MeshBasicMaterial({transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}),N);
+        mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        const dummy=new THREE.Object3D(), col=new THREE.Color();
+        const px=new Float32Array(N), pv=new Float32Array(N), ps=new Float32Array(N);
+        const spawn=(i,any)=>{ px[i]=any?XMIN+Math.random()*(XMAX-XMIN):XMIN-Math.random()*0.5;
+                               pv[i]=(Math.random()*2-1)*4; ps[i]=Math.random(); };
+        for(let i=0;i<N;i++) spawn(i,true);
+        for(let i=0;i<N;i++) mesh.setColorAt(i,col.setRGB(1,1,1));
+        scene.add(mesh);
+
+        // Slow cycle through the activation set so the card shows the range
+        const DWELL=4.2, MORPH=1.2, PERIOD=DWELL+MORPH, L=G_FNS.length;
+        let lastW=0,lastH=0,prev=0;
+        return function(t,inten){
+            const w=holder.clientWidth,h=holder.clientHeight;
+            if(!w||!h) return;
+            if(w!==lastW||h!==lastH){ lastW=w; lastH=h; renderer.setSize(w,h,false);
+                camera.aspect=w/h; camera.updateProjectionMatrix(); }
+            let dt=t-prev; prev=t; if(!(dt>0)||dt>0.05) dt=0.016;
+
+            const cyc=t/PERIOD, i=Math.floor(cyc)%L, nx=(i+1)%L, local=(cyc-Math.floor(cyc))*PERIOD;
+            const mt=local<DWELL?0:smooth((local-DWELL)/MORPH);
+            const A=G_FNS[i], B=G_FNS[nx];
+            const F=v=>lerp(A.f(v),B.f(v),mt), AL=v=>lerp(A.a(v),B.a(v),mt), SPD=v=>lerp(A.s(v),B.s(v),mt);
+
+            for(let k=0;k<N;k++){
+                const v=pv[k], past=px[k]>0;
+                const gk=past?smooth(px[k]/GATE_W):0;
+                const sp=past?lerp(1,SPD(v),gk):1;
+                px[k]+=1.5*inten*sp*dt;
+                const y=lerp(v,F(v),gk)*YSCALE, al=lerp(1,AL(v),gk);
+                if(px[k]>XMAX||(al<0.03&&sp<0.02&&past)){ spawn(k,false); continue; }
+                dummy.position.set(px[k],clamp(y,-1.5,1.5),(ps[k]-0.5)*1.1);
+                dummy.scale.setScalar((0.7+ps[k]*0.5)*(0.35+0.65*al));
+                dummy.updateMatrix(); mesh.setMatrixAt(k,dummy.matrix);
+                const q=clamp((v+4)/8,0,1); let r,g,b;
+                if(q<0.5){ const u=q*2; r=lerp(0.31,0.87,u); g=lerp(0.62,0.91,u); b=lerp(1.0,0.96,u); }
+                else     { const u=(q-0.5)*2; r=lerp(0.87,1.0,u); g=lerp(0.91,0.37,u); b=lerp(0.96,0.43,u); }
+                const m=al*0.8*inten;
+                mesh.setColorAt(k,col.setRGB(r*m,g*m,b*m));
+            }
+            mesh.instanceMatrix.needsUpdate=true;
+            if(mesh.instanceColor) mesh.instanceColor.needsUpdate=true;
+            renderer.render(scene,camera);
+        };
+    }
+
     const CARD_VIZ={gate:vizGate,field:vizField,prune:vizPrune,transfer:vizTransferFlow,sampling:vizSampling,cascade:vizCascade};
 
     function initCards(){
         cardGlobalDefs();
-        const anim=[];  // {card, update, intensity, target, visible}
-        document.querySelectorAll('.card[data-viz]').forEach(card=>{
-            const build=CARD_VIZ[card.dataset.viz]; if(!build) return;
-            const holder=card.querySelector('.card-viz'); if(!holder) return;
-            const W=300,H=132, svg=d3.select(holder).append('svg').attr('viewBox','0 0 '+W+' '+H).attr('preserveAspectRatio','xMidYMid slice');
-            const update=build(svg,{color:card.dataset.color,gen:rng(+card.dataset.seed),W,H}); if(!update) return;
-            const a={card,update,intensity:1,target:1,visible:false};
+        const anim=[];   // {card, update, intensity, target, visible}
+        let io=null;
+        if(!REDUCED && 'IntersectionObserver' in window){
+            io=new IntersectionObserver(es=>es.forEach(e=>{
+                const a=anim.find(x=>x.card===e.target); if(a) a.visible=e.isIntersecting;
+            }),{threshold:0.05});
+        }
+        // register(): wire hover intensity + visibility for any card renderer
+        function register(card,update){
+            if(REDUCED){ update(0.7,1); return; }
+            const a={card,update,intensity:1,target:1,visible:!io};
             card.addEventListener('mouseenter',()=>a.target=1.7);
             card.addEventListener('mouseleave',()=>a.target=1);
-            anim.push(a);
+            anim.push(a); if(io) io.observe(card);
+        }
+        // Fall back to the flat SVG gate when 3D is unavailable
+        function svgFallback(card,holder){
+            const build=CARD_VIZ[card.dataset.fallback||'gate']; if(!build) return;
+            const svg=d3.select(holder).append('svg').attr('viewBox','0 0 300 132').attr('preserveAspectRatio','xMidYMid slice');
+            const u=build(svg,{color:card.dataset.color,gen:rng(+card.dataset.seed),W:300,H:132});
+            if(u) register(card,u);
+        }
+        function setupGate3D(card,holder){
+            if(REDUCED||!webglOK()){ svgFallback(card,holder); return; }
+            const start=()=>loadScript(THREE_URL)
+                .then(()=>{ const u=buildGate3D(holder,card.dataset.color);
+                            if(u) register(card,u); else svgFallback(card,holder); })
+                .catch(()=>svgFallback(card,holder));
+            if('IntersectionObserver' in window){
+                const pre=new IntersectionObserver((es,o)=>{ if(es.some(e=>e.isIntersecting)){ o.disconnect(); start(); } },{rootMargin:'320px'});
+                pre.observe(card);
+            } else start();
+        }
+
+        document.querySelectorAll('.card[data-viz]').forEach(card=>{
+            const holder=card.querySelector('.card-viz'); if(!holder) return;
+            if(card.dataset.viz==='gate3d'){ setupGate3D(card,holder); return; }
+            const build=CARD_VIZ[card.dataset.viz]; if(!build) return;
+            const W=300,H=132;
+            const svg=d3.select(holder).append('svg').attr('viewBox','0 0 '+W+' '+H).attr('preserveAspectRatio','xMidYMid slice');
+            const update=build(svg,{color:card.dataset.color,gen:rng(+card.dataset.seed),W,H});
+            if(update) register(card,update);
         });
-        if(REDUCED){ anim.forEach(a=>a.update(0.7,1)); return; }   // one still frame
-        if('IntersectionObserver' in window){
-            const io=new IntersectionObserver(es=>es.forEach(e=>{ const a=anim.find(x=>x.card===e.target); if(a) a.visible=e.isIntersecting; }),{threshold:0.05});
-            anim.forEach(a=>io.observe(a.card));
-        } else anim.forEach(a=>a.visible=true);
+
+        if(REDUCED) return;
         const frame=time=>anim.forEach(a=>{ if(!a.visible) return; a.intensity+=(a.target-a.intensity)*0.08; a.update(time,a.intensity); });
         if(typeof gsap!=='undefined') gsap.ticker.add(frame);
         else { const t0=performance.now(), loop=now=>{ frame((now-t0)/1000); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
     }
-
 
     /* ======================================================================
        GSAP ENTRANCE + SCROLL REVEALS

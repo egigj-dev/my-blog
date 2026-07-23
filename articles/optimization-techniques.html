@@ -12,6 +12,8 @@
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -325,6 +327,36 @@
             background: rgba(52, 152, 219, 0.1);
             border-left-color: #3498db;
         }
+
+        /* --- Loss landscape marble race --- */
+        .lv { margin: 2.5rem 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .lv-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-bottom: 1px solid var(--border); }
+        .lv-legend, .lv-starts { display: flex; gap: .4rem; flex-wrap: wrap; }
+        .lv-chip { display: inline-flex; align-items: center; gap: .4rem; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; font-family: inherit; font-size: .78rem; padding: .3rem .7rem; border-radius: 5px; transition: color .2s, border-color .2s, opacity .2s; opacity: .55; }
+        .lv-chip.on { opacity: 1; color: var(--text-primary); border-color: var(--text-secondary); }
+        .lv-chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+        .lv-actions { display: flex; gap: .4rem; }
+        .lv-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); cursor: pointer; font-family: inherit; font-size: .78rem; font-weight: 600; padding: .3rem .9rem; border-radius: 5px; }
+        .lv-btn:hover { opacity: .8; }
+        .lv-panels { display: grid; grid-template-columns: 1.15fr 1fr; }
+        .lv-3d { position: relative; height: 380px; }
+        .lv-2d { position: relative; height: 380px; border-left: 1px solid var(--border); }
+        #lv-plot { display: block; width: 100%; height: 100%; }
+        .lv-fallback { display: none; align-items: center; justify-content: center; height: 100%; padding: 1.5rem; text-align: center; font-size: .82rem; color: var(--text-secondary); line-height: 1.6; }
+        .lv-controls { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-top: 1px solid var(--border); }
+        .lv-lr { display: flex; align-items: center; gap: .6rem; font-size: .78rem; color: var(--text-secondary); }
+        .lv-lr input { accent-color: var(--accent); width: 140px; }
+        .lv-lr span { font-variant-numeric: tabular-nums; color: var(--text-primary); min-width: 3.2em; }
+        .lv-readout { padding: .6rem 1.1rem; border-top: 1px solid var(--border); font-size: .78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+        .lv-readout .lv-sep { opacity: .35; margin: 0 .55rem; }
+        .lv-note { padding: .85rem 1.1rem; border-top: 1px solid var(--border); font-size: .8rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        .lv-note strong { color: var(--text-primary); }
+        @media (max-width: 760px) {
+            .lv-panels { grid-template-columns: 1fr; }
+            .lv-2d { border-left: none; border-top: 1px solid var(--border); }
+            .lv-3d, .lv-2d { height: 300px; }
+        }
+
     </style>
 </head>
 <body>
@@ -524,6 +556,33 @@
                 Default hyperparameters work well: learning_rate=0.001, beta1=0.9, beta2=0.999.
             </div>
 
+            <div class="lv" id="lv">
+                <div class="lv-bar">
+                    <div class="lv-legend" id="lv-legend"></div>
+                    <div class="lv-actions">
+                        <button class="lv-btn" id="lv-run">Run</button>
+                        <button class="lv-btn" id="lv-reset">Reset</button>
+                    </div>
+                </div>
+                <div class="lv-panels">
+                    <div class="lv-3d" id="lv-3d">
+                        <div class="lv-fallback" id="lv-fallback">3D surface unavailable &mdash; WebGL could not start. The loss curves alongside remain accurate.</div>
+                    </div>
+                    <div class="lv-2d"><svg id="lv-plot" aria-label="Loss versus step for each optimizer"></svg></div>
+                </div>
+                <div class="lv-controls">
+                    <label class="lv-lr">Learning rate
+                        <input type="range" id="lv-lr" min="0.02" max="0.16" step="0.005" aria-label="Learning rate">
+                        <span id="lv-lrv"></span>
+                    </label>
+                    <div class="lv-starts" id="lv-starts"></div>
+                </div>
+                <div class="lv-readout" id="lv-readout"></div>
+                <p class="lv-note">Drag the surface to orbit; toggle any optimizer with the chips above.
+                <strong>The surface is illustrative</strong> &mdash; a synthetic function chosen to contain a plateau, two local minima and one global minimum, because real loss landscapes have millions of dimensions and cannot be drawn.
+                <strong>The optimizers are not.</strong> Each runs its real update rule on the analytic gradient of that surface, so every difference you see is produced by the algorithm itself. Try the <em>Plateau</em> start to watch SGD stall where Adam does not &mdash; then try <em>Shallow</em>, where the adaptive methods settle for a worse minimum than plain SGD.</p>
+            </div>
+
             <h2>Learning Rate Decay</h2>
 
             <p>
@@ -622,5 +681,7 @@
             themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
         });
     </script>
+    <script src="../assets/viz-core.js"></script>
+    <script src="../assets/loss-landscape.js"></script>
 </body>
 </html>
