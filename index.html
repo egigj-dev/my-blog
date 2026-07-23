@@ -164,22 +164,6 @@
             pointer-events:none;
         }
 
-        /* FEATURED */
-        .featured-section { position:relative; z-index:1; max-width:1160px; margin:0 auto; width:100%; padding:0 2.5rem 1rem; }
-        .featured {
-            background:var(--bg-card); border:1px solid var(--line); border-radius:16px; overflow:hidden;
-            display:grid; grid-template-columns:1fr 0.9fr; align-items:center;
-            text-decoration:none; color:inherit;
-            transition:border-color .25s, box-shadow .25s;
-        }
-        .featured:hover { border-color:rgba(0,212,184,.22); box-shadow:0 18px 55px rgba(0,0,0,.4); }
-        .featured-copy { padding:2.4rem; }
-        .featured-copy h3 { font-family:'Lora',serif; font-size:1.5rem; font-weight:500; color:#eaf4fa; margin:.6rem 0 .7rem; letter-spacing:-.01em; }
-        .featured-copy p { font-size:.9rem; color:var(--text-2); line-height:1.7; max-width:420px; }
-        .featured-meta { margin-top:1.4rem; font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--text-3); letter-spacing:.05em; }
-        .featured-vis { align-self:stretch; min-height:200px; }
-        .featured-vis svg { width:100%; height:100%; display:block; }
-
         /* ARTICLES */
         .art-section { position:relative; z-index:1; padding:2rem 2.5rem 5rem; max-width:1160px; margin:0 auto; width:100%; }
         .art-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:2.2rem; flex-wrap:wrap; gap:1rem; }
@@ -216,6 +200,14 @@
             transition:border-color .2s, color .2s, transform .2s;
         }
         .card:hover .card-arr { border-color:var(--accent); color:var(--accent); transform:rotate(45deg); }
+
+        /* Lead card — spans two columns on wide grids so the newest piece keeps
+           visual priority without being listed twice. */
+        .card--lead { grid-column: span 2; }
+        .card--lead .card-viz { height:210px; }
+        .card--lead h3 { font-size:1.45rem; }
+        .card--lead p { font-size:.9rem; max-width:52ch; }
+        @media(max-width:980px){ .card--lead{ grid-column:span 1; } .card--lead .card-viz{ height:132px; } .card--lead h3{ font-size:1.15rem; } }
 
         /* NEWSLETTER */
         .news-section { position:relative; z-index:1; max-width:1160px; margin:0 auto 4rem; width:100%; padding:0 2.5rem; }
@@ -255,7 +247,7 @@
         /* LIGHT MODE */
         body.light { --bg:#f2f6fb; --bg-card:#ffffff; --line:rgba(0,0,0,.08); --text:#1a2a38; --text-2:#4a6072; --text-3:#8fa5b5; }
         body.light .hero h1, body.light .section-h, body.light .card h3,
-        body.light .featured-copy h3, body.light .news h3 { color:#1a2a38; }
+        body.light .news h3 { color:#1a2a38; }
         body.light .btn-primary { color:#ffffff; }
         body.light .graph-wrap { background:radial-gradient(circle at 50% 45%, #eef4fb 0%, #ffffff 70%); }
 
@@ -265,13 +257,11 @@
         @media(max-width:820px){
             .hero { grid-template-columns:1fr; padding-top:3.5rem; }
             .hero-vis { max-width:420px; }
-            .featured { grid-template-columns:1fr; }
-            .featured-vis { min-height:150px; order:-1; }
         }
         @media(max-width:680px){
             nav{ padding:0 1.2rem; }
             .nav-links a{ padding:.4rem .55rem; }
-            .hero,.featured-section,.topics-section,.art-section,.news-section{ padding-left:1.2rem; padding-right:1.2rem; }
+            .hero,.topics-section,.art-section,.news-section{ padding-left:1.2rem; padding-right:1.2rem; }
             .art-grid{ grid-template-columns:1fr; }
             .news{ flex-direction:column; align-items:flex-start; }
             footer{ flex-direction:column; align-items:flex-start; }
@@ -356,33 +346,18 @@
         </div>
     </section>
 
-    <!-- FEATURED -->
-    <section class="featured-section" data-reveal>
-        <a href="articles/activation-functions.html" class="featured">
-            <div class="featured-copy">
-                <div class="section-eye">Featured</div>
-                <h3>Understanding Activation Functions</h3>
-                <p>A visual, intuitive guide to the non-linear building blocks of every neural network — ReLU, Sigmoid, Tanh, Softmax — and why the choice matters.</p>
-                <div class="featured-meta">10 min read · Neural Networks</div>
-            </div>
-            <div class="featured-vis">
-                <svg id="featured-wave" viewBox="0 0 460 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
-            </div>
-        </a>
-    </section>
-
     <!-- ARTICLES -->
     <section class="art-section" id="articles" data-reveal>
         <div class="art-header">
             <div>
-                <div class="section-eye">Published</div>
+                <div class="section-eye">Writing</div>
                 <div class="section-h">Latest articles</div>
             </div>
             <a href="#topics" class="art-all">View all topics →</a>
         </div>
 
         <div class="art-grid">
-            <a href="articles/activation-functions.html" class="card" data-viz="gate3d" data-fallback="gate" data-color="#00d4b8" data-seed="11">
+            <a href="articles/activation-functions.html" class="card card--lead" data-viz="gate3d" data-fallback="gate" data-color="#00d4b8" data-seed="11">
                 <div class="card-viz"></div>
                 <div class="card-body">
                     <span class="card-tag t-nn">Neural Networks</span>
@@ -496,7 +471,7 @@
 
     <footer>
         <p>© 2026 AI/ML Learning Blog</p>
-        <p>Hosted on <a href="https://github.com/egigj-dev/my-blog" target="_blank" rel="noopener">GitHub Pages</a></p>
+        <p><a href="#articles">All articles</a> &middot; <a href="https://github.com/egigj-dev/my-blog" target="_blank" rel="noopener">GitHub</a></p>
     </footer>
 
     <!-- Libraries (load in browser; blocked in sandboxes) -->
@@ -572,23 +547,6 @@
         }
         function tick(){ for(const p of nodes){ p.x+=p.vx;p.y+=p.vy; if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1; } draw(); }
         draw(); if(!REDUCED) gsap.ticker.add(tick);
-    }
-
-    /* ======================================================================
-       FEATURED WAVE (D3, decorative) — layered phase-animated sine paths
-       ====================================================================== */
-    function featuredWave(){
-        const svg=d3.select('#featured-wave'), W=460,H=260, cols=[COLORS.accent,COLORS.violet,COLORS.gold];
-        const line=d3.line().x(d=>d[0]).y(d=>d[1]).curve(d3.curveBasis);
-        const paths=cols.map((c,i)=>svg.append('path').attr('fill','none').attr('stroke',c).attr('stroke-width',1.6).attr('opacity',0.55-i*0.12));
-        function build(phase){
-            paths.forEach((p,i)=>{
-                const amp=26+i*10,freq=0.022+i*0.006,yOff=H*0.5+(i-1)*24;
-                const pts=d3.range(0,W+8,8).map(x=>[x, yOff+Math.sin(x*freq+phase+i)*amp*Math.sin(x*0.006+phase*0.5)]);
-                p.attr('d',line(pts));
-            });
-        }
-        let phase=0; build(phase); if(!REDUCED) gsap.ticker.add(()=>{ phase+=0.012; build(phase); });
     }
 
     /* ======================================================================
@@ -1051,7 +1009,7 @@
        ====================================================================== */
     window.addEventListener('DOMContentLoaded',()=>{
         if(typeof d3!=='undefined'){
-            heroConstellation(); featuredWave(); setEngine('tree');
+            heroConstellation(); setEngine('tree');
             initCards();
         }
         animateIn();
