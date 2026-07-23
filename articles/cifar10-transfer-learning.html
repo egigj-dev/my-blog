@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transfer Learning for CIFAR-10: EfficientNetB0 Feature Extraction</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -408,6 +410,30 @@
         body.light-mode .abstract-box {
             color: var(--text-secondary);
         }
+
+        /* --- tl interactive --- */
+        .tl { margin: 2.5rem 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .tl-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-bottom: 1px solid var(--border); }
+        .tl-btn { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; font-family: inherit; font-size: .78rem; padding: .32rem .8rem; border-radius: 5px; transition: color .2s, border-color .2s; }
+        .tl-btn.on { color: var(--accent); border-color: var(--accent); }
+        .tl-panels { display: grid; grid-template-columns: 1.25fr 1fr; }
+        .tl-pane { position: relative; height: 380px; }
+        .tl-pane + .tl-pane { border-left: 1px solid var(--border); }
+        .tl-pane svg { display: block; width: 100%; height: 100%; }
+        .tl-tag { position: absolute; top: 10px; left: 14px; font-size: .68rem; letter-spacing: .09em; text-transform: uppercase; color: var(--text-secondary); opacity: .75; pointer-events: none; z-index: 2; }
+        .tl-fallback { display: none; align-items: center; justify-content: center; height: 100%; padding: 1.5rem; text-align: center; font-size: .82rem; color: var(--text-secondary); line-height: 1.6; }
+        .tl-readout, .tl-summary { padding: .6rem 1.1rem; border-top: 1px solid var(--border); font-size: .79rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+        .tl-readout b, .tl-summary b { color: var(--text-primary); }
+        .tl-sep { opacity: .35; margin: 0 .45rem; }
+        .tl-dim { opacity: .65; }
+        .tl-cross { color: #ff6b6b; }
+        .tl-note { padding: .85rem 1.1rem; border-top: 1px solid var(--border); font-size: .8rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        .tl-note strong { color: var(--text-primary); }
+        .tl-range { display: flex; align-items: center; gap: .55rem; font-size: .78rem; color: var(--text-secondary); }
+        .tl-range input { accent-color: var(--accent); width: 140px; }
+        .tl-range > span:last-child { color: var(--text-primary); min-width: 6.5em; }
+        @media (max-width: 760px) { .tl-panels { grid-template-columns: 1fr; } .tl-pane + .tl-pane { border-left: none; border-top: 1px solid var(--border); } .tl-pane { height: 300px; } }
+
     </style>
 </head>
 <body>
@@ -563,6 +589,29 @@
             <p>
                 If end-to-end validation accuracy fell below 87%, a fine-tuning fallback was designed to unfreeze the top 20 EfficientNetB0 layers and continue at lr = 5×10⁻⁵. In practice, this fallback was never triggered.
             </p>
+
+            <div class="tl" id="tl">
+                <div class="tl-bar">
+                    <button class="tl-btn on" id="tl-freeze">Backbone: frozen</button>
+                    <label class="tl-range">Features
+                        <input type="range" id="tl-morph" min="0" max="1" step="0.01" aria-label="Feature quality">
+                        <span id="tl-morphv"></span>
+                    </label>
+                </div>
+                <div class="tl-panels">
+                    <div class="tl-pane">
+                        <div class="tl-tag">Latent space &middot; 10 CIFAR-10 classes</div>
+                        <div class="tl-3d" id="tl-3d" style="height:100%">
+                            <div class="tl-fallback" id="tl-fallback">3D view unavailable &mdash; WebGL could not start. The measured accuracy below is unaffected.</div>
+                        </div>
+                    </div>
+                    <div class="tl-pane"><div class="tl-tag">Where the gradient goes</div><svg id="tl-stack" aria-label="Frozen backbone and trainable head"></svg></div>
+                </div>
+                <div class="tl-readout" id="tl-readout"></div>
+                <p class="tl-note"><strong>The cloud is illustrative</strong> &mdash; real EfficientNetB0 embeddings are 1280-dimensional and cannot be drawn, so this is a stand-in that runs from unstructured noise to well-separated clusters.
+                <strong>The accuracy is measured.</strong> A nearest-centroid linear probe is fitted on 60% of the points and scored on the held-out 40%, recomputed every time you move the slider.
+                Drag <em>Features</em> to the left and the probe collapses to chance: with no class structure in the representation, no linear head can recover it. Drag it right and the same probe becomes near-perfect without a single layer of the backbone changing. That is the whole argument for freezing &mdash; if the representation already separates the classes, the only thing left to fit is a head of <strong>12,810 parameters, roughly 0.3% of the model</strong>.</p>
+            </div>
 
             <h2>3. Results</h2>
 
@@ -858,5 +907,7 @@
             }
         });
     </script>
+    <script src="../assets/viz-core.js"></script>
+    <script src="../assets/transfer-latent.js"></script>
 </body>
 </html>

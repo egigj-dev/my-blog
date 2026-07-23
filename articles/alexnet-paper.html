@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ImageNet Classification with Deep Convolutional Neural Networks - Paper Summary</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -246,6 +248,30 @@
             background: rgba(52, 152, 219, 0.1);
             border-left-color: #3498db;
         }
+
+        /* --- ax interactive --- */
+        .ax { margin: 2.5rem 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .ax-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-bottom: 1px solid var(--border); }
+        .ax-btn { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; font-family: inherit; font-size: .78rem; padding: .32rem .8rem; border-radius: 5px; transition: color .2s, border-color .2s; }
+        .ax-btn.on { color: var(--accent); border-color: var(--accent); }
+        .ax-panels { display: grid; grid-template-columns: 1.25fr 1fr; }
+        .ax-pane { position: relative; height: 380px; }
+        .ax-pane + .ax-pane { border-left: 1px solid var(--border); }
+        .ax-pane svg { display: block; width: 100%; height: 100%; }
+        .ax-tag { position: absolute; top: 10px; left: 14px; font-size: .68rem; letter-spacing: .09em; text-transform: uppercase; color: var(--text-secondary); opacity: .75; pointer-events: none; z-index: 2; }
+        .ax-fallback { display: none; align-items: center; justify-content: center; height: 100%; padding: 1.5rem; text-align: center; font-size: .82rem; color: var(--text-secondary); line-height: 1.6; }
+        .ax-readout, .ax-summary { padding: .6rem 1.1rem; border-top: 1px solid var(--border); font-size: .79rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+        .ax-readout b, .ax-summary b { color: var(--text-primary); }
+        .ax-sep { opacity: .35; margin: 0 .45rem; }
+        .ax-dim { opacity: .65; }
+        .ax-cross { color: #ff6b6b; }
+        .ax-note { padding: .85rem 1.1rem; border-top: 1px solid var(--border); font-size: .8rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        .ax-note strong { color: var(--text-primary); }
+        .ax-range { display: flex; align-items: center; gap: .55rem; font-size: .78rem; color: var(--text-secondary); }
+        .ax-range input { accent-color: var(--accent); width: 140px; }
+        .ax-range > span:last-child { color: var(--text-primary); min-width: 6.5em; }
+        @media (max-width: 760px) { .ax-panels { grid-template-columns: 1fr; } .ax-pane + .ax-pane { border-left: none; border-top: 1px solid var(--border); } .ax-pane { height: 300px; } }
+
     </style>
 </head>
 <body>
@@ -340,6 +366,30 @@ FC3: 1000 units (output)
                 The network was trained using stochastic gradient descent with momentum (momentum=0.9). Batch size was 128. Training took roughly 90 epochs. The validation accuracy plateaued after about 100 hours of training.
             </p>
 
+            <div class="ax" id="ax">
+                <div class="ax-bar">
+                    <div class="ax-dim" style="font-size:.78rem">Drag to orbit &middot; click a slab to inspect it</div>
+                    <label class="ax-range">Explode
+                        <input type="range" id="ax-explode" min="0" max="1" step="0.01" aria-label="Explode the layer stack">
+                        <span></span>
+                    </label>
+                </div>
+                <div class="ax-panels">
+                    <div class="ax-pane">
+                        <div class="ax-tag">Exploded blueprint &middot; two GPU lanes</div>
+                        <div class="ax-3d" id="ax-3d" style="height:100%">
+                            <div class="ax-fallback" id="ax-fallback">3D view unavailable &mdash; WebGL could not start. The parameter breakdown alongside is unaffected.</div>
+                        </div>
+                    </div>
+                    <div class="ax-pane"><div class="ax-tag">Where the parameters live</div><svg id="ax-bars" aria-label="Parameters per layer"></svg></div>
+                </div>
+                <div class="ax-readout" id="ax-readout"></div>
+                <div class="ax-summary" id="ax-summary"></div>
+                <p class="ax-note">Every figure here is recomputed in the browser from the layer definitions in the paper, so the totals are summed rather than quoted.
+                The two lanes are not decoration: AlexNet was genuinely split across two GTX 580 cards with 3&nbsp;GB each, and <strong>Conv2, Conv4 and Conv5 connect only to feature maps on their own GPU</strong> &mdash; which is why their parameter counts use half the previous depth. The lanes exchange feature maps only at Conv3 and in the fully connected layers &mdash; marked in red &mdash; while Conv2, Conv4 and Conv5 never leave their own card.
+                The slab sizes tell the other half of the story: spatial resolution collapses from 224 to 6 while channel depth climbs, and <strong>the five convolutional layers together hold under 4% of the network's parameters</strong>. Almost everything sits in the fully connected layers, and that is the memory pressure the split was built to relieve.</p>
+            </div>
+
             <h2>Results</h2>
 
             <h3>Accuracy Metrics</h3>
@@ -427,5 +477,7 @@ FC3: 1000 units (output)
             themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
         });
     </script>
+    <script src="../assets/viz-core.js"></script>
+    <script src="../assets/alexnet-blueprint.js"></script>
 </body>
 </html>
