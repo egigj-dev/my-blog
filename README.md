@@ -1,94 +1,73 @@
 # AI/ML Learning Blog
 
-A deep learning fundamentals blog covering neural networks, activation functions, optimization techniques, regularization, computer vision, and transfer learning. Built with HTML, CSS, and JavaScript — no frameworks, no build tools.
+Articles on deep learning fundamentals, with interactive visualizations you can run in the browser. Published as a static site on GitHub Pages at `https://egigj-dev.github.io/my-blog/`.
 
 ## Articles
 
-- [Activation Functions](articles/activation-functions.html) — ReLU, Sigmoid, Tanh, Softmax explained with interactive comparisons
-- [Optimization Techniques](articles/optimization-techniques.html) — Feature scaling, batch norm, momentum, RMSProp, Adam, LR decay
-- [Regularization Techniques](articles/regularization-techniques.html) — L1, L2, Dropout, Data Augmentation, Early Stopping
-- [Transfer Learning for CIFAR-10](articles/cifar10-transfer-learning.html) — EfficientNetB0 frozen backbone, 87–89% accuracy in under 3 minutes
-- [AlexNet Paper Walkthrough](articles/alexnet-paper.html) — Deep dive into the architecture that sparked modern deep learning
-- [Data Augmentation](articles/data-augmentation.html) — Techniques to expand your dataset and improve generalization
+| Article | Topic | Interactive feature |
+| --- | --- | --- |
+| [Backpropagation and Autodiff](articles/backpropagation.html) | Foundations | Live forward and backward values for one neuron |
+| [Activation Functions](articles/activation-functions.html) | Foundations | Function and derivative explorer |
+| [Optimization Techniques](articles/optimization-techniques.html) | Training | Optimizers on a synthetic 3D loss surface |
+| [Regularization Techniques](articles/regularization-techniques.html) | Training | L1 and L2 constraint geometry, dropout subnetworks |
+| [Data Augmentation](articles/data-augmentation.html) | Training | Effect of transforms on a synthetic decision boundary |
+| [AlexNet Paper Walkthrough](articles/alexnet-paper.html) | Computer vision | 3D architecture and parameter breakdown |
+| [Transfer Learning for CIFAR-10](articles/cifar10-transfer-learning.html) | Computer vision | Synthetic latent space with a linear probe |
+| [Model Evaluation and Calibration](articles/model-evaluation-calibration.html) | Evaluation | Reliability diagram with temperature scaling, on synthetic data |
 
-## Features
+## How results are labelled
 
-- **Dark / Light mode** — persists across sessions via localStorage
-- **Interactive mind map** — click any topic node to jump to its article
-- **Responsive grid layout** — works on desktop, tablet, and mobile
-- **Typography** — Syne (headings), Lora (body), JetBrains Mono (code)
-- **Zero external dependencies** — no CDNs, no build tools, no frameworks
-- **GitHub Pages ready** — push to `main`, enable Pages, and it's live
+Articles distinguish paper results, the author's reported project results, values computed from synthetic data, and schematic charts. The CIFAR-10 training chart is schematic, and the project figures in that article are author-reported, with no published logs. Keep these labels accurate when editing.
 
-## Project Structure
+## Project structure
 
 ```
-my-blog/
-├── index.html                  (homepage with mind map + article grid)
-├── README.md
-├── favicon.svg
-├── .gitignore
-├── LICENSE
-│
-├── articles/
-│   ├── activation-functions.html
-│   ├── optimization-techniques.html
-│   ├── regularization-techniques.html
-│   ├── cifar10-transfer-learning.html
-│   ├── alexnet-paper.html
-│   └── data-augmentation.html
-│
-└── assets/
-    ├── alexnet-architecture.png
-    ├── alexnet-architecture-2.png
-    ├── data-aug-example.png
-    └── data-aug-example-2.png
+index.html              Homepage, article cards, topic graph section and fallback list
+articles/               One self-contained HTML page per article
+assets/brain-graph.js   Topic graph data and rendering; add new articles here
+assets/viz-core.js      Shared helpers for the article visualizations
+assets/*.js             One visualization module per article
+scripts/check_site.py   Static link, graph and JavaScript syntax checks
 ```
 
-## Run Locally
+## Browser dependencies
+
+There is no build step, but some scripts and fonts load from CDNs:
+
+- Homepage: GSAP and ScrollTrigger (optional animation), Google Fonts. The topic graph has no library dependency.
+- Articles: D3, GSAP, Chart.js and Three.js, depending on the article.
+
+If a CDN is unavailable, the homepage and its article links still work. Interactive figures in articles may not render.
+
+## Local preview
 
 ```bash
-cd my-blog
 python3 -m http.server 8000
-# → http://localhost:8000
 ```
 
-Or with Node:
+Then open <http://localhost:8000>.
 
-```bash
-npx serve .
-```
+## Adding an article
 
-## Add a New Article
-
-1. Create a new `.html` file in `articles/` (use an existing one as a template)
-2. The back link at the top should point to `../index.html`
-3. Add a card to the `.art-grid` in `index.html`
-4. Add a node to the SVG mind map (optional)
-5. Commit and push
-
-## File Naming Convention
-
-Use **kebab-case** (lowercase with hyphens):
-
-- `activation-functions.html` ✓
-- `cifar10-transfer-learning.html` ✓
-- `my-new-article.html` ✓
+1. Create `articles/your-article.html`, using an existing article as a template.
+2. Add a card to `.art-grid` in `index.html`.
+3. Add it to the fallback list in `index.html` and to `graph.nodes` in `assets/brain-graph.js`, with any relationships it has.
+4. Run `python3 scripts/check_site.py`.
 
 ## Deployment
 
-Push to `main` on GitHub. In Settings → Pages, select the `main` branch root. Your site is live at `https://egigj-dev.github.io/my-blog/`.
+The site deploys from the root of `main` through GitHub Pages.
 
-## Tech Stack
+## Known limitations
 
-- HTML5 + CSS3 — no frameworks
-- Vanilla JavaScript — theme toggle, interactive mind map
-- SVG — knowledge graph visualization
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+- The newsletter form on the homepage is a placeholder and does not submit anywhere.
+- On screens under 600 px, the topic graph is replaced by a grouped article list.
+- Article pages have not been fully reviewed for keyboard and screen-reader use.
 
 ## Author
 
-**Egi Gjineci** — AI/ML Engineer at Credins Bank, Tirana, Albania
+**Egi Gjineci**, AI/ML Engineer at Credins Bank, Tirana, Albania.
+
+## License
+
+MIT. See [LICENSE.txt](LICENSE.txt).
