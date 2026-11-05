@@ -454,7 +454,7 @@
 
             <div class="abstract-box">
                 <strong>Abstract</strong>
-                This paper describes a CNN pipeline for 10-class image classification on CIFAR-10 using a two-stage transfer-learning strategy. A pre-trained EfficientNetB0 backbone (ImageNet weights) is frozen and used as a fixed feature extractor, with a Lambda upsampling layer bridging the 32×32 to 224×224 resolution gap. The 1,280-dimensional feature vectors are cached and a lightweight classifier head is trained on them. The pipeline achieves ≥87% validation accuracy while remaining tractable on consumer hardware.
+                This paper describes a CNN pipeline for 10-class image classification on CIFAR-10 using a two-stage transfer-learning strategy. A pre-trained EfficientNetB0 backbone (ImageNet weights) is frozen and used as a fixed feature extractor, with a Lambda upsampling layer bridging the 32×32 to 224×224 resolution gap. The 1,280-dimensional feature vectors are cached and a lightweight classifier head is trained on them. The author reports validation accuracy of at least 87% on consumer hardware.
             </div>
 
             <h2>1. Introduction</h2>
@@ -475,12 +475,12 @@
 
             <h3>2.1 Dataset</h3>
             <p>
-                CIFAR-10 was loaded via <code>tensorflow.keras.datasets.cifar10</code>, already partitioned into 50,000 training and 10,000 test images. No additional augmentation was applied in the baseline run — the large representational capacity of EfficientNetB0 features reduced the need for it during the head-training phase.
+                CIFAR-10 was loaded via <code>tensorflow.keras.datasets.cifar10</code>, already partitioned into 50,000 training and 10,000 test images. No augmentation was applied in the baseline run, because cached features rule it out during head training. No separate hold-out split is described. If the 10,000 test images also drove early stopping and learning-rate reduction, the reported validation accuracy is somewhat optimistic as an estimate of performance on unseen data.
             </p>
 
             <h3>2.2 Pre-processing</h3>
             <p>
-                The <code>preprocess_data</code> function performs two operations: it casts pixel arrays to <code>float32</code> and applies EfficientNetB0's <code>preprocess_input</code> (scaling to approximately [−1, 1]), then one-hot-encodes labels using <code>to_categorical</code> with <code>num_classes=10</code>.
+                The <code>preprocess_data</code> function casts pixel arrays to <code>float32</code>, calls EfficientNetB0's <code>preprocess_input</code>, and one-hot-encodes labels using <code>to_categorical</code> with <code>num_classes=10</code>. In Keras, EfficientNet's <code>preprocess_input</code> is a pass-through, because the model contains its own rescaling and normalization layers and expects inputs in [0, 255]. Pixels should therefore not be scaled beforehand.
             </p>
 
             <div class="code-block">def preprocess_data(X, Y):
@@ -510,7 +510,7 @@
                         <div class="block-label">Block 2 — Feature Extraction</div>
                         <div>EfficientNetB0 (frozen, ImageNet weights) + GlobalAveragePooling</div>
                         <div class="block-output">Output: (m, 1280)</div>
-                        <div class="block-detail">trainable = False · ~5.3M params</div>
+                        <div class="block-detail">trainable = False · ~4.05M params without the top layer</div>
                     </div>
                 </div>
                 <div class="arch-row" style="justify-content: center;">
@@ -547,7 +547,7 @@
 
             <h3>2.4 The Resolution Mismatch Problem</h3>
             <p>
-                EfficientNetB0 was designed for 224×224 inputs; CIFAR-10 images are only 32×32. Feeding 32×32 images directly would pass through fewer spatial pooling operations, degrading feature quality. A <code>Lambda</code> layer bilinearly rescales every batch to 224×224 on the fly using <code>tf.image.resize</code> — adding negligible overhead and requiring no separate pre-processing pass.
+                EfficientNetB0 was designed for 224×224 inputs; CIFAR-10 images are only 32×32. The backbone downsamples by a factor of 32, so a 32×32 input would leave a 1×1 final feature map with very little spatial detail. A Lambda layer bilinearly rescales every batch to 224×224 on the fly using <code>tf.image.resize</code>. This avoids a separate pre-processing pass, though running the backbone at 224×224 is the main compute cost of the pipeline.
             </p>
 
             <h3>2.5 Feature Pre-computation Strategy</h3>
@@ -559,7 +559,7 @@
                 <div class="pros">
                     <h4>Benefits of Caching</h4>
                     <ul>
-                        <li>Head training reduced from hours to minutes</li>
+                        <li>Head training reduced from hours to minutes (author-reported)</li>
                         <li>Hyperparameter iteration becomes practical</li>
                         <li>No backbone recomputation per epoch</li>
                     </ul>
@@ -567,7 +567,7 @@
                 <div class="cons">
                     <h4>Trade-offs</h4>
                     <ul>
-                        <li>~500 MB RAM to store two (50,000 × 1280) float32 arrays</li>
+                        <li>About 310 MB of RAM for the float32 features: (50,000 + 10,000) × 1,280 × 4 bytes</li>
                         <li>Augmentation cannot be applied at this stage</li>
                         <li>Requires separate partial-model forward pass</li>
                     </ul>
@@ -609,13 +609,17 @@
                 </div>
                 <div class="tl-readout" id="tl-readout"></div>
                 <p class="tl-note"><strong>The cloud is illustrative</strong> &mdash; real EfficientNetB0 embeddings are 1280-dimensional and cannot be drawn, so this is a stand-in that runs from unstructured noise to well-separated clusters.
-                <strong>The accuracy is measured.</strong> A nearest-centroid linear probe is fitted on 60% of the points and scored on the held-out 40%, recomputed every time you move the slider.
-                Drag <em>Features</em> to the left and the probe collapses to chance: with no class structure in the representation, no linear head can recover it. Drag it right and the same probe becomes near-perfect without a single layer of the backbone changing. That is the whole argument for freezing &mdash; if the representation already separates the classes, the only thing left to fit is a head of <strong>12,810 parameters, roughly 0.3% of the model</strong>.</p>
+                <strong>The accuracy is computed on these synthetic points, not on CIFAR-10.</strong> A nearest-centroid linear probe is fitted on 60% of the points and scored on the held-out 40%, recomputed every time you move the slider.
+                Drag <em>Features</em> to the left and the probe collapses to chance: with no class structure in the representation, no linear head can recover it. Drag it right and the same probe becomes near-perfect without a single layer of the backbone changing. That is the argument for freezing: if the representation already separates the classes, only a head remains to fit. The panel counts the smallest such head, a single linear layer of 12,810 parameters, roughly 0.3% of the model. The head actually used in this project (512 &rarr; 256 &rarr; 10) has about 790,000.
             </div>
 
             <h2>3. Results</h2>
 
             <h3>3.1 Training Dynamics</h3>
+
+            <p>
+                <strong>The chart below is schematic.</strong> Its curves are generated by a formula shaped to resemble the reported outcome. They are not logged training history. The figures in the table are author-reported from the original project, and their logs are not published here.
+            </p>
 
             <div class="chart-container">
                 <canvas id="trainingChart"></canvas>
@@ -655,21 +659,21 @@
 
             <h3>3.2 Final Validation Accuracy</h3>
             <p>
-                The assembled end-to-end model consistently achieved:
+                The author reports that the assembled end-to-end model achieved:
                 <span class="result-badge">87–89% validation accuracy</span>
-                satisfying the ≥87% requirement. The fine-tuning fallback was not triggered in any recorded run, confirming that frozen EfficientNetB0 features alone were sufficient.
+                meeting the project's ≥87% requirement. The fine-tuning fallback was not needed in the author's runs, so frozen EfficientNetB0 features were sufficient for that target. Well-tuned CIFAR-10 models trained end to end reach substantially higher accuracy, so this target should not be read as a performance ceiling.
             </p>
 
             <h3>3.3 Per-Class Observations</h3>
             <p>
-                The model performed best on structurally distinctive classes — <strong>ships, airplanes, and automobiles</strong> — whose consistent shapes and colour statistics align well with low-level ImageNet features. Performance was lowest on visually similar pairs like <strong>cat vs. dog</strong> and <strong>deer vs. horse</strong>, consistent with known CIFAR-10 difficulty patterns in the literature.
+                The author observed the best performance on structurally distinctive classes such as ships, airplanes, and automobiles, and the weakest on visually similar pairs like cat vs. dog and deer vs. horse. This is qualitative: per-class figures are not published here.
             </p>
 
             <h2>4. Discussion</h2>
 
             <h3>4.1 Why EfficientNetB0?</h3>
             <p>
-                Multiple Keras Applications were evaluated (VGG16, ResNet50, MobileNetV2). EfficientNetB0 was selected for three reasons: compact parameter count (~5.3M), competitive ImageNet accuracy, and principled <strong>compound scaling</strong> — width, depth, and resolution are balanced together, which matters when the downstream task (32×32 CIFAR-10) differs significantly from pre-training (224×224 ImageNet).
+                The author reports evaluating several Keras Applications (VGG16, ResNet50, MobileNetV2). EfficientNetB0 was selected for three reasons: a compact parameter count (about 5.3M with its ImageNet classifier, about 4.05M without it), competitive ImageNet accuracy, and a compound-scaling design that balances width, depth, and resolution.
             </p>
 
             <h3>4.2 Limitations</h3>
@@ -700,7 +704,7 @@
 
             <h3>4.4 Future Directions</h3>
             <p>
-                Three avenues could push accuracy higher. First, <strong>selective fine-tuning</strong> of upper EfficientNetB0 blocks typically adds 1–3 percentage points. Second, replacing the Dense head with a <strong>residual MLP or attention-based aggregator</strong> may extract more information from the 1,280-d feature vectors. Third, <strong>mixed-precision training</strong> (float16) would allow larger batch sizes and more stable gradient estimates.
+                Three avenues could push accuracy higher. First, selective fine-tuning of upper EfficientNetB0 blocks would let features adapt to CIFAR-10, though the gain would need to be measured. Second, a different head could extract more from the 1,280-dimensional features. Third, augmenting images before the backbone during fine-tuning would restore the regularization that caching gives up.
             </p>
 
             <h2>5. Key Hyperparameters</h2>
@@ -731,13 +735,13 @@
             <div class="conclusion">
                 <h2>Conclusion</h2>
                 <p>
-                    This project demonstrates that transfer learning with a frozen EfficientNetB0 backbone is a highly effective and computationally efficient approach to CIFAR-10 classification. By pre-computing and caching feature vectors, head training is reduced from hours to minutes while achieving 87–89% validation accuracy.
+                    This project shows that a frozen EfficientNetB0 backbone can be a computationally efficient route to its target accuracy on CIFAR-10. The author reports that pre-computing and caching feature vectors reduced head training from hours to minutes, with 87-89% validation accuracy.
                 </p>
                 <p>
                     The resolution mismatch between CIFAR-10's 32×32 images and EfficientNetB0's 224×224 native input is elegantly handled by a Lambda upsampling layer, requiring no offline pre-processing. The overall design prioritises speed and reproducibility without sacrificing accuracy.
                 </p>
                 <p>
-                    Key takeaway: for small datasets with limited compute, feature extraction from a frozen pre-trained backbone combined with a lightweight classifier head is often the best starting point — beating training from scratch on both speed and generalisation.
+                    <strong>Key takeaway:</strong> for small datasets with limited compute, a frozen pre-trained backbone with a lightweight head is often a good starting point. It is fast, but it trades away accuracy: this project's figures are below what well-tuned end-to-end training can achieve on CIFAR-10.
                 </p>
             </div>
 

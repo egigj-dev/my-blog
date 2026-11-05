@@ -7,7 +7,7 @@
     <meta name="description" content="Techniques to improve generalization and prevent overfitting — L1, L2, Dropout, Data Augmentation, and Early Stopping.">
     <meta property="og:title" content="Regularization: Preventing Your Network from Overfitting">
     <meta property="og:description" content="Techniques to improve generalization and prevent overfitting — L1, L2, Dropout, Data Augmentation, and Early Stopping.">
-    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/articles/regularization_techniques.html">
+    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/articles/regularization-techniques.html">
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
@@ -369,7 +369,7 @@
             <h2>Introduction</h2>
             
             <p>
-                A neural network will always try to memorize training data if given the chance. Without constraints, it learns exact patterns in the training set and fails on new data. Regularization prevents this by forcing the network to learn generalizable patterns instead.
+                A sufficiently flexible neural network can memorize its training data, including noise. Regularization discourages this by constraining the model or the training process, so that it is more likely to learn patterns that generalize.
             </p>
 
             <p>
@@ -399,13 +399,13 @@
             <div class="code-block">loss = standard_loss + λ × Σ|weights|</div>
 
             <p>
-                The penalty forces weights toward zero. Some weights become exactly zero, automatically eliminating unimportant features. This creates sparse models—only important connections remain active.
+                The penalty pushes weights toward zero. With a suitable solver, such as proximal gradient descent, some weights become exactly zero, which removes those connections and creates sparse models. Plain SGD on this penalty usually leaves weights small but not exactly zero.
             </p>
 
             <h3>Feature Selection</h3>
 
             <p>
-                Unlike L2, which shrinks weights gradually, L1 can eliminate them completely. This acts as automatic feature selection. For a medical diagnosis task with 100 possible symptoms, L1 might zero out 90, identifying only the 10 that matter.
+                Unlike L2, which shrinks weights gradually, L1 can eliminate them completely, which acts as a form of feature selection in linear models. For a task with 100 candidate features, L1 might keep only a small subset. That subset is a modelling result, not proof that the others are irrelevant: among correlated features, L1 can select one fairly arbitrarily.
             </p>
 
             <div class="pros-cons">
@@ -413,7 +413,7 @@
                     <h4>Advantages</h4>
                     <ul>
                         <li>Automatic feature selection</li>
-                        <li>Sparse models (faster)</li>
+                        <li>Sparse models (faster only if zero weights are actually pruned)</li>
                         <li>More interpretable</li>
                     </ul>
                 </div>
@@ -435,13 +435,13 @@
             <div class="code-block">loss = standard_loss + λ × Σ(weights²)</div>
 
             <p>
-                This shrinks weights uniformly without eliminating them. Instead of forcing weights to zero, it encourages smaller weights across the board. This distributes importance across many features rather than concentrating it on a few.
+                This shrinks each weight in proportion to its size, without generally setting any to zero. It encourages smaller weights across the board and tends to spread importance across correlated features. Conventions differ: many texts write the penalty as (λ/2) × Σ(weights²), so that its gradient is λ × weights, and a given λ means different things under each convention.
             </p>
 
             <h3>Weight Decay</h3>
 
             <p>
-                L2 is also called weight decay because it gradually reduces all weight magnitudes. The effect is subtle but effective: the network uses all features but with smaller coefficients, forcing it to rely on more robust patterns.
+                For plain SGD, an L2 penalty is equivalent to multiplying weights by a constant slightly below 1 at each step (with λ rescaled by the learning rate), which is why the two terms are often used interchangeably. They are not equivalent with adaptive optimizers such as Adam: adding the L2 gradient lets it be rescaled by the adaptive denominator. AdamW decouples weight decay for this reason (Loshchilov &amp; Hutter, 2019).
             </p>
 
             <div class="pros-cons">
@@ -449,7 +449,7 @@
                     <h4>Advantages</h4>
                     <ul>
                         <li>Smooth weight reduction</li>
-                        <li>Usually better accuracy than L1</li>
+                        <li>Often a good default in neural networks</li>
                         <li>Easier to optimize</li>
                         <li>Most popular choice</li>
                     </ul>
@@ -470,10 +470,10 @@
             <h2>Dropout</h2>
 
             <p>
-                Dropout randomly disables neurons during training. Each neuron has a probability (typically 50%) of being turned off for each training sample.
+                Dropout randomly disables neurons during training. Each neuron is dropped with probability p, sampled independently for each training example. p must be in [0, 1): p = 1 would drop every unit. A common choice is around 0.5 for fully connected hidden layers, with lower values for inputs and convolutional layers.
             </p>
 
-            <div class="code-block">output = output × random_mask (50% zeros)<br>(During testing, all neurons are active)</div>
+            <div class="code-block">keep_prob = 1 - p&nbsp;&nbsp;# 0 &le; p &lt; 1<br>output = output × random_mask / keep_prob&nbsp;&nbsp;# mask is 1 with probability keep_prob<br>(During testing, all neurons are active and no mask or scaling is applied)</div>
 
             <h3>Why It Works</h3>
 
@@ -482,7 +482,7 @@
             </p>
 
             <p>
-                Think of it as ensemble learning during training. With 50% dropout and 1000 neurons, each sample sees a different sub-network. By testing, the full network has learned from thousands of these sub-networks.
+                Dividing by keep_prob keeps each unit's expected output the same between training and testing. This is the "inverted dropout" used by modern libraries. The original paper instead scales weights by the keep probability at test time; the two are equivalent in expectation. You can think of dropout as approximately training an ensemble of weight-sharing sub-networks, with the full network acting as an approximate average at test time.
             </p>
 
             <div class="pros-cons">
@@ -539,7 +539,7 @@
             <h3>Why It Works</h3>
 
             <p>
-                With 1000 images, you have 1000 examples. With augmentation, you effectively have 5000 (rotated, flipped, zoomed versions). The network sees more variety, learns to recognize objects regardless of rotation or slight changes, and doesn't memorize specific images.
+                With 1000 images, you have 1000 independent examples. Augmented versions add variety, but they are correlated with their originals, so they are not equivalent to collecting more real data. The network sees more variation, learns tolerance to the applied changes, and finds it harder to memorize specific images.
             </p>
 
             <div class="pros-cons">
@@ -563,7 +563,7 @@
             </div>
 
             <div class="highlight-box">
-                Data augmentation is almost always beneficial. Even if you have plenty of data, augmentation helps the model generalize.
+                Data augmentation is usually worth trying when the transformations preserve the label. A transform that changes the correct answer, such as flipping a digit or a road sign, can harm the model.
             </div>
 
             <h2>Early Stopping</h2>
@@ -581,7 +581,7 @@
             <div class="code-block">best_validation_loss = infinity<br>patience_counter = 0<br><br>for each epoch:<br>  training_loss = train(network)<br>  validation_loss = validate(network)<br><br>  if validation_loss < best_validation_loss:<br>    best_validation_loss = validation_loss<br>    patience_counter = 0<br>    save_weights(network)<br>  else:<br>    patience_counter += 1<br><br>  if patience_counter > patience_threshold:<br>    stop_training()</div>
 
             <p>
-                The "patience" parameter (typically 10-20 epochs) allows temporary increases in validation loss. You don't stop on the first bad epoch.
+                The "patience" parameter allows temporary increases in validation loss, so you don't stop on the first bad epoch. A suitable value depends on the training length and how noisy validation is.
             </p>
 
             <div class="pros-cons">
@@ -589,8 +589,8 @@
                     <h4>Advantages</h4>
                     <ul>
                         <li>Simple and effective</li>
-                        <li>No hyperparameters to tune</li>
-                        <li>Automatically finds optimal training point</li>
+                        <li>Few hyperparameters (patience, monitored metric)</li>
+                        <li>Selects the best checkpoint seen on validation data</li>
                         <li>Saves training time</li>
                     </ul>
                 </div>
@@ -619,7 +619,7 @@
             <h3>For Deep Networks</h3>
 
             <p>
-                L2 regularization + Dropout (in middle layers, typically 50%) + Data augmentation + Early stopping + Batch normalization. This combination handles the complexity of deep architectures.
+                L2 regularization or weight decay + Dropout (where appropriate, around 0.5 in fully connected layers) + Data augmentation + Early stopping + Batch normalization. This is a common starting set, not a recipe: each addition should earn its place on validation data.
             </p>
 
             <h3>For Limited Data</h3>
@@ -635,7 +635,7 @@
             </p>
 
             <div class="highlight-box">
-                Always use early stopping with a validation set. It's the simplest, most effective technique and has no downside.
+                Early stopping with a validation set is simple and often useful, but it has costs: it holds out data, repeated evaluation takes time, and it can stop too soon if validation is noisy or if the learning-rate schedule has not finished.
             </div>
 
             <h2>Comparison Table</h2>
@@ -645,7 +645,7 @@
                     <tr>
                         <th>Technique</th>
                         <th>Type</th>
-                        <th>Effectiveness</th>
+                        <th>Typical impact (rule of thumb)</th>
                         <th>Complexity</th>
                     </tr>
                 </thead>
@@ -686,13 +686,13 @@
             <div class="conclusion">
                 <h2>Conclusion</h2>
                 <p>
-                    Regularization is the difference between models that work in demos and models that work in production. Without it, networks memorize noise. With it, they learn generalizable patterns.
+                    Regularization helps models generalize beyond the data they were trained on. Without some form of it, flexible networks can memorize noise.
                 </p>
                 <p>
-                    The five techniques covered here—L1, L2, Dropout, Data Augmentation, and Early Stopping—address overfitting from different angles. L1 and L2 constrain weights. Dropout creates ensemble effects. Data augmentation provides varied training examples. Early stopping finds the optimal training point.
+                    The five techniques covered here address overfitting from different angles. L1 and L2 constrain weights. Dropout approximates an ensemble. Data augmentation provides varied training examples. Early stopping selects a good point in training using validation data.
                 </p>
                 <p>
-                    A practical approach: start with L2 + early stopping (simplest), add dropout for deep networks, and always use data augmentation when possible. Fine-tune from there based on what you observe in your specific problem.
+                    A practical approach: start with L2 or weight decay plus early stopping, add dropout where the architecture benefits, and use label-preserving data augmentation. Fine-tune from there based on what you observe in your specific problem.
                 </p>
             </div>
         </article>
