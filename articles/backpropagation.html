@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backpropagation and Automatic Differentiation</title>
+    <meta name="description" content="How backpropagation computes gradients: the chain rule on a graph, a worked example, a small autodiff engine, and why deep learning uses reverse mode.">
+    <meta property="og:title" content="Backpropagation and Automatic Differentiation">
+    <meta property="og:description" content="How backpropagation computes gradients: the chain rule on a graph, a worked example, a small autodiff engine, and why deep learning uses reverse mode.">
+    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/articles/backpropagation.html">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1e2e;
+            --bg-card: #1a2e42;
+            --text-primary: #e8f0f5;
+            --text-secondary: #a0adb8;
+            --accent: #00d9ff;
+            --border: #2a3f5a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body.light-mode {
+            --bg-dark: #ffffff;
+            --bg-card: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #3498db;
+            --border: #e0e6ed;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .article-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-category {
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .article-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .content {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: rgba(0, 217, 255, 0.1);
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .pros, .cons {
+            padding: 1.3rem;
+            border-radius: 6px;
+            border-left: 3px solid;
+        }
+
+        .pros {
+            border-left-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .cons {
+            border-left-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .pros h4, .cons h4 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pros h4 { color: #27ae60; }
+        .cons h4 { color: #ff6b6b; }
+
+        .pros ul, .cons ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .pros li, .cons li {
+            font-size: 0.95rem;
+            padding: 0.4rem 0;
+            color: var(--text-primary);
+        }
+
+        .pros li:before {
+            content: "✓ ";
+            color: #27ae60;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .cons li:before {
+            content: "✗ ";
+            color: #ff6b6b;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .highlight-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1.3rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .conclusion {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 6px;
+            margin: 2.5rem 0;
+        }
+
+        .conclusion h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .article-header h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+
+            .back-link, .theme-toggle {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .back-link {
+                left: 10px;
+            }
+
+            .theme-toggle {
+                right: 10px;
+            }
+        }
+
+        body.light-mode .comparison-table th {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        body.light-mode .highlight-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+
+        /* --- Loss landscape marble race --- */
+        .lv { margin: 2.5rem 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .lv-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-bottom: 1px solid var(--border); }
+        .lv-legend, .lv-starts { display: flex; gap: .4rem; flex-wrap: wrap; }
+        .lv-chip { display: inline-flex; align-items: center; gap: .4rem; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; font-family: inherit; font-size: .78rem; padding: .3rem .7rem; border-radius: 5px; transition: color .2s, border-color .2s, opacity .2s; opacity: .55; }
+        .lv-chip.on { opacity: 1; color: var(--text-primary); border-color: var(--text-secondary); }
+        .lv-chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+        .lv-actions { display: flex; gap: .4rem; }
+        .lv-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); cursor: pointer; font-family: inherit; font-size: .78rem; font-weight: 600; padding: .3rem .9rem; border-radius: 5px; }
+        .lv-btn:hover { opacity: .8; }
+        .lv-panels { display: grid; grid-template-columns: 1.15fr 1fr; }
+        .lv-3d { position: relative; height: 380px; }
+        .lv-2d { position: relative; height: 380px; border-left: 1px solid var(--border); }
+        #lv-plot { display: block; width: 100%; height: 100%; }
+        .lv-fallback { display: none; align-items: center; justify-content: center; height: 100%; padding: 1.5rem; text-align: center; font-size: .82rem; color: var(--text-secondary); line-height: 1.6; }
+        .lv-controls { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-top: 1px solid var(--border); }
+        .lv-lr { display: flex; align-items: center; gap: .6rem; font-size: .78rem; color: var(--text-secondary); }
+        .lv-lr input { accent-color: var(--accent); width: 140px; }
+        .lv-lr span { font-variant-numeric: tabular-nums; color: var(--text-primary); min-width: 3.2em; }
+        .lv-readout { padding: .6rem 1.1rem; border-top: 1px solid var(--border); font-size: .78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+        .lv-readout .lv-sep { opacity: .35; margin: 0 .55rem; }
+        .lv-note { padding: .85rem 1.1rem; border-top: 1px solid var(--border); font-size: .8rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        .lv-note strong { color: var(--text-primary); }
+        @media (max-width: 760px) {
+            .lv-panels { grid-template-columns: 1fr; }
+            .lv-2d { border-left: none; border-top: 1px solid var(--border); }
+            .lv-3d, .lv-2d { height: 300px; }
+        }
+
+    </style>
+    <style>
+        .demo { border: 1px solid var(--border); border-radius: 10px; margin: 1.75rem 0; overflow: hidden; }
+        .demo-controls { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; padding: .85rem 1.1rem; border-bottom: 1px solid var(--border); font-size: .85rem; color: var(--text-secondary); }
+        .demo-controls label { display: flex; align-items: center; gap: .55rem; }
+        .demo-controls input { accent-color: var(--accent); width: 130px; }
+        .demo svg { display: block; width: 100%; height: auto; }
+        .demo-readout { padding: .7rem 1.1rem; border-top: 1px solid var(--border); font-size: .85rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+        .demo-readout b { color: var(--text-primary); }
+        .demo-note { padding: .85rem 1.1rem; border-top: 1px solid var(--border); font-size: .82rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        .references { font-size: .92rem; }
+        .references li { margin-bottom: .55rem; }
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← Back to Blog</a>
+    <button class="theme-toggle" id="themeToggle">Light Mode</button>
+
+    <div class="container">
+        <article class="content">
+            <div class="article-header">
+                <div class="article-category">Foundations</div>
+                <h1>Backpropagation and Automatic Differentiation</h1>
+                <div class="article-meta">
+                    <span>November 2026</span>
+                    <span>11 min read</span>
+                </div>
+            </div>
+
+            <h2>Introduction</h2>
+
+            <p>
+                Training a neural network means adjusting its parameters to reduce a loss, and that requires the derivative of the loss with respect to every parameter. A modern network can have millions or billions of them. Backpropagation computes all of those derivatives at about the cost of a small, constant number of forward passes.
+            </p>
+
+            <p>
+                By the end of this article you should be able to trace backpropagation by hand on a small graph, explain why deep learning uses reverse mode rather than forward mode, and read a small automatic differentiation engine, which is included below and has been executed.
+            </p>
+
+            <h2>The Chain Rule on a Graph</h2>
+
+            <p>
+                Any computation can be written as a graph of simple operations, each with a known local derivative. If a loss L depends on a through an intermediate value p, the chain rule says:
+            </p>
+
+            <div class="code-block">dL/da = dL/dp × dp/da</div>
+
+            <p>
+                Backpropagation is the chain rule applied in an efficient order. A forward pass computes and stores each intermediate value. A backward pass starts from the loss, whose derivative with respect to itself is 1, and walks the graph in reverse. Each node multiplies its accumulated derivative by the local derivative of each input and passes the result back. If a value is used in more than one place, its contributions are added.
+            </p>
+
+            <h2>A Worked Example</h2>
+
+            <p>
+                Take one neuron with a sigmoid output and binary cross-entropy loss, for one example with x = 2 and label y = 1, starting from w = 0.5 and b = −0.5.
+            </p>
+
+            <table class="comparison-table">
+                <thead><tr><th>Forward step</th><th>Value</th><th>Local derivative</th><th>Backward value</th></tr></thead>
+                <tbody>
+                    <tr><td>a = w·x + b</td><td>0.5000</td><td>da/dw = x = 2, da/db = 1</td><td>dL/dw = −0.7551, dL/db = −0.3775</td></tr>
+                    <tr><td>p = σ(a)</td><td>0.6225</td><td>dp/da = p(1 − p) = 0.2350</td><td>dL/da = −0.3775</td></tr>
+                    <tr><td>L = −ln(p)</td><td>0.4741</td><td>dL/dp = −1/p = −1.6065</td><td>dL/dp = −1.6065</td></tr>
+                </tbody>
+            </table>
+
+            <p>
+                Read the last column from the bottom up: −1.6065 × 0.2350 = −0.3775, then −0.3775 × 2 = −0.7551. Both gradients are negative, so increasing w or b reduces the loss, as expected for a positive example with p below 1.
+            </p>
+
+            <div class="demo" id="bp-demo">
+                <div class="demo-controls">
+                    <label>w <input type="range" id="bp-w" min="-3" max="3" step="0.05" value="0.5" aria-label="Weight w"><span id="bp-w-v"></span></label>
+                    <label>b <input type="range" id="bp-b" min="-3" max="3" step="0.05" value="-0.5" aria-label="Bias b"><span id="bp-b-v"></span></label>
+                    <label>x <input type="range" id="bp-x" min="-3" max="3" step="0.05" value="2" aria-label="Input x"><span id="bp-x-v"></span></label>
+                </div>
+                <div class="demo-readout" id="bp-out" aria-live="polite"></div>
+                <p class="demo-note">Each number is computed in your browser by the same steps as the table, with y = 1. Push w·x + b far below zero and notice the size of the gradients: with this loss they approach −x and −1, so the model still gets a strong correction when it is badly wrong. Push it far above zero and they approach zero, because the prediction is already correct.</p>
+            </div>
+
+            <h2>A Small Autodiff Engine</h2>
+
+            <p>
+                Automatic differentiation is not symbolic differentiation, which manipulates formulas, and it is not numerical differentiation, which uses finite differences. It records operations on actual values and applies exact local derivatives. This engine implements reverse mode for the example above:
+            </p>
+
+            <div class="code-block"><pre>import math
+
+class Value:
+    """A number that records how it was computed."""
+
+    def __init__(self, data, parents=(), local_grads=()):
+        self.data = data
+        self.grad = 0.0
+        self.parents = parents          # inputs to the operation
+        self.local_grads = local_grads  # d(self)/d(parent), one per parent
+
+    def __add__(self, other):
+        return Value(self.data + other.data, (self, other), (1.0, 1.0))
+
+    def __mul__(self, other):
+        return Value(self.data * other.data, (self, other), (other.data, self.data))
+
+    def sigmoid(self):
+        p = 1.0 / (1.0 + math.exp(-self.data))
+        return Value(p, (self,), (p * (1.0 - p),))
+
+    def neg_log(self):
+        return Value(-math.log(self.data), (self,), (-1.0 / self.data,))
+
+    def backward(self):
+        # Visit each node after every node that depends on it.
+        order, seen = [], set()
+
+        def visit(node):
+            if node not in seen:
+                seen.add(node)
+                for parent in node.parents:
+                    visit(parent)
+                order.append(node)
+
+        visit(self)
+        self.grad = 1.0
+        for node in reversed(order):
+            for parent, local in zip(node.parents, node.local_grads):
+                parent.grad += node.grad * local  # the chain rule
+
+
+w, b, x = Value(0.5), Value(-0.5), Value(2.0)
+loss = (w * x + b).sigmoid().neg_log()   # label y = 1
+loss.backward()
+print(f"loss = {loss.data:.4f}, dL/dw = {w.grad:.4f}, dL/db = {b.grad:.4f}")</pre></div>
+
+            <p>
+                Running it prints <code>loss = 0.4741, dL/dw = -0.7551, dL/db = -0.3775</code>, which matches the table. The same calculation in PyTorch looks like this:
+            </p>
+
+            <div class="code-block"><pre>import torch
+
+w = torch.tensor(0.5, requires_grad=True)
+b = torch.tensor(-0.5, requires_grad=True)
+x, y = torch.tensor(2.0), torch.tensor(1.0)
+
+loss = torch.nn.functional.binary_cross_entropy(torch.sigmoid(w * x + b), y)
+loss.backward()
+print(w.grad, b.grad)</pre></div>
+
+            <p>
+                PyTorch builds the graph as operations run, and <code>backward()</code> fills in each leaf's <code>.grad</code>. Gradients accumulate across calls, which is why training loops zero them at each step.
+            </p>
+
+            <h2>Why Reverse Mode?</h2>
+
+            <p>
+                Forward mode pushes derivatives from inputs to outputs. One pass gives the derivative of every output with respect to one input. Reverse mode gives the derivative of one output with respect to every input.
+            </p>
+
+            <table class="comparison-table">
+                <thead><tr><th></th><th>Forward mode</th><th>Reverse mode</th></tr></thead>
+                <tbody>
+                    <tr><td>Passes needed for the full gradient</td><td>One per input</td><td>One per output</td></tr>
+                    <tr><td>Best when</td><td>Few inputs, many outputs</td><td>Many inputs, few outputs</td></tr>
+                    <tr><td>Memory</td><td>Low: no stored graph</td><td>Must retain intermediates for the backward pass</td></tr>
+                </tbody>
+            </table>
+
+            <p>
+                A training loss is a single scalar that depends on many parameters, which is the ideal case for reverse mode. Its cost is memory: intermediate values must be kept until the backward pass. Gradient checkpointing reduces this by recomputing some values instead of storing them.
+            </p>
+
+            <h2>Where Things Go Wrong</h2>
+
+            <p>
+                <strong>Vanishing and exploding gradients.</strong> Backpropagation multiplies many local derivatives. If they tend to be small, early layers receive tiny gradients; if they tend to be large, updates can blow up. This is the context for the <a href="activation-functions.html">activation functions</a> article, and for careful initialization, normalization, and residual connections.
+            </p>
+
+            <p>
+                <strong>Non-differentiable points.</strong> ReLU has no derivative at exactly zero. Frameworks use a subgradient, usually 0, there, and this rarely matters in practice.
+            </p>
+
+            <p>
+                <strong>Blocked gradients.</strong> Operations such as <code>argmax</code> have zero gradient almost everywhere, and detaching a tensor deliberately cuts the graph. Either can silently stop part of a model from learning.
+            </p>
+
+            <p>
+                <strong>A useful check.</strong> When writing a custom gradient, compare it with a central finite difference, (f(w + ε) − f(w − ε)) / 2ε. For the example above, this gives about −0.7551 for w.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Key idea:</strong> backpropagation computes gradients. It does not choose how to use them. Deciding how to step is the job of an optimizer, covered in <a href="optimization-techniques.html">Optimization Techniques</a>.
+            </div>
+
+            <h2>References</h2>
+            <ul class="references">
+                <li>Rumelhart, D. E., Hinton, G. E., &amp; Williams, R. J. (1986). Learning representations by back-propagating errors. <em>Nature</em>, 323, 533-536.</li>
+                <li>Baydin, A. G., Pearlmutter, B. A., Radul, A. A., &amp; Siskind, J. M. (2018). Automatic Differentiation in Machine Learning: a Survey. <em>JMLR</em>, 18(153), 1-43.</li>
+                <li>Griewank, A., &amp; Walther, A. (2008). <em>Evaluating Derivatives</em> (2nd ed.). SIAM.</li>
+                <li>Goodfellow, I., Bengio, Y., &amp; Courville, A. (2016). <em>Deep Learning</em>, chapter 6. MIT Press.</li>
+            </ul>
+
+        </article>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const isDark = localStorage.getItem('light-mode') !== 'true';
+
+        function updateTheme() {
+            if (!isDark) {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = 'Dark Mode';
+            } else {
+                document.body.classList.remove('light-mode');
+                themeToggle.textContent = 'Light Mode';
+            }
+        }
+
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            const isNowLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('light-mode', isNowLight);
+            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
+        });
+    </script>
+    <script>
+    (function () {
+        var ids = ['w', 'b', 'x'];
+        function val(id) { return parseFloat(document.getElementById('bp-' + id).value); }
+        function fmt(n) { return (n < 0 ? '\u2212' : '') + Math.abs(n).toFixed(4); }
+        function update() {
+            var w = val('w'), b = val('b'), x = val('x');
+            ids.forEach(function (id) { document.getElementById('bp-' + id + '-v').textContent = val(id).toFixed(2); });
+            var a = w * x + b, p = 1 / (1 + Math.exp(-a));
+            var dLda = -(1 - p);  // (-1/p) * p(1-p), simplified so that it stays stable as p approaches 0
+            var L = Math.log(1 + Math.exp(-a));
+            document.getElementById('bp-out').innerHTML =
+                'a = <b>' + fmt(a) + '</b> &nbsp; p = <b>' + p.toFixed(4) + '</b> &nbsp; L = <b>' + L.toFixed(4) + '</b>' +
+                ' &nbsp; dL/dw = <b>' + fmt(dLda * x) + '</b> &nbsp; dL/db = <b>' + fmt(dLda) + '</b>';
+        }
+        ids.forEach(function (id) { document.getElementById('bp-' + id).addEventListener('input', update); });
+        update();
+    })();
+    </script>
+</body>
+</html>

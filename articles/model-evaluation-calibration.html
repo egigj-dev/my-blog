@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Evaluation and Calibration</title>
+    <meta name="description" content="Choosing metrics that match the decision, avoiding evaluation leaks, reading reliability diagrams, and recalibrating classifiers.">
+    <meta property="og:title" content="Model Evaluation and Calibration">
+    <meta property="og:description" content="Choosing metrics that match the decision, avoiding evaluation leaks, reading reliability diagrams, and recalibrating classifiers.">
+    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/articles/model-evaluation-calibration.html">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1e2e;
+            --bg-card: #1a2e42;
+            --text-primary: #e8f0f5;
+            --text-secondary: #a0adb8;
+            --accent: #00d9ff;
+            --border: #2a3f5a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body.light-mode {
+            --bg-dark: #ffffff;
+            --bg-card: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #3498db;
+            --border: #e0e6ed;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .article-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-category {
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .article-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .content {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: rgba(0, 217, 255, 0.1);
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .pros, .cons {
+            padding: 1.3rem;
+            border-radius: 6px;
+            border-left: 3px solid;
+        }
+
+        .pros {
+            border-left-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .cons {
+            border-left-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .pros h4, .cons h4 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pros h4 { color: #27ae60; }
+        .cons h4 { color: #ff6b6b; }
+
+        .pros ul, .cons ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .pros li, .cons li {
+            font-size: 0.95rem;
+            padding: 0.4rem 0;
+            color: var(--text-primary);
+        }
+
+        .pros li:before {
+            content: "✓ ";
+            color: #27ae60;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .cons li:before {
+            content: "✗ ";
+            color: #ff6b6b;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .highlight-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1.3rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .conclusion {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 6px;
+            margin: 2.5rem 0;
+        }
+
+        .conclusion h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            .article-header h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+
+            .back-link, .theme-toggle {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .back-link {
+                left: 10px;
+            }
+
+            .theme-toggle {
+                right: 10px;
+            }
+        }
+
+        body.light-mode .comparison-table th {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        body.light-mode .highlight-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+
+        /* --- Loss landscape marble race --- */
+        .lv { margin: 2.5rem 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .lv-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-bottom: 1px solid var(--border); }
+        .lv-legend, .lv-starts { display: flex; gap: .4rem; flex-wrap: wrap; }
+        .lv-chip { display: inline-flex; align-items: center; gap: .4rem; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; font-family: inherit; font-size: .78rem; padding: .3rem .7rem; border-radius: 5px; transition: color .2s, border-color .2s, opacity .2s; opacity: .55; }
+        .lv-chip.on { opacity: 1; color: var(--text-primary); border-color: var(--text-secondary); }
+        .lv-chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+        .lv-actions { display: flex; gap: .4rem; }
+        .lv-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); cursor: pointer; font-family: inherit; font-size: .78rem; font-weight: 600; padding: .3rem .9rem; border-radius: 5px; }
+        .lv-btn:hover { opacity: .8; }
+        .lv-panels { display: grid; grid-template-columns: 1.15fr 1fr; }
+        .lv-3d { position: relative; height: 380px; }
+        .lv-2d { position: relative; height: 380px; border-left: 1px solid var(--border); }
+        #lv-plot { display: block; width: 100%; height: 100%; }
+        .lv-fallback { display: none; align-items: center; justify-content: center; height: 100%; padding: 1.5rem; text-align: center; font-size: .82rem; color: var(--text-secondary); line-height: 1.6; }
+        .lv-controls { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .8rem 1.1rem; border-top: 1px solid var(--border); }
+        .lv-lr { display: flex; align-items: center; gap: .6rem; font-size: .78rem; color: var(--text-secondary); }
+        .lv-lr input { accent-color: var(--accent); width: 140px; }
+        .lv-lr span { font-variant-numeric: tabular-nums; color: var(--text-primary); min-width: 3.2em; }
+        .lv-readout { padding: .6rem 1.1rem; border-top: 1px solid var(--border); font-size: .78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+        .lv-readout .lv-sep { opacity: .35; margin: 0 .55rem; }
+        .lv-note { padding: .85rem 1.1rem; border-top: 1px solid var(--border); font-size: .8rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        .lv-note strong { color: var(--text-primary); }
+        @media (max-width: 760px) {
+            .lv-panels { grid-template-columns: 1fr; }
+            .lv-2d { border-left: none; border-top: 1px solid var(--border); }
+            .lv-3d, .lv-2d { height: 300px; }
+        }
+
+    </style>
+    <style>
+        .demo { border: 1px solid var(--border); border-radius: 10px; margin: 1.75rem 0; overflow: hidden; }
+        .demo-controls { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; padding: .85rem 1.1rem; border-bottom: 1px solid var(--border); font-size: .85rem; color: var(--text-secondary); }
+        .demo-controls label { display: flex; align-items: center; gap: .55rem; }
+        .demo-controls input { accent-color: var(--accent); width: 130px; }
+        .demo svg { display: block; width: 100%; height: auto; }
+        .demo-readout { padding: .7rem 1.1rem; border-top: 1px solid var(--border); font-size: .85rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+        .demo-readout b { color: var(--text-primary); }
+        .demo-note { padding: .85rem 1.1rem; border-top: 1px solid var(--border); font-size: .82rem; color: var(--text-secondary); line-height: 1.65; margin: 0; }
+        .references { font-size: .92rem; }
+        .references li { margin-bottom: .55rem; }
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← Back to Blog</a>
+    <button class="theme-toggle" id="themeToggle">Light Mode</button>
+
+    <div class="container">
+        <article class="content">
+            <div class="article-header">
+                <div class="article-category">Evaluation</div>
+                <h1>Model Evaluation and Calibration</h1>
+                <div class="article-meta">
+                    <span>November 2026</span>
+                    <span>12 min read</span>
+                </div>
+            </div>
+
+            <h2>Introduction</h2>
+
+            <p>
+                A single accuracy number hides most of what you need to know about a classifier. It does not say which errors the model makes, whether it would hold up on new data, or whether a predicted 80% means something happens about 80% of the time.
+            </p>
+
+            <p>
+                By the end of this article you should be able to choose a metric that fits the cost of each error, avoid common evaluation leaks, read a reliability diagram, and recalibrate a model without changing how it ranks examples.
+            </p>
+
+            <h2>Start With the Split</h2>
+
+            <p>
+                Metrics estimate performance only if the evaluation data is truly unseen. Use training data to fit, validation data to make decisions, and a test set once, at the end. Common leaks include:
+            </p>
+
+            <ul>
+                <li>Fitting scalers, imputers, or feature selection on all the data before splitting.</li>
+                <li>Random splits when examples are grouped, so that the same patient or customer appears on both sides.</li>
+                <li>Random splits on time-ordered data, which train on the future to predict the past.</li>
+                <li>Picking hyperparameters or thresholds on the test set, which turns it into validation data.</li>
+            </ul>
+
+            <h2>Why Accuracy Can Mislead</h2>
+
+            <p>
+                Consider a condition with 1% prevalence in 10,000 people, and a model that catches 90% of positives and correctly clears 95% of negatives. These figures are a worked example, not a real system.
+            </p>
+
+            <table class="comparison-table">
+                <thead><tr><th></th><th>Predicted positive</th><th>Predicted negative</th></tr></thead>
+                <tbody>
+                    <tr><td>Actually positive (100)</td><td>90 true positives</td><td>10 false negatives</td></tr>
+                    <tr><td>Actually negative (9,900)</td><td>495 false positives</td><td>9,405 true negatives</td></tr>
+                </tbody>
+            </table>
+
+            <p>
+                Accuracy is 94.95%, which is lower than the 99% achieved by always predicting negative. That trivial model catches no positives, though, while this one has recall of 90%. Its precision is only 90 / 585, or about 15.4%: most of its alarms are false, because negatives vastly outnumber positives.
+            </p>
+
+            <h2>Choosing a Metric</h2>
+
+            <table class="comparison-table">
+                <thead><tr><th>Metric</th><th>Question it answers</th><th>Watch out for</th></tr></thead>
+                <tbody>
+                    <tr><td>Precision</td><td>When it flags a case, how often is it right?</td><td>Depends on prevalence and threshold</td></tr>
+                    <tr><td>Recall</td><td>What share of real positives does it find?</td><td>Can be maximized by flagging everything</td></tr>
+                    <tr><td>F1</td><td>Harmonic mean of precision and recall</td><td>Ignores true negatives and assumes a particular trade-off</td></tr>
+                    <tr><td>ROC-AUC</td><td>How often does a random positive outrank a random negative?</td><td>Can look strong on rare-event problems while precision is poor</td></tr>
+                    <tr><td>PR-AUC</td><td>How does precision hold up as recall rises?</td><td>Its baseline equals prevalence, so compare only with that in mind</td></tr>
+                    <tr><td>Brier score</td><td>Mean squared error of the predicted probabilities</td><td>Reflects both calibration and discrimination</td></tr>
+                </tbody>
+            </table>
+
+            <p>
+                No metric is best in general. Begin with the decision the model supports, and with the cost of false positives and false negatives. Then choose the metric and threshold accordingly, and report uncertainty: a difference that fits inside the confidence interval of a small test set may not be real.
+            </p>
+
+            <h2>Calibration</h2>
+
+            <p>
+                Ranking and calibration are different properties. A model discriminates well if positives get higher scores than negatives. It is calibrated if, among all the cases where it predicts about 0.8, roughly 80% are actually positive. Calibration matters whenever the number itself is used: to compute expected cost, to set a threshold, or to decide when to defer to a person.
+            </p>
+
+            <p>
+                A <strong>reliability diagram</strong> groups predictions into bins and plots the observed frequency in each against its mean prediction. A calibrated model lies near the diagonal. <strong>Expected calibration error (ECE)</strong> summarizes the gap as a weighted average over bins:
+            </p>
+
+            <div class="code-block">ECE = Σ (n_bin / N) × | observed_frequency(bin) − mean_prediction(bin) |</div>
+
+            <p>
+                ECE depends on the binning and can be noisy with few examples, so report it together with the diagram and a proper scoring rule such as Brier score or log loss.
+            </p>
+
+            <div class="demo" id="cal-demo">
+                <div class="demo-controls">
+                    <label>Temperature T <input type="range" id="cal-t" min="0.5" max="5" step="0.05" value="1" aria-label="Temperature"><span id="cal-t-v"></span></label>
+                </div>
+                <svg id="cal-svg" viewBox="0 0 420 300" role="img" aria-label="Reliability diagram comparing predicted probability and observed frequency"></svg>
+                <div class="demo-readout" id="cal-out" aria-live="polite"></div>
+                <p class="demo-note"><strong>This is synthetic data, generated in your browser with a fixed seed.</strong> 4,000 labels are drawn from a known probability, and the simulated model reports logits 2.5 times too large, so it is overconfident. Dividing logits by T = 2.5 undoes this by construction, which real models will not match so neatly. Accuracy at a 0.5 threshold does not change with T, because dividing a logit by a positive number cannot change its sign.</p>
+            </div>
+
+            <h2>Fixing Miscalibration</h2>
+
+            <p>
+                Recalibration learns a mapping from raw scores to probabilities, on data the model was not trained on. Never fit it on the test set you use to report results.
+            </p>
+
+            <ul>
+                <li><strong>Temperature scaling</strong> divides logits by one learned value T. It preserves the ranking within each output and has very little capacity to overfit. Guo et al. (2017) found it effective on the modern neural networks they studied.</li>
+                <li><strong>Platt scaling</strong> fits a logistic regression on the scores. It is simple, and works well when the distortion is roughly sigmoid-shaped.</li>
+                <li><strong>Isotonic regression</strong> fits a monotonic step function. It is more flexible, and needs more data to avoid overfitting.</li>
+            </ul>
+
+            <p>
+                Calibration is also relative to a population. A model calibrated on one group or time period may not be calibrated on another, so recheck it after deployment and across important subgroups.
+            </p>
+
+            <h2>A Reproducible Workflow</h2>
+
+            <p>
+                This scikit-learn example has been executed. It uses generated data, so its scores say nothing about real problems, and they are deliberately not quoted here.
+            </p>
+
+            <div class="code-block"><pre>from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
+from sklearn.model_selection import train_test_split
+
+X, y = make_classification(n_samples=20_000, weights=[0.9], flip_y=0.02, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0)
+
+base = RandomForestClassifier(n_estimators=200, random_state=0, n_jobs=2)
+# Calibration is fitted on internal cross-validation folds, never on the test set.
+model = CalibratedClassifierCV(base, method="isotonic", cv=5).fit(X_train, y_train)
+
+p = model.predict_proba(X_test)[:, 1]
+print("ROC-AUC:", round(roc_auc_score(y_test, p), 3))
+print("PR-AUC: ", round(average_precision_score(y_test, p), 3))
+print("Brier:  ", round(brier_score_loss(y_test, p), 3))
+
+# Points for a reliability diagram: observed frequency vs mean prediction per bin.
+observed, predicted = calibration_curve(y_test, p, n_bins=10, strategy="quantile")</pre></div>
+
+            <div class="highlight-box">
+                <strong>Practical checklist:</strong> a split that matches deployment, a baseline to beat, metrics tied to the decision, a threshold chosen on validation data, a reliability diagram, and uncertainty estimates on the final test results.
+            </div>
+
+            <h2>References</h2>
+            <ul class="references">
+                <li>Guo, C., Pleiss, G., Sun, Y., &amp; Weinberger, K. Q. (2017). On Calibration of Modern Neural Networks. <em>ICML</em>.</li>
+                <li>Niculescu-Mizil, A., &amp; Caruana, R. (2005). Predicting Good Probabilities with Supervised Learning. <em>ICML</em>.</li>
+                <li>Platt, J. (1999). Probabilistic Outputs for Support Vector Machines and Comparisons to Regularized Likelihood Methods. <em>Advances in Large Margin Classifiers</em>.</li>
+                <li>Saito, T., &amp; Rehmsmeier, M. (2015). The Precision-Recall Plot Is More Informative than the ROC Plot When Evaluating Binary Classifiers on Imbalanced Datasets. <em>PLOS ONE</em>.</li>
+                <li>Brier, G. W. (1950). Verification of Forecasts Expressed in Terms of Probability. <em>Monthly Weather Review</em>, 78(1), 1-3.</li>
+                <li>Naeini, M. P., Cooper, G. F., &amp; Hauskrecht, M. (2015). Obtaining Well Calibrated Probabilities Using Bayesian Binning. <em>AAAI</em>.</li>
+            </ul>
+
+        </article>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const isDark = localStorage.getItem('light-mode') !== 'true';
+
+        function updateTheme() {
+            if (!isDark) {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = 'Dark Mode';
+            } else {
+                document.body.classList.remove('light-mode');
+                themeToggle.textContent = 'Light Mode';
+            }
+        }
+
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            const isNowLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('light-mode', isNowLight);
+            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
+        });
+    </script>
+    <script>
+    (function () {
+        var seed = 42;
+        function rand() {  // mulberry32
+            seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+            var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+            t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+        function normal() { return Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(2 * Math.PI * rand()); }
+        function sig(z) { return 1 / (1 + Math.exp(-z)); }
+        var OVER = 2.5, N = 4000, BINS = 10, data = [];
+        for (var i = 0; i < N; i++) {
+            var z = normal() * 1.2;
+            data.push({ logit: z * OVER, y: rand() < sig(z) ? 1 : 0 });
+        }
+        var svg = document.getElementById('cal-svg'), L = 46, T = 14, S = 250;
+        var color = function (name) { return getComputedStyle(document.body).getPropertyValue(name).trim() || '#888'; };
+        function px(v) { return L + v * S; }
+        function py(v) { return T + (1 - v) * S; }
+        function update() {
+            var t = parseFloat(document.getElementById('cal-t').value);
+            document.getElementById('cal-t-v').textContent = t.toFixed(2);
+            var bins = [], brier = 0, correct = 0, i;
+            for (i = 0; i < BINS; i++) bins.push({ n: 0, p: 0, y: 0 });
+            data.forEach(function (d) {
+                var p = sig(d.logit / t), b = bins[Math.min(BINS - 1, Math.floor(p * BINS))];
+                b.n++; b.p += p; b.y += d.y;
+                brier += (p - d.y) * (p - d.y);
+                if ((p >= 0.5 ? 1 : 0) === d.y) correct++;
+            });
+            var ece = 0, text = color('--text-secondary'), accent = color('--accent'), border = color('--border'), bars = '';
+            bins.forEach(function (b, k) {
+                if (!b.n) return;
+                var obs = b.y / b.n, mean = b.p / b.n;
+                ece += (b.n / N) * Math.abs(obs - mean);
+                var x = px(k / BINS) + 2, w = S / BINS - 4;
+                bars += '<rect x="' + x + '" y="' + py(obs) + '" width="' + w + '" height="' + (S * obs) + '" fill="' + accent + '" opacity="0.65"></rect>';
+            });
+            var ticks = '';
+            [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+                ticks += '<text x="' + px(v) + '" y="' + (T + S + 15) + '" font-size="10" fill="' + text + '" text-anchor="middle">' + v + '</text>' +
+                         '<text x="' + (L - 7) + '" y="' + (py(v) + 3) + '" font-size="10" fill="' + text + '" text-anchor="end">' + v + '</text>';
+            });
+            svg.innerHTML = bars +
+                '<rect x="' + L + '" y="' + T + '" width="' + S + '" height="' + S + '" fill="none" stroke="' + border + '"></rect>' +
+                '<line x1="' + px(0) + '" y1="' + py(0) + '" x2="' + px(1) + '" y2="' + py(1) + '" stroke="' + text + '" stroke-dasharray="4 3"></line>' +
+                ticks +
+                '<text x="' + (L + S / 2) + '" y="' + (T + S + 31) + '" font-size="11" fill="' + text + '" text-anchor="middle">Predicted probability (bin)</text>' +
+                '<text transform="translate(12 ' + (T + S / 2) + ') rotate(-90)" font-size="11" fill="' + text + '" text-anchor="middle">Observed frequency</text>' +
+                '<text x="' + (L + S + 14) + '" y="' + (T + 14) + '" font-size="11" fill="' + text + '">Dashed: perfect</text>' +
+                '<text x="' + (L + S + 14) + '" y="' + (T + 30) + '" font-size="11" fill="' + text + '">calibration</text>';
+            document.getElementById('cal-out').innerHTML = 'ECE <b>' + ece.toFixed(3) + '</b> &nbsp; Brier <b>' + (brier / N).toFixed(3) +
+                '</b> &nbsp; Accuracy <b>' + (100 * correct / N).toFixed(1) + '%</b>';
+        }
+        document.getElementById('cal-t').addEventListener('input', update);
+        document.getElementById('themeToggle').addEventListener('click', update);
+        update();
+    })();
+    </script>
+</body>
+</html>
