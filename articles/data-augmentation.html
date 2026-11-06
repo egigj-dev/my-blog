@@ -347,7 +347,7 @@
             </p>
 
             <p>
-                Automated data augmentation goes further. Instead of manually deciding "rotate by 15 degrees" or "adjust brightness by 20%," the process automatically decides what transformations to apply and how much. This saves time and often discovers transformations humans wouldn't have thought of.
+                Automated data augmentation goes further. Instead of manually deciding "rotate by 15 degrees" or "adjust brightness by 20%," a search procedure or simple randomized rule chooses what to apply and how strongly. This can save tuning time and sometimes finds combinations that a person would not have tried.
             </p>
 
             <p>
@@ -361,11 +361,11 @@
             </p>
 
             <p>
-                Data augmentation solves this by showing the model dogs in many variations: different colors, poses, lighting, angles. The model learns the essence of "dog-ness" rather than specific visual patterns in your training data.
+                Data augmentation helps by showing the model dogs under variations that image transforms can actually simulate, such as lighting, framing, and left-right orientation. It discourages reliance on those incidental details, but it cannot create poses or breeds that are missing from the data.
             </p>
 
             <div class="example-box">
-                <strong>Real Example:</strong> If you train on 100 images of cats but only show side views, your model learns "cats are side profiles." When you test on a front-view cat, it won't recognize it. Data augmentation by rotating images teaches it "cats are cats from any angle."
+                <strong>Real Example:</strong> If you train on 100 images of cats showing only side views, your model may fail on a front-view cat. Rotating or flipping a 2D image does not fix this, because it cannot create a new 3D viewpoint. Those transforms teach tolerance to in-plane tilt and mirror orientation. To cover front views, you need real front-view images.
             </div>
 
             <div class="am" id="am">
@@ -381,8 +381,8 @@
                     <div class="am-pane"><div class="am-tag">Decision boundary</div><svg id="am-plot" aria-label="1-NN decision boundary"></svg></div>
                 </div>
                 <div class="am-readout" id="am-readout"></div>
-                <p class="am-note"><strong>The dataset is illustrative</strong> &mdash; ten synthetic samples in two dimensions, because a decision boundary cannot be drawn in more.
-                <strong>Everything else is measured.</strong> The classifier is 1-nearest-neighbour, and the accuracy beside it is scored on 1000 held-out samples it never saw during fitting.
+                <strong>The dataset is illustrative</strong> &mdash; ten synthetic samples in two dimensions, because a decision boundary cannot be drawn in more.
+                <strong>The numbers are measured on that synthetic dataset only.</strong> The classifier is 1-nearest-neighbour, and the accuracy beside it is scored on 1000 held-out synthetic samples it never saw during fitting. They illustrate the principle and say nothing about the size of the effect on real images.
                 Augmentation is worth exactly as much as the invariance it encodes. <em>Along arc</em> slides a sample along the curve it was generated from &mdash; a real symmetry of this data &mdash; and pulls held-out accuracy from 79.9% up to roughly 90.7%. Switch it off and turn on <em>Mirror</em>: reflection is not a symmetry here, and the same number falls off a cliff. <em>Jitter</em> leaves the number where it started (79.2%), and <em>Rotate</em> stumbles into a smaller gain (84.2%) &mdash; real, but less than half of what the transform that actually matches the data buys you.
                 More synthetic data is not the goal. More <em>correct</em> synthetic data is.</p>
             </div>
@@ -411,7 +411,7 @@ rotated_img = img.rotate(30)
 rotated_img.save('dog_rotated_30.jpg')</pre></div>
 
             <p>
-                In practice, you'd rotate by random angles (0-360 degrees) and keep versions that look realistic. A dog photo rotated 45 degrees is fine; rotated 180 degrees looks weird and might confuse the model.
+                In practice, you'd rotate by a small random angle chosen for your data, such as &plusmn;15 to &plusmn;30 degrees. A dog photo tilted slightly still looks plausible; rotated 180 degrees, it is unlikely in real photos and may not help the model.
             </p>
 
             <h3><span class="step-number">2</span>Flipping</h3>
@@ -485,10 +485,10 @@ cropped_img = img.crop(box)</pre></div>
 
 img_array = np.array(img)
 noise = np.random.normal(0, 10, img_array.shape)
-noisy_img = np.clip(img_array + noise, 0, 255)</pre></div>
+noisy_img = np.clip(img_array + noise, 0, 255).astype(np.uint8)</pre></div>
 
             <p>
-                Gaussian noise (mean=0, std=10) adds realistic camera noise. Too much noise makes images unrecognizable; too little has no effect.
+                Gaussian noise (mean=0, std=10 on a 0-255 scale) is a simple approximation of sensor noise. Too much makes images unrecognizable; too little may have no measurable effect.
             </p>
 
             <h2>How to Apply Manual Augmentation</h2>
@@ -535,17 +535,16 @@ transform = A.Compose([
     A.Rotate(limit=30, p=0.7),
     A.RandomBrightnessContrast(p=0.2),
     A.GaussNoise(p=0.1),
-    ToTensorV2(),
-], bbox_params=A.BboxParams(format='albumentations'))
+    A.Normalize(),   # ImageNet mean and std by default
+    ToTensorV2(),    # HWC NumPy array to CHW tensor
+])
 
-# During training:
-for epoch in range(num_epochs):
-    for image, label in dataloader:
-        augmented = transform(image=image)
-        # Train on augmented image</pre></div>
+# Albumentations transforms one H x W x C NumPy image at a time,
+# so call it per sample inside Dataset.__getitem__, not on a batch:
+augmented = transform(image=image)['image']</pre></div>
 
             <p>
-                Benefits: No disk space needed, infinitely many variations possible, computationally efficient.
+                <strong>Benefits:</strong> No extra disk space needed, and each epoch can see new random variations.
             </p>
 
             <p>
@@ -555,18 +554,18 @@ for epoch in range(num_epochs):
             <h3>Approach 2: Smart Augmentation Policy (AutoAugment)</h3>
 
             <p>
-                Instead of random augmentations, use a learned policy. AutoAugment uses reinforcement learning to discover which augmentations work best for your dataset.
+                Instead of hand-picked augmentations, use a learned policy. AutoAugment uses a reinforcement-learning search to find augmentation policies for a dataset. The original search is expensive, so most people apply a published policy.
             </p>
 
             <div class="code-block"><pre># Simplified example of smart augmentation
 import torchvision.transforms as transforms
 
-# AutoAugment policy (pre-trained on ImageNet)
+# AutoAugment policy learned on ImageNet
 from torchvision.transforms import AutoAugment, AutoAugmentPolicy
 
 augment = AutoAugment(policy=AutoAugmentPolicy.IMAGENET)
 
-# Apply to images
+# Apply to PIL images or uint8 tensors
 augmented_images = [augment(img) for img in images]</pre></div>
 
             <p>
@@ -581,27 +580,27 @@ augmented_images = [augment(img) for img in images]</pre></div>
             </ol>
 
             <div class="example-box">
-                <strong>Why This Matters:</strong> For ImageNet (1000 classes of general objects), AutoAugment found that rotation is helpful. For medical X-rays, rotation might be harmful (a rotated X-ray looks unnatural). Smart augmentation adapts to your specific data.
+                <strong>Why This Matters:</strong> Which transforms preserve the label depends on the data. A policy learned on ImageNet need not suit another domain. In medical images, for example, flips can swap anatomical left and right, so a policy should be checked with domain knowledge before use.
             </div>
 
             <h3>Approach 3: RandAugment (Simpler and Practical)</h3>
 
             <p>
-                AutoAugment is powerful but complex. RandAugment is simpler: randomly pick augmentations and apply them with random intensity.
+                AutoAugment's search is expensive. RandAugment removes the separate search: for each image it samples a fixed number of operations uniformly and applies them all at one shared magnitude, leaving only those two values to tune.
             </p>
 
-            <div class="code-block"><pre>from timm.data import RandAugment
+            <div class="code-block"><pre>from torchvision.transforms import RandAugment
 
 augment = RandAugment(
     num_ops=2,        # Apply 2 random ops per image
-    magnitude=9,      # Intensity of operations (0-10)
+    magnitude=9,      # Shared strength, on a 0-30 scale by default
 )
 
-# Apply to each image
+# Apply to PIL images or uint8 tensors
 augmented_images = [augment(img) for img in images]</pre></div>
 
             <p>
-                This is often as effective as AutoAugment but much faster to implement.
+                The RandAugment paper (Cubuk et al., 2020) reports results comparable to or better than learned policies on the datasets it tested, without a separate search phase.
             </p>
 
             <h2>Step-by-Step: Implementing Data Augmentation</h2>
@@ -609,7 +608,7 @@ augmented_images = [augment(img) for img in images]</pre></div>
             <h3><span class="step-number">1</span>Choose Your Library</h3>
 
             <p>
-                <strong>For images:</strong> Albumentations (most popular), torchvision, imgaug, Augmentor
+                <strong>For images:</strong> Albumentations, torchvision
             </p>
 
             <p>
@@ -622,6 +621,7 @@ pip install albumentations</pre></div>
             <h3><span class="step-number">2</span>Define Your Augmentation Pipeline</h3>
 
             <div class="code-block"><pre>import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 train_transform = A.Compose([
     A.HorizontalFlip(p=0.5),           # 50% chance
@@ -630,10 +630,12 @@ train_transform = A.Compose([
     A.RandomBrightnessContrast(p=0.2), # 20% chance
     A.GaussNoise(p=0.1),               # 10% chance
     A.Resize(224, 224),                # Resize to 224x224
+    A.Normalize(),                     # ImageNet mean and std by default
+    ToTensorV2(),                      # HWC NumPy array to CHW tensor
 ])</pre></div>
 
             <p>
-                Each `p=0.X` is the probability of applying that transformation. `p=0.5` means 50% of images get flipped.
+                Each <code>p</code> is the probability of applying that transformation to a given image: with <code>p=0.5</code>, each image has a 50% chance of being flipped.
             </p>
 
             <h3><span class="step-number">3</span>Apply During Training</h3>
@@ -646,9 +648,12 @@ class CustomDataset(Dataset):
         self.images = images
         self.labels = labels
         self.transform = transform
-    
+
+    def __len__(self):
+        return len(self.images)
+
     def __getitem__(self, idx):
-        image = self.images[idx]
+        image = self.images[idx]  # H x W x C uint8 NumPy array
         label = self.labels[idx]
         
         if self.transform:
@@ -683,7 +688,7 @@ for images, labels in train_loader:
             <h3><span class="step-number">4</span>Use Different Augmentations for Train vs. Test</h3>
 
             <p>
-                <strong>Critical point:</strong> Only augment training data, never test data.
+                <strong>Critical point:</strong> Apply random augmentation only to training data when you estimate performance. Test data still gets the same deterministic preprocessing. (Test-time augmentation is a separate, deliberate technique.)
             </p>
 
             <div class="code-block"><pre># For training: aggressive augmentation
@@ -691,11 +696,16 @@ train_transform = A.Compose([
     A.HorizontalFlip(p=0.5),
     A.Rotate(limit=45, p=0.7),
     A.RandomBrightnessContrast(p=0.3),
+    A.Resize(224, 224),
+    A.Normalize(),
+    ToTensorV2(),
 ])
 
-# For testing: only resize, no augmentation
+# For testing: deterministic preprocessing, no random augmentation
 test_transform = A.Compose([
     A.Resize(224, 224),
+    A.Normalize(),
+    ToTensorV2(),
 ])</pre></div>
 
             <p>
@@ -772,11 +782,13 @@ train_aug = A.Compose([
     A.Rotate(limit=20, p=0.5),            # Head tilts
     A.RandomBrightnessContrast(p=0.3),    # Different lighting
     A.Resize(224, 224),
+    A.Normalize(),                        # Pretrained ResNet expects ImageNet statistics
     ToTensorV2(),
 ])
 
 test_aug = A.Compose([
     A.Resize(224, 224),
+    A.Normalize(),
     ToTensorV2(),
 ])
 
@@ -786,9 +798,12 @@ class DogDataset(Dataset):
         self.images = images
         self.labels = labels
         self.transform = transform
-    
+
+    def __len__(self):
+        return len(self.images)
+
     def __getitem__(self, idx):
-        img = self.images[idx]
+        img = self.images[idx]  # H x W x C uint8 NumPy array
         if self.transform:
             img = self.transform(image=img)['image']
         return img, self.labels[idx]
@@ -801,7 +816,7 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=32)
 
 # Step 4: Train
-model = models.resnet50(pretrained=True)
+model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 model.fc = nn.Linear(2048, 10)  # 10 dog breeds
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters())
@@ -814,7 +829,8 @@ for epoch in range(10):
         loss.backward()
         optimizer.step()
 
-# Your 200 images become effectively 1000+ variations through augmentation!</pre></div>
+# Each epoch sees new random variations of the same 200 images.
+# These are correlated with the originals, so this is not equal to more real data.</pre></div>
 
             <h2>Key Takeaways for Beginners</h2>
 
@@ -831,11 +847,11 @@ for epoch in range(10):
             </p>
 
             <p>
-                <strong>Only augment training data, never test data.</strong> You want to evaluate on real, unmodified images.
+                <strong>Use random augmentation only on training data</strong> when estimating performance. Test data gets deterministic preprocessing only.
             </p>
 
             <p>
-                <strong>Start simple.</strong> Horizontal flips + rotation covers 80% of use cases. Add more augmentations if accuracy plateaus.
+                <strong>Start simple.</strong> Horizontal flips and small crops or rotations are a common starting point where they preserve the label. Add more if validation results justify it.
             </p>
 
             <p>

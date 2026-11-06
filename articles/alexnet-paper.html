@@ -308,11 +308,11 @@
             </p>
 
             <p>
-                Before 2012, the best approaches used hand-crafted features combined with machine learning algorithms like SVMs. While these methods showed promise, they plateaued at around 74-76% accuracy. The natural question was: could deep learning break through this ceiling?
+                Before 2012, the best approaches used hand-crafted features combined with machine learning algorithms like SVMs. Leading ILSVRC entries had reached a top-5 error of roughly 26-28%. The natural question was: could deep learning do substantially better?
             </p>
 
             <p>
-                Krizhevsky, Sutskever, and Hinton demonstrated that deep convolutional neural networks (CNNs), combined with modern computational resources (GPUs), could dramatically outperform existing methods. This paper introduced AlexNet, which achieved 63.3% top-1 accuracy and 85.2% top-5 accuracy, a massive improvement that fundamentally changed how the industry approached computer vision.
+                Krizhevsky, Sutskever, and Hinton demonstrated that deep convolutional neural networks (CNNs), trained on GPUs, could dramatically outperform existing methods. An ensemble based on this network, later known as AlexNet, won ILSVRC-2012 with a top-5 test error of 15.3%, against 26.2% for the runner-up.
             </p>
 
             <h2>Procedures</h2>
@@ -342,28 +342,32 @@ FC2: 4096 units<br>
 FC3: 1000 units (output)
             </div>
 
+            <p>
+                The paper states the stride only for Conv1 and the 3&times;3, stride 2 overlapping pooling. Stride 1 for the later convolutions comes from reference implementations and is consistent with the feature-map sizes the paper reports. The paper also applies local response normalization after Conv1 and Conv2. Many implementations use a 227&times;227 input, because 224 does not produce the published 55&times;55 map without extra padding. The fully connected layers listed here as FC1 to FC3 are labelled FC6 to FC8 in the diagram below.
+            </p>
+
             <h3>Key Innovations</h3>
 
             <p>
-                <strong>ReLU Activation:</strong> The network used ReLU instead of sigmoid or tanh. This choice was crucial - ReLU provided faster convergence and allowed the network to train effectively on GPUs.
+                <strong>ReLU Activation:</strong> The network used ReLU instead of saturating units such as tanh. The paper reports that a four-layer CNN with ReLUs reached 25% training error on CIFAR-10 six times faster than an equivalent tanh network.
             </p>
 
             <p>
-                <strong>GPU Training:</strong> This was trained on two NVIDIA GTX 580 GPUs for 6 days. Without GPUs, this would have been impractical. The paper explicitly states: "Our network's parameters were initialized randomly... [and] the learning rate was initially 0.01 and was divided by 10 when the validation error rate plateaued."
+                <strong>GPU Training:</strong> The network was trained on two NVIDIA GTX 580 3GB GPUs for five to six days. The authors cite GPU memory as a limit on the network's size and split the model across the two cards. Weights were initialized from a zero-mean Gaussian with standard deviation 0.01.
             </p>
 
             <p>
-                <strong>Data Augmentation:</strong> The authors significantly expanded their training set by artificially creating variations: horizontal flips, random crops at different locations, and random intensity changes. This was essential for preventing overfitting on the relatively small dataset.
+                <strong>Data Augmentation:</strong> Two label-preserving transformations were used: random 224&times;224 crops of 256&times;256 images with horizontal reflections, and PCA-based alteration of RGB intensities. Both help reduce overfitting in a network with about 60 million parameters.
             </p>
 
             <p>
-                <strong>Dropout Regularization:</strong> Dropout was applied in the fully connected layers (with dropout rate of 0.5) to further prevent overfitting. This technique randomly deactivates neurons during training, forcing the network to learn with different subsets of features.
+                <strong>Dropout Regularization:</strong> Dropout with probability 0.5 was applied in the first two fully connected layers, not in the output layer. The authors report substantial overfitting without it, while dropout roughly doubled the iterations needed to converge.
             </p>
 
             <h3>Training Details</h3>
 
             <p>
-                The network was trained using stochastic gradient descent with momentum (momentum=0.9). Batch size was 128. Training took roughly 90 epochs. The validation accuracy plateaued after about 100 hours of training.
+                The network was trained using stochastic gradient descent with momentum 0.9, batch size 128, and weight decay 0.0005. Training took roughly 90 cycles through the 1.2 million training images. The learning rate started at 0.01 and was divided by 10 when validation error stopped improving, which happened three times.
             </p>
 
             <div class="ax" id="ax">
@@ -395,37 +399,41 @@ FC3: 1000 units (output)
             <h3>Accuracy Metrics</h3>
 
             <p>
-                The results were groundbreaking. AlexNet achieved 63.3% top-1 error rate (meaning 36.7% correct on the first prediction) and 85.2% top-5 error rate on the test set. To put this in perspective, the next-best method at the time achieved only 74.7% top-5 error, a gap of nearly 10 percentage points.
+                The results were groundbreaking. On ILSVRC-2010, where test labels were available, a single network achieved a top-1 error of 37.5% and a top-5 error of 17.0%. In ILSVRC-2012, the single model had a top-5 validation error of 18.2%, and the submitted ensemble of seven CNNs, two of them pre-trained on a larger ImageNet release, achieved a top-5 test error of 15.3%. The runner-up had 26.2%, a gap of about 10.9 percentage points.
             </p>
 
             <div class="highlight-box">
-                <strong>Key Finding:</strong> AlexNet cut the error rate nearly in half compared to the previous best method. This ~10% improvement was the largest jump in ImageNet accuracy achieved in a single year up to that point, and it fundamentally shifted the field toward deep learning.
+                <strong>Key Finding:</strong> The winning top-5 test error was about 40% lower than the runner-up's. These are error rates: lower is better. The figures describe different models and splits, so they should not be compared without those qualifiers.
             </div>
 
-            <h3>Ablation Studies</h3>
+            <h3>Component Effects Reported in the Paper</h3>
 
             <p>
-                The authors performed ablation studies to understand which components mattered most. When they removed the convolutional layers and replaced them with fully connected layers, accuracy dropped significantly. This demonstrated that the local connectivity patterns learned by convolutions were essential.
+                The paper does not present a systematic ablation study, but it does report the effect of several individual choices. Local response normalization reduced top-1 and top-5 error by 1.4% and 1.2%. Overlapping pooling reduced them by 0.4% and 0.3%. The two-GPU scheme reduced them by 1.7% and 1.2% compared with a one-GPU net with half as many kernels per convolutional layer. PCA color augmentation reduced top-1 error by over 1%.
             </p>
 
             <p>
-                Similarly, removing data augmentation or dropout led to measurable decreases in validation accuracy. These ablations proved that the regularization techniques weren't just tricks, they were necessary components of the approach.
+                The authors also report that removing any single convolutional layer in the middle of the network cost about 2% in top-1 performance, which is their main evidence that depth mattered.
             </p>
 
             <h3>Qualitative Analysis</h3>
 
             <p>
-                Beyond accuracy numbers, the authors examined what the network learned. The first convolutional layer learned edge detectors and simple textures, classic features you'd expect. Deeper layers learned increasingly complex patterns: corners, circles, and finally, object-like features. This hierarchy of features was elegant proof that the network was learning meaningful representations.
+                Beyond accuracy numbers, the authors examined what the network learned. The 96 first-layer kernels show frequency- and orientation-selective patterns and colored blobs, and the two GPUs specialized: mostly color-agnostic kernels on one, color-specific kernels on the other. They also showed that images whose last hidden-layer activations are close tend to be semantically similar, even when they differ at the pixel level.
             </p>
 
             <h2>Conclusion</h2>
 
             <p>
-                The researchers concluded that deep convolutional neural networks, combined with GPUs and modern training techniques, could achieve state-of-the-art results on large-scale image classification problems. They emphasized that depth was crucial as simply having more parameters wasn't enough; the hierarchical structure of convolutions was essential.
+                The researchers concluded that a large, deep convolutional network could achieve record-breaking results on a highly challenging dataset using purely supervised learning. They emphasized the importance of depth, noting that performance degrades when a single convolutional layer is removed, and expected results to improve with larger datasets and faster GPUs.
             </p>
 
             <p>
-                They also noted that the improvements came not from a single innovation, but from the combination: ReLU activations for training efficiency, data augmentation for regularization, dropout for preventing co-adaptation, and GPU computing for scalability. This holistic approach became the template for deep learning in computer vision.
+                In hindsight, the result is often attributed to the combination of ReLU, data augmentation, dropout, and GPU computing rather than any single innovation. That reading is an interpretation of the paper, which reports the individual effects above without ranking them.
+            </p>
+
+            <p>
+                <strong>Reference:</strong> Krizhevsky, A., Sutskever, I., &amp; Hinton, G. E. (2012). ImageNet Classification with Deep Convolutional Neural Networks. <em>NeurIPS</em>.
             </p>
 
             <div class="conclusion">
@@ -436,7 +444,7 @@ FC3: 1000 units (output)
                 </p>
 
                 <p>
-                    What strikes me most is how the paper combines bold experimentation (using GPUs, trying ReLU widely, extensive data augmentation) with careful empirical validation (ablation studies showing what matters). The authors didn't just achieve good accuracy but they provided insights into why their approach worked.
+                    What strikes me most is how the paper combines bold experimentation (GPUs, ReLU at scale, extensive data augmentation) with measured effects for individual design choices. The authors did not just report a good score; they also reported what several components contributed.
                 </p>
 
                 <p>
@@ -448,7 +456,7 @@ FC3: 1000 units (output)
                 </p>
 
                 <p>
-                    Finally, the writing is clear and the experimental methodology is sound. The authors present their methods, report results honestly (including failure cases in ablation studies), and discuss implications thoughtfully. This is a masterclass in academic clarity - a paper worth reading not just for its results, but for how to conduct and present research.
+                    Finally, the writing is clear and the experimental methodology is sound. The authors present their methods, report the measured effect of several design choices, and discuss implications thoughtfully. This is a masterclass in academic clarity - a paper worth reading not just for its results, but for how to conduct and present research.
                 </p>
             </div>
         </article>

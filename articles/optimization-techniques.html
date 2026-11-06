@@ -7,7 +7,7 @@
     <meta name="description" content="Practical optimization methods to accelerate neural network training — feature scaling, batch normalization, Adam optimizer, and more.">
     <meta property="og:title" content="Optimization Techniques: Training Networks Faster">
     <meta property="og:description" content="Practical optimization methods to accelerate neural network training — feature scaling, batch normalization, Adam optimizer, and more.">
-    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/articles/optimization_techniques.html">
+    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/articles/optimization-techniques.html">
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
@@ -381,7 +381,7 @@
             </p>
 
             <p>
-                Optimization techniques accelerate training by making gradient descent smarter. Some preprocess data, others adjust how gradients are applied, and some use adaptive learning rates. Together, they can reduce training time from weeks to hours while improving final performance.
+                Optimization techniques accelerate training by making gradient descent smarter. Some preprocess data, others adjust how gradients are applied, and some use adaptive learning rates. Together, they can substantially reduce training time and sometimes improve final performance, though the size of the effect depends on the problem.
             </p>
 
             <h2>Feature Scaling</h2>
@@ -431,13 +431,13 @@
             <h2>Batch Normalization</h2>
 
             <p>
-                Feature scaling normalizes inputs. Batch normalization normalizes the outputs of every layer during training.
+                Feature scaling normalizes inputs. Batch normalization normalizes the activations at the layers where it is inserted, using mini-batch statistics during training and running averages at inference, then applies a learned scale and shift.
             </p>
 
-            <div class="code-block">y_normalized = (y - batch_mean) / sqrt(batch_var + epsilon)</div>
+            <div class="code-block">y_normalized = (y - batch_mean) / sqrt(batch_var + epsilon)<br>output = gamma * y_normalized + beta&nbsp;&nbsp;# gamma and beta are learned</div>
 
             <p>
-                By normalizing layer inputs, we keep them in favorable ranges for activation functions, reducing the internal covariate shift problem. This allows higher learning rates and faster training.
+                Batch normalization keeps activations in favorable ranges and often allows higher learning rates and faster training. Its original motivation was reducing "internal covariate shift" (Ioffe &amp; Szegedy, 2015), but why it works is debated: Santurkar et al. (2018) argue that smoothing the optimization landscape matters more.
             </p>
 
             <div class="pros-cons">
@@ -446,7 +446,7 @@
                     <ul>
                         <li>Faster training</li>
                         <li>Reduces sensitivity to weight initialization</li>
-                        <li>Acts as regularization</li>
+                        <li>Can have a mild regularizing effect</li>
                         <li>Allows higher learning rates</li>
                     </ul>
                 </div>
@@ -463,7 +463,7 @@
             <h2>Mini-Batch Gradient Descent</h2>
 
             <p>
-                Standard gradient descent (SGD) computes gradients on one sample, which is noisy. Full-batch gradient descent computes gradients on all samples, which is stable but slow.
+                Strictly, stochastic gradient descent (SGD) computes gradients on one sample, which is noisy. Full-batch gradient descent computes gradients on all samples, which is stable but slow per update. In practice, and in library names, "SGD" usually means the mini-batch version below.
             </p>
 
             <p>
@@ -477,13 +477,13 @@
             <h2>Momentum</h2>
 
             <p>
-                Standard gradient descent updates weights with the current gradient. Momentum adds history: use a weighted average of past gradients.
+                Standard gradient descent updates weights with the current gradient. Momentum adds history: it accumulates an exponentially decaying sum of past gradients.
             </p>
 
             <div class="code-block">velocity = beta * velocity + gradient<br>weights = weights - learning_rate * velocity</div>
 
             <p>
-                Think of it as rolling a ball downhill. The ball gains momentum and accelerates in consistent directions while moving slowly in oscillating directions. This helps escape local minima and converges faster.
+                Think of it as rolling a ball downhill. The ball builds speed in consistent directions, while oscillating components partly cancel. This often speeds convergence and can carry the optimizer across small bumps, but neither faster convergence nor escaping local minima is guaranteed.
             </p>
 
             <div class="highlight-box">
@@ -496,7 +496,7 @@
                 RMSProp adapts the learning rate per parameter based on the magnitude of recent gradients. Parameters with large gradients get smaller updates (lower effective learning rate).
             </p>
 
-            <div class="code-block">rms = beta * rms + (1 - beta) * gradient²<br>weights = weights - learning_rate * gradient / sqrt(rms + epsilon)</div>
+            <div class="code-block">rms = beta * rms + (1 - beta) * gradient²<br>weights = weights - learning_rate * gradient / (sqrt(rms) + epsilon)</div>
 
             <p>
                 This helps with parameters that consistently have large or small gradients, allowing the optimizer to use appropriate step sizes per parameter.
@@ -526,26 +526,26 @@
                 Adam combines momentum and RMSProp. It maintains both a running average of gradients (momentum) and a running average of gradient magnitudes (adaptive learning rates).
             </p>
 
-            <div class="code-block">m = beta1 * m + (1 - beta1) * gradient<br>v = beta2 * v + (1 - beta2) * gradient²<br>weights = weights - learning_rate * m / sqrt(v + epsilon)</div>
+            <div class="code-block">t = t + 1<br>m = beta1 * m + (1 - beta1) * gradient<br>v = beta2 * v + (1 - beta2) * gradient²<br>m_hat = m / (1 - beta1^t)&nbsp;&nbsp;# bias correction<br>v_hat = v / (1 - beta2^t)&nbsp;&nbsp;# m and v start at zero<br>weights = weights - learning_rate * m_hat / (sqrt(v_hat) + epsilon)</div>
 
             <p>
-                Adam is the most popular optimizer in modern deep learning. It works well across different architectures and datasets with minimal tuning.
+                Adam is a very widely used optimizer and a reasonable default across many architectures and datasets, although the learning rate often still needs tuning. Because m and v start at zero, the bias-correction step above stops early estimates from being too small.
             </p>
 
             <div class="pros-cons">
                 <div class="pros">
                     <h4>Advantages</h4>
                     <ul>
-                        <li>Fast convergence</li>
+                        <li>Often fast early progress</li>
                         <li>Robust to different problems</li>
-                        <li>Industry standard</li>
-                        <li>Minimal hyperparameter tuning</li>
+                        <li>Widely supported and used</li>
+                        <li>Reasonable default hyperparameters</li>
                     </ul>
                 </div>
                 <div class="cons">
                     <h4>Disadvantages</h4>
                     <ul>
-                        <li>Can sometimes overfit</li>
+                        <li>L2 added to the gradient interacts poorly with adaptive scaling; prefer AdamW for weight decay</li>
                         <li>Requires more memory</li>
                         <li>Sometimes performs worse than SGD + momentum on some tasks</li>
                     </ul>
@@ -553,7 +553,7 @@
             </div>
 
             <div class="highlight-box">
-                Default hyperparameters work well: learning_rate=0.001, beta1=0.9, beta2=0.999.
+                Common defaults, from the Adam paper: learning_rate=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8.
             </div>
 
             <div class="lv" id="lv">
@@ -613,7 +613,7 @@
                     <tr>
                         <td>Data Preparation</td>
                         <td>Feature Scaling</td>
-                        <td>2-3x faster training</td>
+                        <td>Better conditioning; often faster training</td>
                     </tr>
                     <tr>
                         <td>Training Setup</td>
@@ -623,12 +623,12 @@
                     <tr>
                         <td>Optimization</td>
                         <td>Adam Optimizer</td>
-                        <td>Usually converges faster</td>
+                        <td>Often fast early progress</td>
                     </tr>
                     <tr>
                         <td>Fine-tuning</td>
                         <td>Learning Rate Decay</td>
-                        <td>Better final performance</td>
+                        <td>Can improve final performance</td>
                     </tr>
                 </tbody>
             </table>
@@ -640,7 +640,7 @@
             </p>
 
             <p>
-                If training oscillates, add momentum or try learning rate decay. If training is too slow, increase batch size. If underfitting, increase learning rate. If overfitting, apply regularization (covered in another article).
+                If the loss oscillates or diverges, lower the learning rate first, then consider momentum or a decay schedule. If underfitting, check for bugs, tune the learning rate, train longer, or use a larger model. If overfitting, apply regularization (covered in another article). Larger batches can increase throughput on suitable hardware, but they do not automatically train a better model.
             </p>
 
             <div class="conclusion">
@@ -649,7 +649,7 @@
                     Modern optimization isn't just about gradient descent—it's about preprocessing data, using adaptive learning rates, normalizing layer activations, and decaying learning rates over time.
                 </p>
                 <p>
-                    The difference between a network that takes weeks to train and one that trains in hours comes down to these optimization techniques. Adam combined with batch normalization is the industry standard for good reason: it works across diverse problems with minimal tuning.
+                    These techniques can make the difference between a network that barely trains and one that trains well. Adam with batch normalization is a common starting point, not a universal answer: SGD with momentum remains competitive on many vision tasks, and batch norm behaves poorly with very small batches.
                 </p>
                 <p>
                     But these aren't one-size-fits-all. Different problems may require different approaches. The key is understanding what each technique does and when to apply it.

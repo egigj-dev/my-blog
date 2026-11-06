@@ -7,7 +7,7 @@
     <meta name="description" content="Comprehensive guide to activation functions in neural networks — ReLU, Sigmoid, Tanh, Softmax, and more with interactive visualizations.">
     <meta property="og:title" content="Activation Functions: From Theory to Practice">
     <meta property="og:description" content="Comprehensive guide to activation functions in neural networks — ReLU, Sigmoid, Tanh, Softmax, and more with interactive visualizations.">
-    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/articles/activation_functions.html">
+    <meta property="og:url" content="https://egigj-dev.github.io/my-blog/articles/activation-functions.html">
     <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
@@ -335,7 +335,7 @@
             </p>
 
             <p>
-                Activation functions break this limitation. By introducing non-linearity at each layer, they enable the network to approximate any continuous function. This is why deep learning is possible.
+                Activation functions break this limitation. Universal approximation theorems show that a network with a suitable non-linearity and enough hidden units can approximate continuous functions on a bounded domain to any accuracy. They say nothing about how easy such a network is to train.
             </p>
 
             <div class="fx-explorer" id="fx">
@@ -387,7 +387,7 @@
             <h3>The Vanishing Gradient Problem</h3>
 
             <p>
-                Sigmoid works well in shallow networks, but has a critical flaw in deep networks. When x is large (say x = 5), σ(x) ≈ 0.993, and the derivative is nearly zero. During backpropagation through multiple layers, these tiny gradients multiply together. By the time the gradient reaches early layers, it's effectively zero. The network can't learn effectively.
+                Sigmoid can work in shallow networks, but it is prone to a problem in deep ones. Its derivative is at most 0.25 and shrinks quickly away from zero: at x = 5, σ(x) ≈ 0.993 and the derivative is about 0.007. During backpropagation these factors multiply across layers, so gradients reaching early layers can become very small and slow learning. Initialization and normalization can reduce this but do not change the shape of the function.
             </p>
 
             <div class="pros-cons">
@@ -410,7 +410,7 @@
             </div>
 
             <div class="highlight-box">
-                Still used for binary classification output layers. But for hidden layers in deep networks? Replaced by ReLU in the 2010s.
+                Still used for binary and multi-label output layers, and as a gate inside LSTMs and GRUs. For hidden layers in deep feedforward networks, it was largely replaced by ReLU-family functions in the 2010s.
             </div>
 
             <h2>Hyperbolic Tangent (Tanh)</h2>
@@ -446,7 +446,7 @@
             </div>
 
             <div class="highlight-box">
-                Where you find it: Recurrent neural networks (RNNs, LSTMs). The zero-centered property works well for sequence models. For standard feedforward networks, ReLU outperforms it.
+                <strong>Where you find it:</strong> Recurrent networks (RNNs, LSTMs), where it is the usual hidden-state non-linearity. For deep feedforward networks, ReLU-family functions are usually preferred.
             </div>
 
             <h2>Rectified Linear Unit (ReLU)</h2>
@@ -458,19 +458,19 @@
             <div class="code-block">f(x) = max(0, x)</div>
 
             <p>
-                Despite its simplicity, ReLU revolutionized deep learning. In 2012, a paper about deep convolutional neural networks using ReLU showed that networks could be trained 10x deeper, 100x faster than with sigmoid. This was the breakthrough moment for modern deep learning.
+                Despite its simplicity, ReLU was a major practical step for deep learning. Nair &amp; Hinton (2010) and Glorot et al. (2011) studied it in deep networks, and AlexNet (2012) reported that a four-layer CNN with ReLUs reached 25% training error on CIFAR-10 six times faster than an equivalent tanh network.
             </p>
 
             <h3>Why ReLU Works</h3>
 
             <p>
-                For positive inputs, the gradient is always 1. This means backpropagation works efficiently through deep networks. The vanishing gradient problem? Solved. For negative inputs, the neuron is inactive (output zero), which creates sparsity—only some neurons activate for a given input. This can improve computational efficiency and generalization.
+                For positive inputs, the gradient is exactly 1, so ReLU does not saturate there. This reduces vanishing gradients but does not eliminate them: the gradient is zero for negative inputs, and training very deep networks still depends on initialization, normalization, and skip connections. For negative inputs, the neuron outputs zero, which creates sparsity: only some neurons activate for a given input.
             </p>
 
             <h3>The Dead Neuron Problem</h3>
 
             <p>
-                If a neuron receives mostly negative inputs during training, its weights may never update (since gradient is zero for negative inputs). The neuron becomes "dead"—permanently inactive. This led to variants like Leaky ReLU (f(x) = 0.01x for x < 0) that allow small gradients even for negative inputs.
+                If a neuron's input is negative for essentially all training examples, its gradient is zero and its weights stop updating. The neuron becomes "dead". A large learning rate can cause this. Variants like Leaky ReLU (f(x) = 0.01x for x &lt; 0, f(x) = x otherwise) keep a small gradient for negative inputs.
             </p>
 
             <div class="pros-cons">
@@ -478,9 +478,9 @@
                     <h4>Advantages</h4>
                     <ul>
                         <li>Computationally cheap (single comparison)</li>
-                        <li>Non-vanishing gradient</li>
+                        <li>No saturation for positive inputs</li>
                         <li>Sparse activation</li>
-                        <li>Enabled deep learning era</li>
+                        <li>Helped make deeper networks easier to train</li>
                     </ul>
                 </div>
                 <div class="cons">
@@ -494,23 +494,23 @@
             </div>
 
             <div class="highlight-box">
-                Today (2024), ReLU is still the industry standard for hidden layers. Use this unless you have a specific reason not to.
+                ReLU remains a common default for hidden layers in CNNs and MLPs. Transformers commonly use smoother relatives such as GELU.
             </div>
 
             <h2>Linear Activation</h2>
 
             <p>
-                Linear activation (also called identity function) simply outputs the input: f(x) = x. It's exclusively used in the output layer for regression tasks.
+                Linear activation (also called the identity function) simply outputs the input: f(x) = x. It is most often seen in the output layer for regression, and also appears wherever a layer is meant to stay linear, such as a projection or an embedding.
             </p>
 
             <h3>When to Use</h3>
 
             <p>
-                For regression problems where output can be any real number (predicting house prices, stock prices, temperature), a linear output layer is essential. The network's hidden layers use non-linear activations (ReLU, tanh), but the output layer must be linear to allow unbounded predictions.
+                For regression problems where output can be any real number, a linear output layer is the usual choice. The hidden layers still need non-linear activations.
             </p>
 
             <p>
-                Using sigmoid or tanh in the output layer would incorrectly constrain predictions to a fixed range.
+                Sigmoid or tanh in the output layer constrains predictions to a fixed range. That is wrong for unbounded targets, but it can be appropriate when the target really is bounded. Softplus is one option for strictly positive targets.
             </p>
 
             <h2>Softmax Function</h2>
@@ -522,7 +522,7 @@
             <div class="code-block">softmax(x_i) = e^(x_i) / Σ(e^(x_j))</div>
 
             <p>
-                Unlike sigmoid (which handles binary classification), softmax handles multiple classes. For a 10-class classification problem, the output layer has 10 neurons. Softmax converts their raw outputs into probabilities summing to 1.
+                Softmax handles mutually exclusive classes. For a 10-class classification problem, the output layer has 10 neurons, and softmax converts their raw outputs into probabilities summing to 1. When several labels can be true at once, use an independent sigmoid per label instead.
             </p>
 
             <p>
@@ -530,7 +530,7 @@
             </p>
 
             <div class="highlight-box">
-                Used exclusively in the output layer for multi-class classification. Not used in hidden layers.
+                Most commonly used in the output layer for multi-class classification. It also appears inside networks: attention mechanisms use it to turn scores into weights.
             </div>
 
             <h2>Practical Recommendations</h2>
@@ -555,7 +555,7 @@
                         <td>Sigmoid</td>
                         <td>(0, 1)</td>
                         <td>Binary classification output</td>
-                        <td>Legacy</td>
+                        <td>Common for outputs</td>
                     </tr>
                     <tr>
                         <td>Tanh</td>
@@ -567,13 +567,13 @@
                         <td>ReLU</td>
                         <td>[0, ∞)</td>
                         <td>Hidden layers (default)</td>
-                        <td>Industry standard</td>
+                        <td>Common default</td>
                     </tr>
                     <tr>
                         <td>Linear</td>
                         <td>(-∞, ∞)</td>
                         <td>Regression output</td>
-                        <td>Essential</td>
+                        <td>Common</td>
                     </tr>
                     <tr>
                         <td>Softmax</td>
@@ -585,7 +585,7 @@
             </table>
 
             <p>
-                For most problems: Use ReLU in hidden layers. Choose the output activation based on the task—sigmoid for binary classification, softmax for multi-class, and linear for regression.
+                <strong>For most problems:</strong> Start with ReLU or a close relative in hidden layers. Choose the output activation based on the task: sigmoid for binary or multi-label classification, softmax for mutually exclusive classes, and linear for unbounded regression.
             </p>
 
             <div class="conclusion">
@@ -594,10 +594,10 @@
                     Activation functions are fundamental to neural networks. They're what makes deep learning possible. The progression from sigmoid to ReLU represents real progress—not just in mathematics, but in practical capability.
                 </p>
                 <p>
-                    The vanishing gradient problem that sigmoid suffered from was blocking progress for years. ReLU solved it with elegant simplicity, enabling the deep learning revolution. Modern variants (Leaky ReLU, GELU, Swish) improve further, but standard ReLU remains the most deployed choice in production systems.
+                    Saturating activations made deep networks harder to train, and ReLU eased that with a very simple function. It worked alongside better initialization, normalization, data, and hardware rather than alone. Modern variants such as Leaky ReLU, GELU, and Swish are useful alternatives, and which works best is an empirical question for each architecture.
                 </p>
                 <p>
-                    In practice, your choice is simple: ReLU for hidden layers, and select the output activation based on your task. The theory is settled. Focus on architecture, data, and training.
+                    In practice, a good default is ReLU or GELU for hidden layers, with the output activation selected by your task. Treat this as a starting point, and test alternatives if training or results suggest a problem.
                 </p>
             </div>
         </article>
@@ -646,9 +646,9 @@
                 sigmoid: { label:'Sigmoid', f:sigF,             d:v=>{const s=sigF(v);return s*(1-s);},
                     note:'f(x) = 1 / (1 + e\u207b\u02e3). Output is squashed into (0, 1). Drag the tracker toward the edges: the derivative flattens toward zero, which is the vanishing gradient problem in one picture.' },
                 tanh:    { label:'Tanh',    f:v=>Math.tanh(v),  d:v=>1-Math.tanh(v)**2,
-                    note:'f(x) = tanh(x). Same squashing as sigmoid but zero-centred, into (-1, 1). Its peak gradient is 1.0 versus sigmoid\u2019s 0.25, so it trains faster \u2014 yet still saturates at the extremes.' },
+                    note:'f(x) = tanh(x). Same squashing as sigmoid but zero-centred, into (-1, 1). Its peak gradient is 1.0 versus sigmoid\u2019s 0.25, which often helps training \u2014 yet it still saturates at the extremes.' },
                 gelu:    { label:'GELU',    f:geluF,            d:numD(geluF),
-                    note:'f(x) = x \u00b7 \u03a6(x). A smooth, probabilistic gate: slightly negative inputs dip below zero instead of being clipped, so gradient keeps flowing. The default in modern transformers.' },
+                    note:'f(x) = x \u00b7 \u03a6(x). A smooth, probabilistic gate: slightly negative inputs dip below zero instead of being clipped, so gradient keeps flowing. Widely used in transformers.' },
             };
             const ORDER = ['linear','relu','sigmoid','tanh','gelu'];
 

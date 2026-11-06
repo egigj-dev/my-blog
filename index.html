@@ -94,9 +94,9 @@
             position:relative; z-index:1;
             max-width:1160px; margin:0 auto; width:100%;
             padding:5.5rem 2.5rem 4rem;
-            display:grid; grid-template-columns:1.05fr 0.95fr; gap:2.5rem; align-items:center;
+            display:block;
         }
-        .hero-copy { max-width:560px; }
+        .hero-copy { max-width:800px; }
         .header-pill {
             display:inline-flex; align-items:center; gap:8px;
             font-family:'JetBrains Mono',monospace; font-size:0.7rem; font-weight:500;
@@ -116,7 +116,7 @@
         .hero h1 em { font-style:italic; color:var(--accent); }
         .hero p {
             font-size:1rem; font-weight:400; color:var(--text-2); line-height:1.75;
-            max-width:460px; margin-bottom:2rem;
+            max-width:640px; margin-bottom:2rem;
         }
         .hero-cta { display:flex; gap:.9rem; flex-wrap:wrap; }
         .btn {
@@ -129,8 +129,6 @@
         .btn-primary:hover { transform:translateY(-2px); background:#12e4c8; }
         .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--line); }
         .btn-ghost:hover { transform:translateY(-2px); border-color:var(--accent); color:var(--accent); }
-        .hero-vis { width:100%; }
-        .hero-vis svg { width:100%; height:auto; display:block; }
 
         /* SECTION HEADINGS */
         .section-eye {
@@ -146,22 +144,48 @@
         /* TOPICS GRAPH (signature) */
         .topics-section { position:relative; z-index:1; max-width:1160px; margin:0 auto; width:100%; padding:2rem 2.5rem 3.5rem; }
         .topics-head { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem; margin-bottom:1.6rem; }
-        .graph-toggle { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
-        .graph-toggle button {
-            background:transparent; color:var(--text-2); border:none; cursor:pointer;
-            font-family:'JetBrains Mono',monospace; font-size:.72rem; letter-spacing:.04em;
-            padding:.5rem 1rem; transition:background .2s, color .2s;
-        }
-        .graph-toggle button.active { background:rgba(0,212,184,.12); color:var(--accent); }
         .graph-wrap {
             background:radial-gradient(circle at 50% 45%, #0e1e30 0%, var(--bg-card) 70%);
             border:1px solid var(--line); border-radius:16px; overflow:hidden; position:relative;
+            display:none;
         }
-        #topic-graph { width:100%; height:auto; display:block; cursor:grab; }
-        .graph-hint {
-            position:absolute; bottom:12px; left:16px;
-            font-family:'JetBrains Mono',monospace; font-size:.66rem; color:var(--text-3);
-            pointer-events:none;
+        .graph-mounted .graph-wrap { display:block; }
+        #topic-graph { width:100%; height:auto; display:block; }
+        .graph-node { color:var(--text); outline:none; }
+        .graph-node text { fill:var(--text); stroke:var(--bg-card); stroke-width:5px; paint-order:stroke; stroke-linejoin:round; }
+        .graph-node.article { cursor:pointer; }
+        .graph-node.article text { font-size:24px; font-weight:600; }
+        .graph-node.topic text { font-size:23px; font-weight:800; }
+        .graph-node.concept text { font-size:22px; fill:var(--text-2); }
+        .graph-node.hub text { font-size:24px; font-weight:800; }
+        .graph-hit { fill:transparent; }
+        .graph-ring { fill:none; stroke:var(--text); stroke-width:3px; opacity:0; }
+        .graph-node:focus-visible .graph-ring { opacity:1; }
+        .graph-node:focus-visible { outline:none; }
+        .graph-node.is-dim, .graph-edge.is-dim { opacity:.12; }
+        .graph-edge.is-neighbour { opacity:.95; }
+        .graph-node.is-neighbour .node-halo { opacity:.3; }
+        .graph-caption { padding:.65rem 1rem; min-height:3.4rem; color:var(--text-2); font-size:.85rem; line-height:1.5; border-top:1px solid var(--line); }
+        .graph-fallback { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.3rem; padding:1.5rem 0; }
+        .graph-fallback h3 { font-size:1rem; margin-bottom:.6rem; }
+        .graph-fallback ul { padding-left:1.2rem; }
+        .graph-fallback li { margin:.4rem 0; line-height:1.5; }
+        .graph-fallback a { color:var(--text); text-decoration-color:var(--accent); text-underline-offset:3px; }
+        .graph-fallback a:focus-visible { outline:2px solid var(--text); outline-offset:4px; }
+        .graph-mounted .graph-fallback { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); }
+        .graph-mounted .graph-fallback:focus-within { position:static; width:auto; height:auto; margin:0; padding:1.5rem 0; overflow:visible; clip-path:none; }
+        .graph-relationships { margin-top:1rem; font-size:.85rem; color:var(--text-2); line-height:1.6; }
+        .graph-relationships summary { cursor:pointer; color:var(--text); }
+        .graph-relationships ul { padding:1rem 0 0 1.3rem; }
+        @media(min-width:600px) and (max-width:899px){
+            .graph-node.concept text { visibility:hidden; }
+            .graph-node.concept.is-neighbour text, .graph-node.concept:focus text { visibility:visible; }
+        }
+        @media(max-width:599px){
+            .graph-mounted .graph-wrap { display:none; }
+            .graph-mounted .graph-fallback { position:static; width:auto; height:auto; margin:0; padding:1.5rem 0; overflow:visible; clip-path:none; }
+            .graph-fallback { grid-template-columns:1fr; }
+            .graph-fallback a { display:inline-block; min-height:44px; padding:.6rem 0; }
         }
 
         /* ARTICLES */
@@ -255,8 +279,7 @@
 
         /* RESPONSIVE */
         @media(max-width:820px){
-            .hero { grid-template-columns:1fr; padding-top:3.5rem; }
-            .hero-vis { max-width:420px; }
+            .hero { padding-top:3.5rem; }
         }
         @media(max-width:680px){
             nav{ padding:0 1.2rem; }
@@ -265,6 +288,11 @@
             .art-grid{ grid-template-columns:1fr; }
             .news{ flex-direction:column; align-items:flex-start; }
             footer{ flex-direction:column; align-items:flex-start; }
+        }
+        @media(max-width:480px){
+            nav{ padding:0 .75rem; }
+            .nav-logo > :not(:first-child){ display:none; }
+            .nav-links a{ padding:.4rem .4rem; font-size:.68rem; }
         }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation:none !important; transition:none !important; }
@@ -322,9 +350,6 @@
                 <a href="#topics" class="btn btn-ghost">Browse topics</a>
             </div>
         </div>
-        <div class="hero-vis" data-anim>
-            <svg id="constellation" viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
-        </div>
     </header>
 
     <!-- TOPICS GRAPH (signature) -->
@@ -333,16 +358,42 @@
             <div>
                 <div class="section-eye">Topics at a glance</div>
                 <div class="section-h">The map of what's here</div>
-                <div class="section-sub">Hover a branch to trace it. Click any article node to open it.</div>
-            </div>
-            <div class="graph-toggle" role="tablist" aria-label="Graph layout">
-                <button id="btn-tree" class="active" role="tab">Radial tree</button>
-                <button id="btn-force" role="tab">Neural web</button>
+                <div class="section-sub">Trace shared ideas across topics. Open an article to explore further.</div>
             </div>
         </div>
         <div class="graph-wrap">
-            <svg id="topic-graph" viewBox="0 0 1100 560" preserveAspectRatio="xMidYMid meet" aria-label="Topic map"></svg>
-            <div class="graph-hint" id="graph-hint">Radial tree — deterministic layout</div>
+            <svg id="topic-graph" viewBox="0 0 1100 560" preserveAspectRatio="xMidYMid meet" role="group" aria-label="AI and machine learning articles connected by topics and shared concepts"></svg>
+            <p class="graph-caption" id="graph-caption">Hover or focus an article to read its introduction. Follow a link to open it.</p>
+        </div>
+        <div class="graph-fallback" id="graph-fallback" aria-label="Articles by topic">
+            <div>
+                <h3>Foundations</h3>
+                <ul>
+                    <li><a href="articles/backpropagation.html">Backpropagation and Autodiff</a></li>
+                    <li><a href="articles/activation-functions.html">Activation Functions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>Training</h3>
+                <ul>
+                    <li><a href="articles/optimization-techniques.html">Optimization Techniques</a></li>
+                    <li><a href="articles/regularization-techniques.html">Regularization Techniques</a></li>
+                    <li><a href="articles/data-augmentation.html">Data Augmentation</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>Computer Vision</h3>
+                <ul>
+                    <li><a href="articles/alexnet-paper.html">AlexNet Paper</a></li>
+                    <li><a href="articles/cifar10-transfer-learning.html">Transfer Learning for CIFAR-10</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>Evaluation</h3>
+                <ul>
+                    <li><a href="articles/model-evaluation-calibration.html">Model Evaluation and Calibration</a></li>
+                </ul>
+            </div>
         </div>
     </section>
 
@@ -365,6 +416,32 @@
                     <p>The non-linear ingredient that makes deep learning possible. ReLU, Sigmoid, Tanh, Softmax — what they do and when to use each.</p>
                     <div class="card-foot">
                         <span class="card-time">10 min read</span>
+                        <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="articles/backpropagation.html" class="card" data-thumb-hover>
+                    <div class="card-viz" data-thumb="cascade" data-accent="#00d4b8" data-seed="31"></div>
+                <div class="card-body">
+                    <span class="card-tag t-nn">Foundations</span>
+                    <h3>Backpropagation and Autodiff</h3>
+                    <p>The chain rule on a graph, a worked example you can change, and a small autodiff engine that runs.</p>
+                    <div class="card-foot">
+                        <span class="card-time">11 min read</span>
+                        <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="articles/model-evaluation-calibration.html" class="card" data-thumb-hover>
+                    <div class="card-viz" data-thumb="sampling" data-accent="#f0a500" data-seed="47"></div>
+                <div class="card-body">
+                    <span class="card-tag t-tr">Evaluation</span>
+                    <h3>Model Evaluation and Calibration</h3>
+                    <p>Metrics that match the decision, common evaluation leaks, and whether predicted probabilities can be trusted.</p>
+                    <div class="card-foot">
+                        <span class="card-time">12 min read</span>
                         <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
                     </div>
                 </div>
@@ -401,7 +478,7 @@
                 <div class="card-body">
                     <span class="card-tag t-cv">Computer Vision</span>
                     <h3>Transfer Learning for CIFAR-10</h3>
-                    <p>A frozen EfficientNetB0 backbone at 87–89% accuracy in under 3 minutes. Feature caching and classifier-head design.</p>
+                    <p>A frozen EfficientNetB0 backbone with cached features and a small classifier head, including what that trade-off gives up.</p>
                     <div class="card-foot">
                         <span class="card-time">15 min read</span>
                         <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -414,7 +491,7 @@
                 <div class="card-body">
                     <span class="card-tag t-tr">Generalization</span>
                     <h3>Data Augmentation</h3>
-                    <p>Expand your dataset with flips, crops, and color jitter — plus modern approaches like MixUp and CutMix.</p>
+                    <p>Flips, crops, and color changes, how to wire them into a PyTorch pipeline, and automated policies like RandAugment.</p>
                     <div class="card-foot">
                         <span class="card-time">11 min read</span>
                         <div class="card-arr"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H3M8 2V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -475,7 +552,7 @@
     </footer>
 
     <!-- Libraries (load in browser; blocked in sandboxes) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="assets/brain-graph.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
@@ -555,7 +632,7 @@
       anyVisible = true;
       // ease hover 0..1 so speed/glow ramp instead of snapping
       inst.ease = clamp(inst.ease + ((inst.hover ? 1 : 0) - inst.ease) * 0.09, 0, 1);
-      inst.frame(t, dt, inst.ease);
+      inst.frame(Math.max(0, t), dt, inst.ease);  // rAF's timestamp can precede the start time on the first frame
     }
     // Park entirely when every instance is off-screen; wake() restarts us.
     rafId = anyVisible ? requestAnimationFrame(tick) : null;
@@ -1354,245 +1431,15 @@
     </script>
 
     <script>
-    /* ======================================================================
-       DATA + HELPERS
-       - REDUCED : prefers-reduced-motion flag (kills all sims/pulses)
-       - COLORS  : named hex values reused by every D3 visual
-       - TOPICS  : topic hierarchy driving BOTH graph engines
-                   (add an article = add one leaf; layout auto-computes)
-       ====================================================================== */
-    const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const COLORS  = { accent:'#00d4b8', gold:'#f0a500', violet:'#a78bfa', danger:'#ff5e57', dim:'#3a5570' };
-
-    const TOPICS = {
-        name: 'AI / ML',
-        children: [
-            { name:'Neural Networks', color:COLORS.accent, children:[
-                { name:'Activation Functions', url:'articles/activation-functions.html' },
-                { name:'Regularization',       url:'articles/regularization-techniques.html' },
-            ]},
-            { name:'Optimization', color:COLORS.gold, children:[
-                { name:'Optimization Techniques', url:'articles/optimization-techniques.html' },
-                { name:'Data Augmentation',       url:'articles/data-augmentation.html' },
-            ]},
-            { name:'Computer Vision', color:COLORS.violet, children:[
-                { name:'Transfer Learning', url:'articles/cifar10-transfer-learning.html' },
-                { name:'AlexNet Paper',     url:'articles/alexnet-paper.html' },
-            ]},
-        ]
-    };
-
-    // Deterministic seeded RNG (mulberry32); seed:int -> ()=>float in [0,1)
-    function rng(seed){
-        return function(){
-            seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-            let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-            t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-            return ((t ^ t >>> 14) >>> 0) / 4294967296;
-        };
-    }
-    // Colour of a node's depth-1 ancestor (its "branch" colour)
-    function branchColor(node){ let n=node; while(n.depth>1) n=n.parent; return (n.data&&n.data.color)||COLORS.accent; }
-    // Gradient-id key for a node ('hub' for centre, else branch colour name)
-    function colorKey(hex){ return hex===COLORS.gold?'gold':hex===COLORS.violet?'violet':'accent'; }
-    function keyOf(d){ return d.depth===0?'hub':colorKey(branchColor(d)); }
-    // Node radius by depth: centre > category > article
-    function nodeR(d){ return d.depth===0?12:d.depth===1?7.5:5.5; }
-
-    /* ======================================================================
-       HERO CONSTELLATION (D3, decorative) — drifting nodes + proximity links
-       ====================================================================== */
-    function heroConstellation(){
-        const svg=d3.select('#constellation'), W=500,H=400,N=34,LINK=90, gen=rng(7);
-        const nodes=d3.range(N).map(()=>({x:gen()*W,y:gen()*H,vx:(gen()-0.5)*0.35,vy:(gen()-0.5)*0.35,r:1+gen()*2.2}));
-        const linkG=svg.append('g'), nodeG=svg.append('g');
-        const dots=nodeG.selectAll('circle').data(nodes).join('circle')
-            .attr('r',d=>d.r).attr('fill',COLORS.accent).attr('opacity',d=>0.35+d.r/6);
-        function draw(){
-            const links=[];
-            for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
-                const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,dist=Math.hypot(dx,dy);
-                if(dist<LINK) links.push({a:nodes[i],b:nodes[j],o:1-dist/LINK});
-            }
-            linkG.selectAll('line').data(links).join('line')
-                .attr('x1',d=>d.a.x).attr('y1',d=>d.a.y).attr('x2',d=>d.b.x).attr('y2',d=>d.b.y)
-                .attr('stroke',COLORS.accent).attr('stroke-width',0.6).attr('opacity',d=>d.o*0.25);
-            dots.attr('cx',d=>d.x).attr('cy',d=>d.y);
-        }
-        function tick(){ for(const p of nodes){ p.x+=p.vx;p.y+=p.vy; if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1; } draw(); }
-        draw(); if(!REDUCED) gsap.ticker.add(tick);
-    }
-
-    /* ======================================================================
-       TOPIC GRAPH — neural aesthetic, two interchangeable engines.
-       Shared bits: neuralDefs() (glow filters + gradients), drawNeuron(),
-       addLabels(). Each renderer is self-contained; to keep only one later,
-       delete its function + its toggle button.
-       ====================================================================== */
-    const GW=1100, GH=560;
-    const svgG=d3.select('#topic-graph');
-    function clearGraph(){ svgG.selectAll('*').remove(); }
-    function go(url){ if(url) window.location.href=url; }
-
-    // <defs>: node glow, soft halo glow, per-colour core gradients, bg glow
-    function neuralDefs(svg){
-        const defs=svg.append('defs');
-        const f=defs.append('filter').attr('id','glow').attr('x','-60%').attr('y','-60%').attr('width','220%').attr('height','220%');
-        f.append('feGaussianBlur').attr('stdDeviation',2.6).attr('result','b');
-        const m=f.append('feMerge'); m.append('feMergeNode').attr('in','b'); m.append('feMergeNode').attr('in','SourceGraphic');
-        defs.append('filter').attr('id','glow-soft').attr('x','-120%').attr('y','-120%').attr('width','340%').attr('height','340%')
-            .append('feGaussianBlur').attr('stdDeviation',8);
-        const cmap={hub:'#d9fff8',accent:COLORS.accent,gold:COLORS.gold,violet:COLORS.violet};
-        Object.entries(cmap).forEach(([k,c])=>{
-            const g=defs.append('radialGradient').attr('id','core-'+k);
-            g.append('stop').attr('offset','0%').attr('stop-color', k==='hub'?'#ffffff':d3.color(c).brighter(1).formatHex());
-            g.append('stop').attr('offset','50%').attr('stop-color',c);
-            g.append('stop').attr('offset','100%').attr('stop-color',c).attr('stop-opacity',0.2);
-        });
-        const bg=defs.append('radialGradient').attr('id','bg-glow');
-        bg.append('stop').attr('offset','0%').attr('stop-color',COLORS.accent).attr('stop-opacity',0.10);
-        bg.append('stop').attr('offset','70%').attr('stop-color',COLORS.accent).attr('stop-opacity',0);
-    }
-    function centerGlow(sel,cx,cy,r){ sel.append('circle').attr('cx',cx).attr('cy',cy).attr('r',r).attr('fill','url(#bg-glow)').attr('pointer-events','none'); }
-
-    // Neuron = soft halo (breathing) + gradient core (glow) + thin ring
-    function drawNeuron(node){
-        node.append('circle').attr('class','halo').attr('r',d=>nodeR(d)*2.6)
-            .attr('fill',d=>d.depth===0?COLORS.accent:branchColor(d)).attr('opacity',0.16).attr('filter','url(#glow-soft)');
-        if(!REDUCED) node.select('.halo').each(function(d,i){
-            d3.select(this).append('animate').attr('attributeName','opacity')
-              .attr('values','0.10;0.22;0.10').attr('dur',(3+(i%4)*0.7)+'s').attr('repeatCount','indefinite');
-        });
-        node.append('circle').attr('r',d=>nodeR(d)).attr('fill',d=>'url(#core-'+keyOf(d)+')').attr('filter','url(#glow)');
-        node.append('circle').attr('r',d=>nodeR(d)+2.5).attr('fill','none')
-            .attr('stroke',d=>d.depth===0?COLORS.accent:branchColor(d)).attr('stroke-opacity',0.55).attr('stroke-width',1);
-    }
-
-    // Labels with a dark halo (paint-order stroke) so they read over glow/links
-    function addLabels(node,mode){
-        node.each(function(d){
-            if(d.depth===0) return;
-            const t=d3.select(this).append('text');
-            if(mode==='tree'){
-                const flip=d.x>=Math.PI;
-                t.attr('transform',flip?'rotate(180)':null).attr('text-anchor',flip?'end':'start')
-                 .attr('x',flip?-(nodeR(d)+7):nodeR(d)+7).attr('dy','0.32em');
-            } else {
-                t.attr('x',nodeR(d)+7).attr('dy','0.32em');
-            }
-            t.text(d.data.name)
-             .attr('font-family',"'Syne',sans-serif").attr('font-weight',d.depth===1?700:600)
-             .attr('font-size',d.depth===1?13:11)
-             .attr('fill',d.depth===1?'#e6f2f8':'#8fb0c4')
-             .attr('paint-order','stroke').attr('stroke','#07111e').attr('stroke-width',3).attr('stroke-linejoin','round');
-        });
-    }
-
-    // ---- Engine A: radial tree (deterministic) ----
-    function renderTree(){
-        clearGraph(); neuralDefs(svgG);
-        const root=d3.hierarchy(TOPICS);
-        const radius=Math.min(GW,GH)/2-120;
-        d3.tree().size([2*Math.PI,radius]).separation((a,b)=>(a.parent===b.parent?1:2)/a.depth)(root);
-        const g=svgG.append('g').attr('transform','translate('+GW/2+','+GH/2+')');
-        centerGlow(g,0,0,radius*0.9);
-
-        const linkGen=d3.linkRadial().angle(d=>d.x).radius(d=>d.y);
-        const link=g.append('g').selectAll('path').data(root.links()).join('path')
-            .attr('fill','none').attr('stroke',d=>branchColor(d.target))
-            .attr('stroke-width',1.4).attr('stroke-opacity',0.32).attr('d',linkGen);
-
-        // Signal pulses travelling outward along each synapse (native SMIL)
-        if(!REDUCED){
-            const pg=g.append('g');
-            root.links().forEach((l,i)=>{
-                pg.append('circle').attr('r',2.2).attr('fill',branchColor(l.target)).attr('filter','url(#glow)').attr('opacity',0.9)
-                  .append('animateMotion').attr('dur',(2.4+(i%3)*0.6)+'s').attr('repeatCount','indefinite')
-                  .attr('begin',(i*0.35)+'s').attr('path',linkGen(l));
-            });
-        }
-
-        const node=g.append('g').selectAll('g').data(root.descendants()).join('g')
-            .attr('transform',d=>'rotate('+(d.x*180/Math.PI-90)+') translate('+d.y+',0)')
-            .style('cursor',d=>d.data.url?'pointer':'default')
-            .on('click',(e,d)=>go(d.data.url))
-            .on('mouseenter',(e,d)=>hl(d)).on('mouseleave',rst);
-        drawNeuron(node); addLabels(node,'tree');
-
-        // Centre "AI / ML" label, upright, just under the hub
-        g.append('text').attr('x',0).attr('y',nodeR(root)+22).attr('text-anchor','middle')
-         .attr('font-family',"'Lora',serif").attr('font-style','italic').attr('font-size',16).attr('fill',COLORS.accent)
-         .attr('paint-order','stroke').attr('stroke','#07111e').attr('stroke-width',3).text('AI / ML');
-
-        function hl(d){ const path=new Set(d.ancestors());
-            link.attr('stroke-opacity',l=>path.has(l.target)?0.95:0.05); node.attr('opacity',n=>path.has(n)?1:0.2); }
-        function rst(){ link.attr('stroke-opacity',0.32); node.attr('opacity',1); }
-    }
-
-    // ---- Engine B: force-directed neural web (physics, draggable) ----
-    function renderForce(){
-        clearGraph(); neuralDefs(svgG);
-        centerGlow(svgG,GW/2,GH/2,Math.min(GW,GH)/2-40);
-        const root=d3.hierarchy(TOPICS), nodes=root.descendants(), links=root.links();
-        links.forEach(l=>l.__ph=Math.random());  // pulse phase offset per synapse
-
-        const sim=d3.forceSimulation(nodes)
-            .force('link',d3.forceLink(links).distance(d=>d.target.children?120:78).strength(0.55))
-            .force('charge',d3.forceManyBody().strength(-340))
-            .force('center',d3.forceCenter(GW/2,GH/2))
-            .force('collide',d3.forceCollide(40));
-
-        const link=svgG.append('g').selectAll('path').data(links).join('path')
-            .attr('fill','none').attr('stroke',d=>branchColor(d.target)).attr('stroke-width',1.4).attr('stroke-opacity',0.34);
-
-        let pulse=null;
-        if(!REDUCED) pulse=svgG.append('g').selectAll('circle').data(links).join('circle')
-            .attr('r',2.2).attr('fill',d=>branchColor(d.target)).attr('filter','url(#glow)').attr('opacity',0.9);
-
-        const node=svgG.append('g').selectAll('g').data(nodes).join('g')
-            .style('cursor',d=>d.data.url?'pointer':'grab')
-            .on('click',(e,d)=>{ if(!e.defaultPrevented) go(d.data.url); })
-            .call(d3.drag()
-                .on('start',(e,d)=>{ if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
-                .on('drag',(e,d)=>{ d.fx=e.x; d.fy=e.y; })
-                .on('end',(e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }));
-        drawNeuron(node); addLabels(node,'force');
-
-        let t=0;
-        const curve=d=>{ const mx=(d.source.x+d.target.x)/2,my=(d.source.y+d.target.y)/2,
-                               dx=d.target.x-d.source.x,dy=d.target.y-d.source.y;
-            return 'M'+d.source.x+','+d.source.y+' Q'+(mx-dy*0.12)+','+(my+dx*0.12)+' '+d.target.x+','+d.target.y; };
-        sim.on('tick',()=>{
-            link.attr('d',curve);
-            node.attr('transform',d=>'translate('+d.x+','+d.y+')');
-            if(pulse){ t+=0.006; pulse
-                .attr('cx',d=>{const p=(t+d.__ph)%1; return d.source.x+(d.target.x-d.source.x)*p;})
-                .attr('cy',d=>{const p=(t+d.__ph)%1; return d.source.y+(d.target.y-d.source.y)*p;}); }
-        });
-        if(REDUCED){ sim.stop(); for(let i=0;i<320;i++) sim.tick();
-            link.attr('d',curve); node.attr('transform',d=>'translate('+d.x+','+d.y+')'); }
-    }
-
-    // Toggle wiring
-    const btnTree=document.getElementById('btn-tree'), btnForce=document.getElementById('btn-force'), hint=document.getElementById('graph-hint');
-    function setEngine(e){
-        btnTree.classList.toggle('active',e==='tree');
-        btnForce.classList.toggle('active',e==='force');
-        hint.textContent = e==='tree' ? 'Radial tree — deterministic layout' : 'Neural web — drag the neurons';
-        e==='tree' ? renderTree() : renderForce();
-    }
-    btnTree.addEventListener('click',()=>setEngine('tree'));
-    btnForce.addEventListener('click',()=>setEngine('force'));
-
-    /* ======================================================================
-       GSAP ENTRANCE + SCROLL REVEALS
-       ====================================================================== */
     function animateIn(){
-        if(REDUCED || typeof gsap==='undefined'){ document.querySelectorAll('[data-anim],[data-reveal]').forEach(el=>el.style.opacity=1); return; }
-        gsap.registerPlugin(ScrollTrigger);
-        gsap.from('[data-anim]',{ y:24, opacity:0, duration:0.8, stagger:0.12, ease:'power3.out' });
-        gsap.utils.toArray('[data-reveal]').forEach(sec=>gsap.from(sec,{ y:40, opacity:0, duration:0.7, ease:'power2.out', scrollTrigger:{ trigger:sec, start:'top 82%' } }));
-        gsap.from('.art-grid .card',{ y:30, opacity:0, duration:0.6, stagger:0.08, ease:'power2.out', scrollTrigger:{ trigger:'.art-grid', start:'top 80%' } });
+        if(window.matchMedia('(prefers-reduced-motion: reduce)').matches || typeof gsap==='undefined') return;
+        try {
+            gsap.from('[data-anim]',{ y:24, duration:0.8, stagger:0.12, ease:'power3.out' });
+            if(typeof ScrollTrigger!=='undefined'){
+                gsap.registerPlugin(ScrollTrigger);
+                gsap.utils.toArray('[data-reveal]').forEach(sec=>gsap.from(sec,{ y:40, duration:0.7, ease:'power2.out', scrollTrigger:{ trigger:sec, start:'top 82%' } }));
+            }
+        } catch(error) { /* Content is visible even if an animation fails. */ }
     }
 
     /* ======================================================================
@@ -1610,9 +1457,6 @@
        BOOT — guard against libraries failing to load (offline / blocked CDN)
        ====================================================================== */
     window.addEventListener('DOMContentLoaded',()=>{
-        if(typeof d3!=='undefined'){
-            heroConstellation(); setEngine('tree');
-        }
         CardThumbnails.mountAll();
         animateIn();
     });
