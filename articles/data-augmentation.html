@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Automated Data Augmentation: A Beginner's Guide</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <meta name="description" content="Image augmentation, Dataset integration, AutoAugment and RandAugment with preprocessing guidance.">
+    <meta property="og:title" content="Automated Data Augmentation: A Beginner's Guide">
+    <meta property="og:description" content="Image augmentation, Dataset integration, AutoAugment and RandAugment with preprocessing guidance.">
+    <meta property="og:type" content="article">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
@@ -316,13 +321,16 @@
         @media (max-width: 760px) { .am-panels { grid-template-columns: 1fr; } .am-pane + .am-pane { border-left: none; border-top: 1px solid var(--border); } .am-pane { height: 290px; } }
 
     </style>
+    <link rel="stylesheet" href="../assets/site.css">
+    <script src="../assets/site.js"></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <a href="../index.html" class="back-link">← Back to Blog</a>
     <button class="theme-toggle" id="themeToggle">Light Mode</button>
 
     <div class="container">
-        <article class="content">
+        <article class="content" id="main-content">
             <div class="article-header">
                 <div class="article-category">Data Augmentation</div>
                 <h1>Automated Data Augmentation: A Beginner's Guide</h1>
@@ -332,8 +340,8 @@
                 </div>
             </div>
 
-            <div class="image-placeholder">
-                <img src="../assets/data-aug-example.png" alt="Data Augmentation Example" width="850" height="500">>
+            <p>Schematic illustration: its “Training Results” curves are decorative, not measured outcomes. The image includes new subjects/views that ordinary crop, flip and color transforms cannot create. Provenance and permissions are not documented in this repository.</p><div class="image-placeholder">
+                <img src="../assets/data-aug-example.png" alt="Schematic augmentation illustration with decorative training curves" width="850" height="500">
             </div>
 
             <h2>Introduction</h2>
@@ -384,6 +392,7 @@
                 <strong>The dataset is illustrative</strong> &mdash; ten synthetic samples in two dimensions, because a decision boundary cannot be drawn in more.
                 <strong>The numbers are measured on that synthetic dataset only.</strong> The classifier is 1-nearest-neighbour, and the accuracy beside it is scored on 1000 held-out synthetic samples it never saw during fitting. They illustrate the principle and say nothing about the size of the effect on real images.
                 Augmentation is worth exactly as much as the invariance it encodes. <em>Along arc</em> slides a sample along the curve it was generated from &mdash; a real symmetry of this data &mdash; and pulls held-out accuracy from 79.9% up to roughly 90.7%. Switch it off and turn on <em>Mirror</em>: reflection is not a symmetry here, and the same number falls off a cliff. <em>Jitter</em> leaves the number where it started (79.2%), and <em>Rotate</em> stumbles into a smaller gain (84.2%) &mdash; real, but less than half of what the transform that actually matches the data buys you.
+                Training and evaluation noise ranges differ, so this toy comparison is not an iid benchmark.
                 More synthetic data is not the goal. More <em>correct</em> synthetic data is.</p>
             </div>
 
@@ -603,7 +612,7 @@ augmented_images = [augment(img) for img in images]</pre></div>
                 The RandAugment paper (Cubuk et al., 2020) reports results comparable to or better than learned policies on the datasets it tested, without a separate search phase.
             </p>
 
-            <h2>Step-by-Step: Implementing Data Augmentation</h2>
+            <h2>Step-by-Step: Implementing Data Augmentation</h2><p>These are instructional fragments, not a standalone experiment: supply train_images/train_labels, a disjoint validation/test split, model, criterion and optimizer. Dataset inputs are RGB NumPy arrays in H×W×3 order, uint8 [0,255], with integer class labels. Normalize converts to float32 using ImageNet channel statistics; ToTensorV2 changes HWC to CHW (it does not itself scale pixels). DataLoader produces N×3×224×224 tensors. Use torch.long labels for cross-entropy. Split original images before augmentation to avoid leakage.</p>
 
             <h3><span class="step-number">1</span>Choose Your Library</h3>
 
@@ -708,6 +717,7 @@ test_transform = A.Compose([
     ToTensorV2(),
 ])</pre></div>
 
+            <p>Test-time augmentation averages predictions over specified transforms and needs a separately validated protocol. Call model.eval() and use torch.no_grad() for evaluation.</p>
             <p>
                 Why? Augmentation teaches the model to generalize. At test time, you want to evaluate on real, unmodified images to know how it will perform in production.
             </p>
@@ -763,7 +773,7 @@ test_transform = A.Compose([
                 </tbody>
             </table>
 
-            <h2>Real-World Example: Dog Classifier</h2>
+            <h2>Illustrative Integration: Dog Classifier</h2><p>Provide RGB image arrays and labels for ten dog breeds; the data and observed outcomes are not included. The preprocessing below matches the channel statistics for <a href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.resnet50.html">ResNet50 IMAGENET1K_V1 weights</a>. For its standard evaluation preset, use weights.transforms() with compatible PIL/tensor inputs (resize 256, center crop 224); direct resize here is a simplified alternative.</p>
 
             <div class="example-box">
                 <strong>Scenario:</strong> You have 200 dog photos. You want to train a classifier.
@@ -816,11 +826,12 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=32)
 
 # Step 4: Train
-model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
 model.fc = nn.Linear(2048, 10)  # 10 dog breeds
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters())
 
+model.train()
 for epoch in range(10):
     for images, labels in train_loader:
         predictions = model(images)
@@ -876,29 +887,6 @@ for epoch in range(10):
         </article>
     </div>
 
-    <script>
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const isDark = localStorage.getItem('light-mode') !== 'true';
-
-        function updateTheme() {
-            if (!isDark) {
-                document.body.classList.add('light-mode');
-                themeToggle.textContent = 'Dark Mode';
-            } else {
-                document.body.classList.remove('light-mode');
-                themeToggle.textContent = 'Light Mode';
-            }
-        }
-
-        updateTheme();
-
-        themeToggle.addEventListener('click', () => {
-            const isNowLight = document.body.classList.toggle('light-mode');
-            localStorage.setItem('light-mode', isNowLight);
-            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
-        });
-    </script>
     <script src="../assets/viz-core.js"></script>
     <script src="../assets/augmentation-margin.js"></script>
 </body>

@@ -220,13 +220,21 @@ function renderReadout(){
     var trainable = S.frozen ? HEAD_PARAMS : (HEAD_PARAMS + BACKBONE_PARAMS);
     var total = HEAD_PARAMS + BACKBONE_PARAMS;
     el.readout.innerHTML =
-        'linear-probe accuracy on held-out points <b>' + (S.acc*100).toFixed(1) + '%</b>' +
-        ' <span class="tl-sep">&middot;</span> trainable parameters <b>' + trainable.toLocaleString() + '</b>' +
+        'synthetic nearest-centroid accuracy on held-out points <b>' + (S.acc*100).toFixed(1) + '%</b>' +
+        ' <span class="tl-sep">&middot;</span> hypothetical linear-head model trainable parameters <b>' + trainable.toLocaleString() + '</b>' +
         ' <span class="tl-dim">of ' + total.toLocaleString() + ' (' + (100*trainable/total).toFixed(1) + '%)</span>';
 }
 
 /* --------------------------------------------------------------------- boot */
 function start(){
+    if (!window.d3) {
+        var unavailable = document.createElement('p');
+        unavailable.className = 'viz-unavailable';
+        unavailable.textContent = 'Interactive visualization unavailable: D3 could not load. The adjacent explanation remains readable.';
+        document.getElementById('tl').appendChild(unavailable);
+        document.querySelectorAll('#tl button, #tl input').forEach(function(c){ c.disabled = true; });
+        return;
+    }
     el.readout = document.getElementById('tl-readout');
     el.morph   = document.getElementById('tl-morph');
     el.morphv  = document.getElementById('tl-morphv');
@@ -242,12 +250,14 @@ function start(){
         S.morph = parseFloat(el.morph.value);
         el.morphv.textContent = S.morph < 0.15 ? 'random init'
                               : (S.morph > 0.85 ? 'pretrained' : 'partially adapted');
+        stack.draw(0);
         renderReadout();
     });
     el.freeze.addEventListener('click', function(){
         S.frozen = !S.frozen;
         el.freeze.textContent = S.frozen ? 'Backbone: frozen' : 'Backbone: fine-tuning';
         el.freeze.classList.toggle('on', S.frozen);
+        stack.draw(0);
         renderReadout();
     });
     renderReadout();

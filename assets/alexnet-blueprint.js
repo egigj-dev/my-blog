@@ -1,7 +1,8 @@
 /* ============================================================================
    alexnet-blueprint.js — "Exploded Blueprint & GPU Split"
 
-   Nothing here is invented. Every shape, filter count and parameter total is
+   Map sizes follow the paper illustration (see article input/padding caveat).
+   Filter counts and parameter totals are
    taken from Krizhevsky, Sutskever & Hinton (2012) and recomputed in the
    browser from the layer definitions below — the totals you see are summed at
    run time, not typed in. The two-lane layout mirrors the paper's own figure:
@@ -218,6 +219,14 @@ function renderReadout(){
 
 /* --------------------------------------------------------------------- boot */
 function start(){
+    if (!window.d3) {
+        var unavailable = document.createElement('p');
+        unavailable.className = 'viz-unavailable';
+        unavailable.textContent = 'Interactive visualization unavailable: D3 could not load. The adjacent explanation remains readable.';
+        document.getElementById('ax').appendChild(unavailable);
+        document.querySelectorAll('#ax button, #ax input').forEach(function(c){ c.disabled = true; });
+        return;
+    }
     el.readout = document.getElementById('ax-readout');
     el.exp     = document.getElementById('ax-explode');
     el.summary = document.getElementById('ax-summary');
@@ -233,6 +242,12 @@ function start(){
 
     el.exp.value = String(S.explode);
     el.exp.addEventListener('input', function(){ S.explode = parseFloat(el.exp.value); });
+    var picker = document.createElement('select');
+    picker.setAttribute('aria-label', 'Inspect AlexNet layer');
+    LAYERS.forEach(function(L, i){ var option = document.createElement('option'); option.value=i; option.textContent=L.name; picker.appendChild(option); });
+    picker.value=String(S.sel);
+    picker.addEventListener('change', function(){ S.sel=Number(picker.value); bars.draw(); renderReadout(); });
+    el.readout.parentElement.insertBefore(picker, el.readout);
     renderReadout();
 
     var holder = document.getElementById('ax-3d');

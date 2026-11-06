@@ -358,13 +358,16 @@
         }
 
     </style>
+    <link rel="stylesheet" href="../assets/site.css">
+    <script src="../assets/site.js"></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <a href="../index.html" class="back-link">← Back to Blog</a>
     <button class="theme-toggle" id="themeToggle">Light Mode</button>
 
     <div class="container">
-        <article class="content">
+        <article class="content" id="main-content">
             <div class="article-header">
                 <div class="article-category">Optimization</div>
                 <h1>Optimization Techniques: Training Networks Faster</h1>
@@ -412,7 +415,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Faster convergence</li>
                         <li>Better gradient flow</li>
@@ -420,7 +423,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Requires knowing data statistics</li>
                         <li>Must be applied consistently</li>
@@ -442,7 +445,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Faster training</li>
                         <li>Reduces sensitivity to weight initialization</li>
@@ -451,7 +454,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Adds computational cost</li>
                         <li>Behavior differs during training vs. testing</li>
@@ -504,7 +507,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Adaptive learning rates</li>
                         <li>Works well in practice</li>
@@ -512,7 +515,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>More hyperparameters to tune</li>
                         <li>More memory for storing running averages</li>
@@ -526,7 +529,7 @@
                 Adam combines momentum and RMSProp. It maintains both a running average of gradients (momentum) and a running average of gradient magnitudes (adaptive learning rates).
             </p>
 
-            <div class="code-block">t = t + 1<br>m = beta1 * m + (1 - beta1) * gradient<br>v = beta2 * v + (1 - beta2) * gradient²<br>m_hat = m / (1 - beta1^t)&nbsp;&nbsp;# bias correction<br>v_hat = v / (1 - beta2^t)&nbsp;&nbsp;# m and v start at zero<br>weights = weights - learning_rate * m_hat / (sqrt(v_hat) + epsilon)</div>
+            <div class="code-block">t = t + 1  # initialize t=0, m=0, v=0<br>m = beta1 * m + (1 - beta1) * gradient<br>v = beta2 * v + (1 - beta2) * gradient²<br>m_hat = m / (1 - beta1^t)&nbsp;&nbsp;# bias correction<br>v_hat = v / (1 - beta2^t)&nbsp;&nbsp;# m and v start at zero<br>weights = weights - learning_rate * m_hat / (sqrt(v_hat) + epsilon)</div>
 
             <p>
                 Adam is a very widely used optimizer and a reasonable default across many architectures and datasets, although the learning rate often still needs tuning. Because m and v start at zero, the bias-correction step above stops early estimates from being too small.
@@ -534,7 +537,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Often fast early progress</li>
                         <li>Robust to different problems</li>
@@ -543,7 +546,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>L2 added to the gradient interacts poorly with adaptive scaling; prefer AdamW for weight decay</li>
                         <li>Requires more memory</li>
@@ -658,29 +661,6 @@
         </article>
     </div>
 
-    <script>
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const isDark = localStorage.getItem('light-mode') !== 'true';
-
-        function updateTheme() {
-            if (!isDark) {
-                document.body.classList.add('light-mode');
-                themeToggle.textContent = 'Dark Mode';
-            } else {
-                document.body.classList.remove('light-mode');
-                themeToggle.textContent = 'Light Mode';
-            }
-        }
-
-        updateTheme();
-
-        themeToggle.addEventListener('click', () => {
-            const isNowLight = document.body.classList.toggle('light-mode');
-            localStorage.setItem('light-mode', isNowLight);
-            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
-        });
-    </script>
     <script src="../assets/viz-core.js"></script>
     <script src="../assets/loss-landscape.js"></script>
 </body>

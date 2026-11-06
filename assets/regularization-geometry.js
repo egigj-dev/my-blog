@@ -65,7 +65,7 @@ var W0 = (function(){                                     // seeded base weights
 var TOTAL = W0.reduce(function(a,m){ return a + m.length; }, 0);
 
 /* -------------------------------------------------------------------- state */
-var S = { lam:0.35, mode:'l1', drop:null, runs:0 };
+var S = { lam:0.35, probability:0.35, mode:'l1', drop:null, runs:0 };
 var el = {}, plotA = null, plotB = null;
 
 /* ------------------------------------------------- panel A: constraint plot */
@@ -154,7 +154,7 @@ function buildA(){
             'L1 &rarr; (' + la[0].toFixed(3) + ', ' + la[1].toFixed(3) + ')' +
             (sparse ? ' <b class="rg-hit">exactly zero &mdash; sparse</b>' : '') +
             '<span class="rg-sep">·</span>L2 &rarr; (' + rg[0].toFixed(3) + ', ' + rg[1].toFixed(3) + ')' +
-            ' <span class="rg-dim">shrunk, never zero</span>';
+            ' <span class="rg-dim">ridge solution</span>';
     }
     return { resize:resize, draw:draw };
 }
@@ -188,8 +188,8 @@ function buildB(){
         for (var l=0;l<W0.length;l++){
             out.push(W0[l].map(function(e){
                 var w = e.w;
-                if (S.mode === 'l1') w = soft(w, S.lam * 0.85);
-                else if (S.mode === 'l2') w = w / (1 + S.lam * 4);
+                if (S.mode === 'l1') w = soft(w, S.lam);
+                else if (S.mode === 'l2') w = w / (1 + S.lam);
                 else if (S.mode === 'drop' && mask){
                     if (mask[e.l] && mask[e.l][e.i]) w = 0;
                     if (mask[e.l+1] && mask[e.l+1][e.j]) w = 0;
@@ -231,7 +231,7 @@ function buildB(){
             .attr('opacity',function(d){ return d.dropped ? 0.35 : 1; });
 
         var label = S.mode==='l1' ? 'weights driven to exactly zero'
-                  : S.mode==='l2' ? 'every weight shrunk, none removed'
+                  : S.mode==='l2' ? 'schematic shrinkage; not fitted network weights'
                   : 'units masked at random each pass';
         el.netNote.innerHTML = '<b>'+alive.length+' / '+TOTAL+'</b> weights active <span class="rg-dim">&mdash; '+label+'</span>';
     }
@@ -243,12 +243,20 @@ function resample(){
     var g = V.rng(1000 + (S.runs++));
     S.drop = LAYERS.map(function(n, l){
         return d3.range(n).map(function(){
-            return (l>0 && l<LAYERS.length-1) ? g() < S.lam : false;   // hidden units only
+            return (l>0 && l<LAYERS.length-1) ? g() < S.probability : false;   // hidden units only
         });
     });
 }
 
 function start(){
+    if (!window.d3) {
+        var unavailable = document.createElement('p');
+        unavailable.className = 'viz-unavailable';
+        unavailable.textContent = 'Interactive visualization unavailable: D3 could not load. The adjacent explanation remains readable.';
+        document.getElementById('rg').appendChild(unavailable);
+        document.querySelectorAll('#rg button, #rg input').forEach(function(c){ c.disabled = true; });
+        return;
+    }
     el.geoNote = document.getElementById('rg-geonote');
     el.netNote = document.getElementById('rg-netnote');
     el.lam     = document.getElementById('rg-lam');
@@ -269,6 +277,10 @@ function start(){
             Array.prototype.forEach.call(el.modes.children, function(c){ c.classList.remove('on'); });
             b.classList.add('on');
             document.getElementById('rg-lamlabel').textContent = S.mode==='drop' ? 'Drop rate' : 'Lambda';
+            el.lam.max = S.mode==='drop' ? '0.95' : '2';
+            el.lam.value = String(S.mode==='drop' ? S.probability : S.lam);
+            el.lamv.textContent = Number(el.lam.value).toFixed(2);
+            el.lam.setAttribute('aria-label', S.mode==='drop' ? 'Dropout probability' : 'Regularization strength lambda');
             if (S.mode==='drop') resample();
             plotB.draw();
         });
@@ -278,8 +290,9 @@ function start(){
     el.lam.value = String(S.lam);
     el.lamv.textContent = S.lam.toFixed(2);
     el.lam.addEventListener('input', function(){
-        S.lam = parseFloat(el.lam.value);
-        el.lamv.textContent = S.lam.toFixed(2);
+        if (S.mode==='drop') S.probability = V.clamp(parseFloat(el.lam.value), 0, 0.95);
+        else S.lam = V.clamp(parseFloat(el.lam.value), 0, 2);
+        el.lamv.textContent = (S.mode==='drop' ? S.probability : S.lam).toFixed(2);
         if (S.mode==='drop') resample();
         plotA.draw(); plotB.draw();
     });

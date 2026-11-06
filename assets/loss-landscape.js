@@ -246,7 +246,7 @@ function buildPlot(){
 function recompute(){
     var st = STARTS[S.start];
     S.runs = simulate(st.x, st.y, S.lr);
-    S.cursor = 0;
+    S.cursor = V.REDUCED ? STEPS : 0;
     if (plot) plot.resize();
     renderReadout();
 }
@@ -282,7 +282,7 @@ function buildStarts(){
         b.addEventListener('click', function(){
             S.start = i;
             Array.prototype.forEach.call(el.starts.children, function(c,ci){ c.classList.toggle('on', ci===i); });
-            recompute(); S.playing = true; el.run.textContent = 'Pause';
+            recompute(); S.playing = !V.REDUCED; el.run.textContent = V.REDUCED ? 'Show result' : 'Pause';
         });
         el.starts.appendChild(b);
     });
@@ -290,6 +290,14 @@ function buildStarts(){
 
 /* ------------------------------------------------------------------- boot */
 function start(){
+    if (!window.d3) {
+        var unavailable = document.createElement('p');
+        unavailable.className = 'viz-unavailable';
+        unavailable.textContent = 'Interactive visualization unavailable: D3 could not load. The adjacent explanation remains readable.';
+        document.getElementById('lv').appendChild(unavailable);
+        document.querySelectorAll('#lv button, #lv input').forEach(function(c){ c.disabled = true; });
+        return;
+    }
     el.readout = document.getElementById('lv-readout');
     el.legend  = document.getElementById('lv-legend');
     el.starts  = document.getElementById('lv-starts');
@@ -307,9 +315,10 @@ function start(){
     el.lrv.textContent = S.lr.toFixed(3);
     el.lr.addEventListener('input', function(){
         S.lr = parseFloat(el.lr.value); el.lrv.textContent = S.lr.toFixed(3);
-        recompute(); S.playing = true; el.run.textContent = 'Pause';
+        recompute(); S.playing = !V.REDUCED; el.run.textContent = V.REDUCED ? 'Show result' : 'Pause';
     });
     el.run.addEventListener('click', function(){
+        if (V.REDUCED) { S.cursor = STEPS; S.playing = false; plot.draw(); renderReadout(); return; }
         if (S.cursor >= STEPS) S.cursor = 0;
         S.playing = !S.playing; el.run.textContent = S.playing ? 'Pause' : 'Run';
     });
@@ -325,7 +334,7 @@ function start(){
         var visible = true, prev = 0;
         V.onVisible(document.getElementById('lv'), function(v){ visible = v; });
         if (V.REDUCED){
-            S.cursor = STEPS; plot.draw(); renderReadout();
+            el.run.textContent = 'Show result'; S.cursor = STEPS; plot.draw(); renderReadout();
             if (three) three.render(0.016);
             return;
         }
