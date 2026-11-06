@@ -350,13 +350,16 @@
         @media (max-width: 760px) { .rg-panels { grid-template-columns: 1fr; } .rg-pane + .rg-pane { border-left: none; border-top: 1px solid var(--border); } .rg-pane { height: 290px; } }
 
     </style>
+    <link rel="stylesheet" href="../assets/site.css">
+    <script src="../assets/site.js"></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <a href="../index.html" class="back-link">← Back to Blog</a>
     <button class="theme-toggle" id="themeToggle">Light Mode</button>
 
     <div class="container">
-        <article class="content">
+        <article class="content" id="main-content">
             <div class="article-header">
                 <div class="article-category">Regularization</div>
                 <h1>Regularization: Preventing Your Network from Overfitting</h1>
@@ -383,7 +386,7 @@
             </p>
 
             <div class="chart-container">
-                <canvas id="overfittingChart"></canvas>
+                <canvas id="overfittingChart">Schematic losses: training falls while validation can rise later; regularization may reduce this gap.</canvas><p>Schematic curves, generated analytically. No experiment was run to produce this chart.</p>
             </div>
 
             <p>
@@ -410,7 +413,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Automatic feature selection</li>
                         <li>Sparse models (faster only if zero weights are actually pruned)</li>
@@ -418,7 +421,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Can remove too many features</li>
                         <li>Harder to optimize mathematically</li>
@@ -432,10 +435,10 @@
                 L2 regularization adds a penalty for the square of weights:
             </p>
 
-            <div class="code-block">loss = standard_loss + λ × Σ(weights²)</div>
+            <div class="code-block">loss = standard_loss + (λ / 2) × Σ(weights²)</div>
 
             <p>
-                This shrinks each weight in proportion to its size, without generally setting any to zero. It encourages smaller weights across the board and tends to spread importance across correlated features. Conventions differ: many texts write the penalty as (λ/2) × Σ(weights²), so that its gradient is λ × weights, and a given λ means different things under each convention.
+                This shrinks each weight in proportion to its size, without generally setting any to zero. It encourages smaller weights across the board and tends to spread importance across correlated features. Here the half-coefficient convention gives gradient λ × weights; texts that omit the half use a differently scaled λ.
             </p>
 
             <h3>Weight Decay</h3>
@@ -446,7 +449,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Smooth weight reduction</li>
                         <li>Often a good default in neural networks</li>
@@ -455,7 +458,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Doesn't eliminate features</li>
                         <li>Less interpretable than L1</li>
@@ -487,7 +490,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Very effective at preventing overfitting</li>
                         <li>Simple to implement</li>
@@ -496,7 +499,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Requires more training iterations</li>
                         <li>Slower convergence</li>
@@ -521,7 +524,7 @@
                 <div class="rg-readout" id="rg-netnote"></div>
                 <p class="rg-note"><strong>The setup is illustrative</strong> &mdash; a synthetic two-parameter quadratic loss, because constraint geometry is only visible in two dimensions.
                 <strong>The solutions are computed.</strong> The L2 point is the closed-form ridge estimate; the L1 point comes from proximal gradient descent with soft-thresholding, the same operator that produces sparsity in real training.
-                Raise lambda and watch the L1 solution slide along the diamond until it snaps onto an axis &mdash; that coordinate becomes <em>exactly</em> zero. The L2 solution shrinks toward the origin but never reaches an axis at any finite lambda. That one difference is why L1 selects features while L2 only damps them.</p>
+                The geometry uses loss + λ‖w‖₁ for L1 and loss + (λ/2)‖w‖₂² for L2. The circle and diamond show the budgets corresponding to the computed solutions; they are not equal-radius comparisons. L1 can produce exact zeros. Ridge generally shrinks coefficients without enforcing sparsity, though individual coefficients can cross zero with correlated features. The separate network panel is a schematic shrinkage/masking illustration, not a trained neural network. Its dropout probability p is independent of λ; activation scaling is explained above.</p>
             </div>
 
             <h2>Data Augmentation</h2>
@@ -544,7 +547,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Increases effective data size</li>
                         <li>Forces learning of general patterns</li>
@@ -553,7 +556,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Requires domain knowledge</li>
                         <li>Computationally expensive</li>
@@ -578,7 +581,7 @@
                 During training, periodically evaluate on a validation set. If validation loss increases (or validation accuracy decreases), stop. Save the weights from when validation was best.
             </p>
 
-            <div class="code-block">best_validation_loss = infinity<br>patience_counter = 0<br><br>for each epoch:<br>  training_loss = train(network)<br>  validation_loss = validate(network)<br><br>  if validation_loss < best_validation_loss:<br>    best_validation_loss = validation_loss<br>    patience_counter = 0<br>    save_weights(network)<br>  else:<br>    patience_counter += 1<br><br>  if patience_counter > patience_threshold:<br>    stop_training()</div>
+            <div class="code-block">best_validation_loss = infinity<br>patience_counter = 0<br><br>for each epoch:<br>  training_loss = train(network)<br>  validation_loss = validate(network)<br><br>  if validation_loss &lt; best_validation_loss:<br>    best_validation_loss = validation_loss<br>    patience_counter = 0<br>    save_weights(network)<br>  else:<br>    patience_counter += 1<br><br>  if patience_counter > patience_threshold:<br>    stop_training()</div>
 
             <p>
                 The "patience" parameter allows temporary increases in validation loss, so you don't stop on the first bad epoch. A suitable value depends on the training length and how noisy validation is.
@@ -586,7 +589,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Simple and effective</li>
                         <li>Few hyperparameters (patience, monitored metric)</li>
@@ -595,7 +598,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Requires a validation set</li>
                         <li>Depends on validation set quality</li>
@@ -653,31 +656,31 @@
                     <tr>
                         <td>L1 Regularization</td>
                         <td>Weight penalty</td>
-                        <td>Moderate</td>
+                        <td>Task dependent</td>
                         <td>Low</td>
                     </tr>
                     <tr>
                         <td>L2 Regularization</td>
                         <td>Weight penalty</td>
-                        <td>High</td>
+                        <td>Task dependent</td>
                         <td>Low</td>
                     </tr>
                     <tr>
                         <td>Dropout</td>
                         <td>Architectural</td>
-                        <td>Very High</td>
+                        <td>Task dependent</td>
                         <td>Low</td>
                     </tr>
                     <tr>
                         <td>Data Augmentation</td>
                         <td>Data level</td>
-                        <td>Very High</td>
+                        <td>Task dependent</td>
                         <td>Medium</td>
                     </tr>
                     <tr>
                         <td>Early Stopping</td>
                         <td>Training process</td>
-                        <td>Very High</td>
+                        <td>Task dependent</td>
                         <td>Very Low</td>
                     </tr>
                 </tbody>
@@ -699,30 +702,9 @@
     </div>
 
     <script>
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const isDark = localStorage.getItem('light-mode') !== 'true';
-
-        function updateTheme() {
-            if (!isDark) {
-                document.body.classList.add('light-mode');
-                themeToggle.textContent = 'Dark Mode';
-            } else {
-                document.body.classList.remove('light-mode');
-                themeToggle.textContent = 'Light Mode';
-            }
-        }
-
-        updateTheme();
-
-        themeToggle.addEventListener('click', () => {
-            const isNowLight = document.body.classList.toggle('light-mode');
-            localStorage.setItem('light-mode', isNowLight);
-            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
-        });
 
         // Overfitting chart
-        new Chart(document.getElementById('overfittingChart'), {
+        if (window.Chart) new Chart(document.getElementById('overfittingChart'), {
             type: 'line',
             data: {
                 labels: Array.from({length: 100}, (_, i) => i + 1),

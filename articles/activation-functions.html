@@ -279,8 +279,11 @@
         @media (max-width: 640px) { .fx-plotwrap { height: 280px; } }
 
     </style>
+    <link rel="stylesheet" href="../assets/site.css">
+    <script src="../assets/site.js"></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
 
@@ -308,7 +311,7 @@
     </nav>
 
     <div class="container">
-        <article class="content">
+        <article class="content" id="main-content">
             <div class="article-header">
                 <div class="article-category">Neural Networks</div>
                 <h1>Activation Functions: From Theory to Practice</h1>
@@ -392,7 +395,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Output (0,1) is interpretable as probability</li>
                         <li>Smooth gradient enables optimization</li>
@@ -400,7 +403,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Vanishing gradient in extreme ranges</li>
                         <li>Computationally expensive (exponential)</li>
@@ -429,7 +432,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Zero-centered output improves convergence</li>
                         <li>Stronger gradients than sigmoid</li>
@@ -437,7 +440,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Still suffers from vanishing gradients</li>
                         <li>Computationally expensive</li>
@@ -475,7 +478,7 @@
 
             <div class="pros-cons">
                 <div class="pros">
-                    <h4>Advantages</h4>
+                    <p class="panel-label"><strong>Advantages</strong></p>
                     <ul>
                         <li>Computationally cheap (single comparison)</li>
                         <li>No saturation for positive inputs</li>
@@ -484,7 +487,7 @@
                     </ul>
                 </div>
                 <div class="cons">
-                    <h4>Disadvantages</h4>
+                    <p class="panel-label"><strong>Disadvantages</strong></p>
                     <ul>
                         <li>Dead neuron problem</li>
                         <li>Not zero-centered</li>
@@ -604,27 +607,6 @@
     </div>
 
     <script>
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const isDark = localStorage.getItem('light-mode') !== 'true';
-
-        function updateTheme() {
-            if (!isDark) {
-                document.body.classList.add('light-mode');
-                themeToggle.textContent = 'Dark Mode';
-            } else {
-                document.body.classList.remove('light-mode');
-                themeToggle.textContent = 'Light Mode';
-            }
-        }
-
-        updateTheme();
-
-        themeToggle.addEventListener('click', () => {
-            const isNowLight = document.body.classList.toggle('light-mode');
-            localStorage.setItem('light-mode', isNowLight);
-            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
-        });
 
         /* ==================================================================
            INTERACTIVE ACTIVATION EXPLORER
@@ -633,6 +615,7 @@
            Switching functions morphs both paths by re-sampling and lerping.
            ================================================================== */
         (function(){
+            if (!window.d3) { document.getElementById('fx-plot').insertAdjacentHTML('afterend', '<p>Activation plot unavailable; formulas are described below.</p>'); return; }
             const H = 1e-3;                                    // numeric-derivative step
             const numD = f => v => (f(v+H) - f(v-H)) / (2*H);
             const sigF  = v => 1/(1 + Math.exp(-v));
@@ -739,7 +722,7 @@
             ORDER.forEach(k=>{
                 const b = document.createElement('button');
                 b.className = 'fx-tab' + (k===S.cur?' on':''); b.dataset.k = k;
-                b.textContent = FNS[k].label; b.setAttribute('role','tab');
+                b.textContent = FNS[k].label; b.setAttribute('aria-pressed', String(k===S.cur));
                 b.addEventListener('click', ()=>setFn(k));
                 tabs.appendChild(b);
             });
@@ -748,6 +731,11 @@
             svg.on('pointermove', ev=>{ const [mx]=d3.pointer(ev); S.userProbe=true; S.probe=clamp(xS.invert(mx),-4,4); draw(); })
                .on('pointerleave', ()=>{ S.userProbe=false; });
 
+            const probe = document.createElement('input');
+            probe.type='range'; probe.min='-4'; probe.max='4'; probe.step='0.05'; probe.value=String(S.probe);
+            probe.setAttribute('aria-label','Activation input x');
+            probe.addEventListener('input',()=>{ S.userProbe=true; S.probe=Number(probe.value); draw(); });
+            document.getElementById('fx-readout').after(probe);
             resize();
             window.addEventListener('resize', resize);
             new MutationObserver(restyle).observe(document.body,{attributes:true,attributeFilter:['class']});

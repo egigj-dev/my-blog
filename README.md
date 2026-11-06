@@ -23,9 +23,12 @@ Articles distinguish paper results, the author's reported project results, value
 
 ```
 index.html              Homepage, article cards, topic graph section and fallback list
-articles/               One self-contained HTML page per article
+articles/               Eight HTML articles sharing theme and accessibility assets
 assets/brain-graph.js   Topic graph data and rendering; add new articles here
 assets/viz-core.js      Shared helpers for the article visualizations
+assets/site.js          Shared theme (theme key, legacy migration, storage fallback)
+assets/site.css         Shared focus, responsive and reduced-motion styles
+assets/card-thumbnails.js  Isolated decorative card renderers
 assets/*.js             One visualization module per article
 scripts/check_site.py   Static link, graph and JavaScript syntax checks
 ```
@@ -52,7 +55,17 @@ Then open <http://localhost:8000>.
 1. Create `articles/your-article.html`, using an existing article as a template.
 2. Add a card to `.art-grid` in `index.html`.
 3. Add it to the fallback list in `index.html` and to `graph.nodes` in `assets/brain-graph.js`, with any relationships it has.
-4. Run `python3 scripts/check_site.py`.
+4. Run the checks below and update both article inventories when adding URLs.
+
+## Checks
+
+```bash
+python3 scripts/check_site.py
+python3 scripts/validate.py
+node scripts/test-numerics.js
+```
+
+Python standard-library checks and Node VM regressions require no installed packages. CI runs both Python checks; the validator also runs the numerical suite. These checks do not establish browser rendering or reproduce training results.
 
 ## Deployment
 

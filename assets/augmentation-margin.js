@@ -157,7 +157,7 @@ function buildMargin(){
         var cls = Math.abs(delta) < 0.6 ? 'am-dim' : (delta > 0 ? 'am-good' : 'am-bad');
         el.readout.innerHTML =
             '<b>'+S.data.length+'</b> training samples <span class="am-sep">&middot;</span> ' +
-            'held-out accuracy <b>'+(S.acc*100).toFixed(1)+'%</b> ' +
+            'synthetic held-out accuracy <b>'+(S.acc*100).toFixed(1)+'%</b> ' +
             '<span class="'+cls+'">('+sign+delta.toFixed(1)+' pts vs no augmentation)</span>';
     }
     return { resize:resize, draw:draw };
@@ -202,7 +202,7 @@ function buildCloud(){
         var extra = S.data.length - BASE.length;
         el.cloudNote.textContent = extra
             ? extra + ' synthetic copies · dashed lines are the true manifold'
-            : 'no augmentation — 10 real samples';
+            : 'no augmentation — 10 base synthetic samples';
     }
     return { resize:resize, draw:draw };
 }
@@ -211,6 +211,14 @@ function buildCloud(){
 function refresh(){ augment(); cloud.draw(); margin.draw(); }
 
 function start(){
+    if (!window.d3) {
+        var unavailable = document.createElement('p');
+        unavailable.className = 'viz-unavailable';
+        unavailable.textContent = 'Interactive visualization unavailable: D3 could not load. The adjacent explanation remains readable.';
+        document.getElementById('am').appendChild(unavailable);
+        document.querySelectorAll('#am button, #am input').forEach(function(c){ c.disabled = true; });
+        return;
+    }
     el.readout   = document.getElementById('am-readout');
     el.cloudNote = document.getElementById('am-cloudnote');
     el.copies    = document.getElementById('am-copies');

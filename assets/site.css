@@ -1,0 +1,33 @@
+/* Shared accessibility and small-screen corrections; page design stays local. */
+:focus-visible { outline: 3px solid #f0a500; outline-offset: 4px; }
+.skip-link { position: absolute; left: 1rem; top: -8rem; z-index: 2000; padding: .7rem; background: #fff; color: #123; }
+.skip-link:focus { top: .5rem; }
+html[data-theme="light"] body:has(.back-link) { --bg-dark:#fff; --bg-card:#f8f9fa; --text-primary:#2c3e50; --text-secondary:#5a6c7d; --accent:#3498db; --border:#e0e6ed; }
+html[data-theme="light"] body:has(.hero) { --bg:#f2f6fb; --bg-card:#ffffff; --line:rgba(0,0,0,.08); --text:#1a2a38; --text-2:#4a6072; --text-3:#8fa5b5; }
+img, svg { max-width: 100%; }
+.architecture-summary { border:1px solid var(--border); padding:1rem; margin:2rem 0; border-radius:6px; }
+.architecture-summary figcaption { font-weight:700; margin-bottom:.8rem; }
+.viz-unavailable { padding:1rem; border:1px solid var(--border); }
+@media (max-width: 768px) {
+    body:has(.back-link) .container { padding-top:5rem; }
+    .comparison-table { display:block; overflow-x:auto; }
+}
+@media (max-width: 375px) {
+    .container { padding-left:1rem; padding-right:1rem; }
+    .article-meta { gap:.7rem; }
+    .theme-toggle, .back-link { font-size:.75rem; padding:8px; }
+    .lv-range, .rg-range, .tl-range { flex-wrap:wrap; }
+    h1 { overflow-wrap:break-word; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
+}
+
+@media (max-width:375px) { nav .logo-text { font-size:.75rem; } .nav-links a { padding:.3rem; font-size:.7rem; } }
+
+.pros .panel-label { color:#27ae60; margin-bottom:.8rem; }
+.cons .panel-label { color:#ff6b6b; margin-bottom:.8rem; }
+
+html[data-theme="light"] body:has(.hero) nav { background:rgba(255,255,255,.9); border-bottom-color:rgba(0,0,0,.08); }
+html[data-theme="light"] body:has(.hero) .nav-links a:hover { background:rgba(0,0,0,.05); }
+html[data-theme="light"] body:has(.hero) .card-viz svg line { stroke:#dce4ee; }

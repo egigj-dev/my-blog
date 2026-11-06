@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transfer Learning for CIFAR-10: EfficientNetB0 Feature Extraction</title>
+    <title>Transfer Learning for CIFAR-10: A Feature-Extraction Approach Using EfficientNetB0</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <meta name="description" content="EfficientNetB0 feature extraction for CIFAR-10, author-reported results and an illustrative synthetic probe.">
+    <meta property="og:title" content="Transfer Learning for CIFAR-10: A Feature-Extraction Approach Using EfficientNetB0">
+    <meta property="og:description" content="EfficientNetB0 feature extraction for CIFAR-10, author-reported results and an illustrative synthetic probe.">
+    <meta property="og:type" content="article">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -435,13 +440,16 @@
         @media (max-width: 760px) { .tl-panels { grid-template-columns: 1fr; } .tl-pane + .tl-pane { border-left: none; border-top: 1px solid var(--border); } .tl-pane { height: 300px; } }
 
     </style>
+    <link rel="stylesheet" href="../assets/site.css">
+    <script src="../assets/site.js"></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <a href="../index.html" class="back-link">← Back to Blog</a>
     <button class="theme-toggle" id="themeToggle">Light Mode</button>
 
     <div class="container">
-        <article class="content">
+        <article class="content" id="main-content">
             <div class="article-header">
                 <div class="article-category">Transfer Learning · Computer Vision</div>
                 <h1>Transfer Learning for CIFAR-10: A Feature-Extraction Approach Using EfficientNetB0</h1>
@@ -551,9 +559,7 @@
             </p>
 
             <h3>2.5 Feature Pre-computation Strategy</h3>
-            <p>
-                Because all EfficientNetB0 layers are frozen, their output is deterministic for a given input. Instead of recomputing features every batch, a single forward pass was run over the entire dataset, caching 1,280-dimensional vectors in memory. The classifier head then trained exclusively on these cached vectors.
-            </p>
+            <p>Freeze the backbone and call it with training=False when extracting features, so BatchNorm uses stored statistics and stochastic training layers are inactive. Determinism also depends on preprocessing and runtime kernels. Caching fixed features avoids repeating backbone inference each epoch; image augmentation must occur before extraction or require new cached features.</p>
 
             <div class="pros-cons">
                 <div class="pros">
@@ -602,7 +608,7 @@
                     <div class="tl-pane">
                         <div class="tl-tag">Latent space &middot; 10 CIFAR-10 classes</div>
                         <div class="tl-3d" id="tl-3d" style="height:100%">
-                            <div class="tl-fallback" id="tl-fallback">3D view unavailable &mdash; WebGL could not start. The measured accuracy below is unaffected.</div>
+                            <div class="tl-fallback" id="tl-fallback">3D view unavailable &mdash; WebGL could not start. The synthetic probe calculation below is unaffected.</div>
                         </div>
                     </div>
                     <div class="tl-pane"><div class="tl-tag">Where the gradient goes</div><svg id="tl-stack" aria-label="Frozen backbone and trainable head"></svg></div>
@@ -610,19 +616,10 @@
                 <div class="tl-readout" id="tl-readout"></div>
                 <p class="tl-note"><strong>The cloud is illustrative</strong> &mdash; real EfficientNetB0 embeddings are 1280-dimensional and cannot be drawn, so this is a stand-in that runs from unstructured noise to well-separated clusters.
                 <strong>The accuracy is computed on these synthetic points, not on CIFAR-10.</strong> A nearest-centroid linear probe is fitted on 60% of the points and scored on the held-out 40%, recomputed every time you move the slider.
-                Drag <em>Features</em> to the left and the probe collapses to chance: with no class structure in the representation, no linear head can recover it. Drag it right and the same probe becomes near-perfect without a single layer of the backbone changing. That is the argument for freezing: if the representation already separates the classes, only a head remains to fit. The panel counts the smallest such head, a single linear layer of 12,810 parameters, roughly 0.3% of the model. The head actually used in this project (512 &rarr; 256 &rarr; 10) has about 790,000.
-            </div>
-
-            <h2>3. Results</h2>
-
-            <h3>3.1 Training Dynamics</h3>
-
-            <p>
-                <strong>The chart below is schematic.</strong> Its curves are generated by a formula shaped to resemble the reported outcome. They are not logged training history. The figures in the table are author-reported from the original project, and their logs are not published here.
-            </p>
+                Drag <em>Features</em> to the left and the probe collapses to chance: with no class structure in the representation, no linear head can recover it. Drag it right and the same probe becomes near-perfect without a single layer of the backbone changing. That is the whole argument for freezing &mdash; if the representation already separates the classes, the only thing left to fit is a head of <strong>12,810 parameters for a hypothetical 1280→10 linear head, roughly 0.3% of the backbone-plus-linear-head model; the reported 512→256→10 head above instead has 791,306 trainable parameters plus 1,536 non-trainable BatchNorm statistics</strong>.</p>
 
             <div class="chart-container">
-                <canvas id="trainingChart"></canvas>
+                <canvas id="trainingChart">Schematic curves: training and validation accuracy rise and losses fall. No measured history is provided.</canvas><p>Analytic illustration, not recorded training data. If the chart cannot load, the author-reported table below remains available.</p>
             </div>
 
             <table class="comparison-table">
@@ -698,9 +695,7 @@
             </div>
 
             <h3>4.3 Reproducibility</h3>
-            <p>
-                Random seeds were fixed (<code>tf.random.set_seed(42)</code>, <code>np.random.seed(42)</code>) to maximise reproducibility. However, GPU non-determinism in TensorFlow means exact numerical results may vary slightly across runs and hardware.
-            </p>
+            <p>No executable training pipeline, environment lockfile, run logs, saved model, split indices or confusion matrix is supplied here. Seed settings and hardware in the narrative are author-reported and cannot establish reproducibility. The browser charts are not training artifacts.</p>
 
             <h3>4.4 Future Directions</h3>
             <p>
@@ -762,20 +757,6 @@
     </div>
 
     <script>
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const savedLight = localStorage.getItem('light-mode') === 'true';
-
-        if (savedLight) {
-            document.body.classList.add('light-mode');
-            themeToggle.textContent = 'Dark Mode';
-        }
-
-        themeToggle.addEventListener('click', () => {
-            const isNowLight = document.body.classList.toggle('light-mode');
-            localStorage.setItem('light-mode', isNowLight);
-            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
-        });
 
         // Training dynamics chart — simulated curves matching the paper's results (~88% val acc, early stop ~epoch 18)
         const epochs = Array.from({length: 25}, (_, i) => i + 1);
@@ -801,7 +782,7 @@
         const gridColor  = 'rgba(0, 217, 255, 0.08)';
         const tickColor  = isDark ? '#a0adb8' : '#5a6c7d';
 
-        new Chart(document.getElementById('trainingChart'), {
+        if (window.Chart) new Chart(document.getElementById('trainingChart'), {
             type: 'line',
             data: {
                 labels: epochs,

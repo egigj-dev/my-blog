@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ImageNet Classification with Deep Convolutional Neural Networks - Paper Summary</title>
+    <title>ImageNet Classification with Deep Convolutional Neural Networks</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <meta name="description" content="AlexNet architecture, training methods and competition metrics, with an interactive parameter breakdown.">
+    <meta property="og:title" content="ImageNet Classification with Deep Convolutional Neural Networks">
+    <meta property="og:description" content="AlexNet architecture, training methods and competition metrics, with an interactive parameter breakdown.">
+    <meta property="og:type" content="article">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
@@ -273,13 +278,16 @@
         @media (max-width: 760px) { .ax-panels { grid-template-columns: 1fr; } .ax-pane + .ax-pane { border-left: none; border-top: 1px solid var(--border); } .ax-pane { height: 300px; } }
 
     </style>
+    <link rel="stylesheet" href="../assets/site.css">
+    <script src="../assets/site.js"></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <a href="../index.html" class="back-link">← Back to Blog</a>
     <button class="theme-toggle" id="themeToggle">Light Mode</button>
 
     <div class="container">
-        <article class="content">
+        <article class="content" id="main-content">
             <div class="article-header">
                 <div class="article-category">Paper Summary</div>
                 <h1>ImageNet Classification with Deep Convolutional Neural Networks</h1>
@@ -297,9 +305,7 @@
                 <p><strong>Significance:</strong> Won the 2012 ImageNet Large Scale Visual Recognition Challenge (ILSVRC)</p>
             </div>
 
-            <div class="image-placeholder">
-                <img src="../assets/alexnet-architecture-2.png" alt="AlexNet Architecture" width="850" height="500">
-            </div>
+            <figure class="architecture-summary"><figcaption>AlexNet: five convolutional and three fully connected layers</figcaption><p>Input → Conv1 → LRN → Pool → Conv2 → LRN → Pool → Conv3 → Conv4 → Conv5 → Pool → FC6 + dropout → FC7 + dropout → FC8 → softmax.</p><p>ReLU follows Conv1–5 and FC6–7. Conv3 uses stride 1. Dropout probability is 0.5 on FC6 and FC7 only. The original raster diagram is retained in assets but contains incorrect labels.</p></figure>
 
             <h2>Introduction</h2>
 
@@ -462,29 +468,6 @@ FC3: 1000 units (output)
         </article>
     </div>
 
-    <script>
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const isDark = localStorage.getItem('light-mode') !== 'true';
-
-        function updateTheme() {
-            if (!isDark) {
-                document.body.classList.add('light-mode');
-                themeToggle.textContent = 'Dark Mode';
-            } else {
-                document.body.classList.remove('light-mode');
-                themeToggle.textContent = 'Light Mode';
-            }
-        }
-
-        updateTheme();
-
-        themeToggle.addEventListener('click', () => {
-            const isNowLight = document.body.classList.toggle('light-mode');
-            localStorage.setItem('light-mode', isNowLight);
-            themeToggle.textContent = isNowLight ? 'Dark Mode' : 'Light Mode';
-        });
-    </script>
     <script src="../assets/viz-core.js"></script>
     <script src="../assets/alexnet-blueprint.js"></script>
 </body>
